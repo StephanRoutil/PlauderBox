@@ -15,9 +15,9 @@ PlauderBox läuft als getrennte Testumgebung auf Delphi01. FileBox und der zentr
 
 | Bestandteil | Stand |
 |---|---|
-| Quellstand | GitHub `main`, Commit `a9db0c8` |
+| Quellstand | GitHub `main`, Commit `1bf2532` |
 | Anwendungsimage | `plauderbox:delphi01-test-20261109` |
-| Image-ID | `sha256:4e98c9a8010a…` |
+| Image-ID | `sha256:97e13910249b…` |
 | Laufende Ablage | `/home/zeus/plauderbox-test-vorbereitung` |
 | Anwendungslistener | `127.0.0.1:5187` auf Delphi01 |
 | Interner HTTPS-Zugriff | `https://192.168.68.8` |
@@ -39,6 +39,7 @@ Die OpenAI-Testschlüsseldatei wurde nach ausdrücklicher Freigabe ausschliessli
 - `/api/status` meldet KI-Bereitschaft und Modell `gpt-transcribe`.
 - Download des öffentlichen Caddy-Stammzertifikats liefert HTTP 200.
 - QR-Codes für Zertifikatsdownload und Testanwendung lokal erzeugt.
+- Vue-Oberfläche mit interner IndexedDB-Einzelaufnahme bereitgestellt; Einstieg, Frontend-Asset und KI-Status über internes HTTPS geprüft.
 
 ## Bedienung vom Handy
 

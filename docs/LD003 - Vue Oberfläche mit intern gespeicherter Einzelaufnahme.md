@@ -1,7 +1,7 @@
 ---
 typ: loesungsdokumentation
 id: LD003
-status: lokal-umgesetzt
+status: testbereit-delphi01
 datum: 2026-11-09
 ---
 
@@ -23,7 +23,7 @@ Die PlauderBox-Oberfläche ist auf Vue und TypeScript umgestellt. Nach dem Stopp
 | Containerbuild | `Dockerfile` | Frontend- und .NET-Build getrennt reproduzierbar vorbereitet |
 | Gesamtprüfung | `tests/Pruefe-Prototyp.ps1` | erweitert und lokal bestanden |
 
-Branch: `main`. Commit und Delphi01-Bereitstellung werden nach der lokalen Prüfung ergänzt.
+Branch: `main`, Commit `1bf2532`. Das daraus auf Delphi01 gebaute Image `plauderbox:delphi01-test-20261109` besitzt die Image-ID `sha256:97e13910249b…`. Vue-Einstieg, Frontend-Asset, KI-Status und fehlerfreier Containerstart sind geprüft. Der manuelle mobile Speicherablauf bleibt gemäss T002 offen.
 
 ## Grenzen
 
