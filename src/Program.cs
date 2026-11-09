@@ -36,6 +36,7 @@ builder.Services.AddRateLimiter(options =>
 
 (string? apiKey, string? konfigurationsfehler) = LadeApiKey(builder.Configuration);
 string modell = builder.Configuration["PlauderBox:KI:Modell"] ?? "gpt-transcribe";
+string? erlaubterUrsprung = builder.Configuration["PlauderBox:ErlaubterUrsprung"]?.TrimEnd('/');
 
 WebApplication app = builder.Build();
 app.Use(async (context, next) =>
@@ -54,8 +55,12 @@ app.Use(async (context, next) =>
     if (HttpMethods.IsPost(context.Request.Method) && context.Request.Path.StartsWithSegments("/api"))
     {
         string origin = context.Request.Headers.Origin.ToString();
-        if (!string.IsNullOrWhiteSpace(origin) && (!Uri.TryCreate(origin, UriKind.Absolute, out Uri? uri)
-            || !IPAddress.TryParse(uri.Host, out IPAddress? ip) || !IPAddress.IsLoopback(ip)))
+        bool istLoopbackUrsprung = Uri.TryCreate(origin, UriKind.Absolute, out Uri? uri)
+            && IPAddress.TryParse(uri.Host, out IPAddress? ip)
+            && IPAddress.IsLoopback(ip);
+        bool istKonfigurierterUrsprung = !string.IsNullOrWhiteSpace(erlaubterUrsprung)
+            && string.Equals(origin.TrimEnd('/'), erlaubterUrsprung, StringComparison.OrdinalIgnoreCase);
+        if (!string.IsNullOrWhiteSpace(origin) && !istLoopbackUrsprung && !istKonfigurierterUrsprung)
         {
             context.Response.StatusCode = StatusCodes.Status403Forbidden;
             return;

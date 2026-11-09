@@ -2,6 +2,7 @@ services:
   app:
     image: plauderbox:delphi01-test-20261109
     network_mode: host
+    user: "1000:1000"
     restart: unless-stopped
     read_only: true
     tmpfs:
@@ -9,11 +10,36 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       PlauderBox__Url: http://127.0.0.1:5187
+      PlauderBox__ErlaubterUrsprung: https://192.168.68.8
       PlauderBox__KI__Schluesseldatei: /run/secrets/openai.json
     volumes:
       - ./secrets/openai.json:/run/secrets/openai.json:ro
     mem_limit: 512m
     cpus: 1.0
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+
+  https:
+    image: caddy:2.10-alpine
+    network_mode: host
+    user: "1000:1000"
+    restart: unless-stopped
+    read_only: true
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    tmpfs:
+      - /tmp:size=32m,mode=1777
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./caddy-data:/data
+      - ./caddy-config:/config
+    mem_limit: 128m
+    cpus: 0.5
     logging:
       driver: json-file
       options:

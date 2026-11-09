@@ -19,13 +19,15 @@ Delphi01 ist per SSH als `zeus` erreichbar. FileBox und der zentrale PostgreSQL-
 
 - `Dockerfile`: reproduzierbarer Multi-Stage-Build für .NET 10,
 - `.dockerignore`: Ausschluss von Git, Buildausgaben und geschützter Konfiguration,
-- `deploy/delphi01-test/compose.yaml`: eigener Container mit Loopback-Listener, schreibgeschütztem Dateisystem sowie CPU-, RAM- und Loggrenzen,
+- `deploy/delphi01-test/compose.yaml`: eigener Anwendungscontainer mit Loopback-Listener und eigener Caddy-Container für internes HTTPS; beide mit Ressourcen- und Loggrenzen,
+- `deploy/delphi01-test/Caddyfile`: HTTPS an der internen Serveradresse und gezielter Download des öffentlichen Stammzertifikats,
 - `deploy/delphi01-test/README.md`: Zielstruktur und noch nicht freigegebene Schritte.
 
 ## Sicherheitsgrenzen
 
 - Der aktuelle Prototyp erhält keine PostgreSQL-Datenbank, weil er nichts dauerhaft speichert.
-- Der Server lauscht nur auf Delphi01-Loopback; ein späterer Arbeitsplatztest erfolgt über SSH-Tunnel.
+- Die Anwendung lauscht nur auf Delphi01-Loopback. Caddy stellt sie ausschliesslich im internen Netz per HTTPS bereit.
+- Das Caddy-Stammzertifikat muss auf dem Handy bewusst installiert und als vertrauenswürdig aktiviert werden; der private Schlüssel bleibt auf Delphi01.
 - Die OpenAI-Schlüsseldatei wird nicht in Image, Repository oder Übertragungspaket aufgenommen.
 - Der Container wird mit einem unprivilegierten Benutzer und schreibgeschütztem Root-Dateisystem vorgesehen.
 - FileBox, der zentrale PostgreSQL-Dienst und Olymp01 werden nicht verändert.
@@ -35,7 +37,7 @@ Delphi01 ist per SSH als `zeus` erreichbar. FileBox und der zentrale PostgreSQL-
 - Anlegen von `/srv/docker/plauderbox-test` benötigt auf Delphi01 eine interaktive `sudo`-Bestätigung.
 - Geschützte OpenAI-Testkonfiguration bereitstellen.
 - Image bauen, auf Delphi01 übertragen und vor Start prüfen.
-- Containerstart, SSH-Tunnel und echter Mikrofontest im Browser gesondert freigeben und nachweisen.
+- Containerstart, Zertifikatsvertrauen und echter Mikrofontest im mobilen Browser nachweisen.
 
 ## Verknüpfungen
 

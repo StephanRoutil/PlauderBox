@@ -1,0 +1,20 @@
+{
+    auto_https disable_redirects
+}
+
+https://192.168.68.8 {
+    tls internal
+    reverse_proxy 127.0.0.1:5187
+}
+
+http://192.168.68.8:8080 {
+    @stammzertifikat path /delphi01-root.crt
+    handle @stammzertifikat {
+        rewrite * /caddy/pki/authorities/local/root.crt
+        root * /data
+        header Content-Disposition "attachment; filename=delphi01-root.crt"
+        file_server
+    }
+
+    respond 404
+}
