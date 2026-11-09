@@ -1,3 +1,11 @@
+FROM node:24-alpine AS frontend
+WORKDIR /quelle/src/PlauderBox.UI.Client
+RUN corepack enable
+COPY src/PlauderBox.UI.Client/package.json src/PlauderBox.UI.Client/pnpm-lock.yaml src/PlauderBox.UI.Client/pnpm-workspace.yaml ./
+RUN pnpm install --frozen-lockfile
+COPY src/PlauderBox.UI.Client/ ./
+RUN pnpm run build
+
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /quelle
 
@@ -7,6 +15,7 @@ COPY src/PlauderBox.Datenmanagement/PlauderBox.Datenmanagement.csproj src/Plaude
 RUN dotnet restore src/PlauderBox.UI.csproj
 
 COPY . .
+COPY --from=frontend /quelle/src/wwwroot/ src/wwwroot/
 RUN dotnet publish src/PlauderBox.UI.csproj \
     --configuration Release \
     --no-restore \

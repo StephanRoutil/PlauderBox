@@ -1,0 +1,25 @@
+{
+  "name": "plauderbox-ui",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "build": "vue-tsc -b && vite build",
+    "dev": "vite",
+    "test": "vitest run",
+    "typecheck": "vue-tsc -b"
+  },
+  "dependencies": {
+    "vue": "3.5.45"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "6.0.10",
+    "@types/node": "24.10.1",
+    "fake-indexeddb": "6.2.8",
+    "typescript": "6.0.3",
+    "vite": "8.3.7",
+    "vitest": "5.1.0",
+    "vue-tsc": "3.3.14"
+  },
+  "packageManager": "pnpm@11.25.0"
+}

@@ -7,6 +7,8 @@ datum: 2026-11-09
 
 # D001 – Anforderungen an den lokalen Aufnahmeprototyp
 
+> Historischer Grundumfang. Die dauerhafte Nicht-Speicherung wurde für die nächste Ausbaustufe durch [[D005 - Anforderungen an die intern gespeicherte Einzelaufnahme]] und [[E002 - Aufnahmen offline sichern und später transkribieren]] abgelöst.
+
 ## Ziel
 
 Der Benutzer kann im Browser eine Mikrofonaufnahme starten und stoppen. Nach dem Stoppen wird die abgeschlossene Aufnahme serverseitig in Text umgewandelt und der erkannte Text angezeigt.

@@ -1,69 +1,15 @@
 <!doctype html>
 <html lang="de-CH">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#171a1f">
+  <meta name="description" content="PlauderBox – Sprache wird zu Projektdokumentation.">
   <title>PlauderBox – Aufnahme zu Text</title>
-  <meta name="description" content="Lokaler PlauderBox-Prototyp für Sprache-zu-Text.">
-  <link rel="stylesheet" href="styles.css">
+  <script type="module" crossorigin src="/assets/index-D7eC4CGX.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-BxkybBZJ.css">
 </head>
 <body>
-  <main class="shell">
-    <header class="topbar">
-      <a class="brand" href="/" aria-label="PlauderBox Startseite">
-        <span class="brand__mark" aria-hidden="true"><i></i><i></i><i></i></span>
-        <span>PlauderBox</span>
-      </a>
-      <span class="prototype-badge">Lokaler Prototyp</span>
-    </header>
-
-    <section class="recorder" aria-labelledby="title">
-      <p class="eyebrow">Sprache zu Text</p>
-      <h1 id="title">Sag es einfach.</h1>
-      <p class="intro">PlauderBox hört zu und gibt dir das Gesprochene als Text zurück.</p>
-
-      <div class="recording-stage" id="recordingStage">
-        <canvas id="visualizer" width="520" height="180" aria-hidden="true"></canvas>
-        <button class="record-button" id="recordButton" type="button" aria-label="Aufnahme starten">
-          <span class="record-button__icon" aria-hidden="true"></span>
-          <span id="recordButtonText">Aufnahme starten</span>
-        </button>
-        <div class="recording-meta" aria-live="polite">
-          <span class="status-dot" id="statusDot"></span>
-          <span id="statusText">Bereit</span>
-          <time id="timer">00:00</time>
-        </div>
-      </div>
-
-      <div class="processing" id="processing" hidden role="status">
-        <span class="spinner" aria-hidden="true"></span>
-        <div><strong>Gesprochenes wird erkannt</strong><small>Die Aufnahme wird sicher an OpenAI übertragen.</small></div>
-      </div>
-
-      <section class="result" id="result" hidden aria-labelledby="resultTitle">
-        <div class="result__head">
-          <p class="eyebrow">Erkannter Text</p>
-          <span id="modelLabel"></span>
-        </div>
-        <h2 id="resultTitle" class="sr-only">Erkannter Text</h2>
-        <p id="transcript"></p>
-      </section>
-
-      <div class="message" id="message" hidden role="alert"></div>
-
-      <p class="privacy-note">
-        <span aria-hidden="true">◈</span>
-        Die Aufnahme wird erst nach dem Stoppen an OpenAI gesendet. PlauderBox speichert Audio und Text nicht dauerhaft.
-      </p>
-    </section>
-
-    <footer>
-      <span>Ein Knopf. Eine Aufnahme. Dein Text.</span>
-      <span id="connectionState">KI-Anbindung wird geprüft …</span>
-    </footer>
-  </main>
-  <script src="app.js"></script>
+  <div id="app"></div>
 </body>
 </html>
-

@@ -3,6 +3,7 @@
 .local
 **/bin
 **/obj
+**/node_modules
 **/*.user
 **/*.suo
 deploy/**/secrets

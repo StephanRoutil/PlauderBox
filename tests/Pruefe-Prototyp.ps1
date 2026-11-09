@@ -1,15 +1,18 @@
 $ErrorActionPreference = 'Stop'
 $projektordner = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
+$clientordner = Join-Path $projektordner 'src\PlauderBox.UI.Client'
+
+pnpm --dir $clientordner run typecheck
+if ($LASTEXITCODE -ne 0) { throw "PlauderBox-TypeScript-Prüfung fehlgeschlagen (Exitcode $LASTEXITCODE)." }
+pnpm --dir $clientordner run test
+if ($LASTEXITCODE -ne 0) { throw "PlauderBox-Frontendtests fehlgeschlagen (Exitcode $LASTEXITCODE)." }
+pnpm --dir $clientordner run build
+if ($LASTEXITCODE -ne 0) { throw "PlauderBox-Frontendbuild fehlgeschlagen (Exitcode $LASTEXITCODE)." }
 
 dotnet build (Join-Path $projektordner 'src\PlauderBox.sln') -c Release
 if ($LASTEXITCODE -ne 0) { throw "PlauderBox-Build fehlgeschlagen (Exitcode $LASTEXITCODE)." }
-node --check (Join-Path $projektordner 'src\wwwroot\app.js')
-if ($LASTEXITCODE -ne 0) { throw "JavaScript-Syntaxprüfung fehlgeschlagen (Exitcode $LASTEXITCODE)." }
 
 $html = Get-Content -Raw -LiteralPath (Join-Path $projektordner 'src\wwwroot\index.html')
-$javascript = Get-Content -Raw -LiteralPath (Join-Path $projektordner 'src\wwwroot\app.js')
-$ids = [regex]::Matches($javascript, "getElementById\('([^']+)'\)") | ForEach-Object { $_.Groups[1].Value } | Sort-Object -Unique
-$fehlend = @($ids | Where-Object { $html -notmatch ('id="' + [regex]::Escape($_) + '"') })
-if ($fehlend.Count -gt 0) { throw "Fehlende HTML-IDs: $($fehlend -join ', ')" }
+if ($html -notmatch '<div id="app"></div>') { throw 'Vue-Einstiegspunkt fehlt im Produktionsbuild.' }
 
-Write-Host "PlauderBox-Prüfung bestanden: Build, JavaScript und $($ids.Count) DOM-Verweise." -ForegroundColor Green
+Write-Host 'PlauderBox-Prüfung bestanden: TypeScript, IndexedDB-Tests, Vue-Build und .NET-Solution.' -ForegroundColor Green

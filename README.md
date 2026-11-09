@@ -1,6 +1,6 @@
 # PlauderBox
 
-Lokaler Browserprototyp für einen einzigen Ablauf: aufnehmen, an OpenAI zur Transkription senden und den erkannten Text anzeigen.
+Browserprototyp für einen kontrollierten Ablauf: aufnehmen, intern als `Noch nicht übertragen` speichern, bewusst an OpenAI zur Transkription senden und den erkannten Text anzeigen.
 
 ## Start
 
@@ -26,12 +26,13 @@ Der lokale Starter verwendet den bereits vorhandenen PaperTrap-Schlüsseldateipf
 
 ## Datenfluss
 
-1. Der Browser hält die Aufnahme bis zum Stoppen im Arbeitsspeicher.
-2. Nach dem Stoppen sendet er die Audiodatei an den lokalen PlauderBox-Server.
-3. Der Server überträgt sie an OpenAI `/v1/audio/transcriptions` mit `gpt-transcribe`.
-4. Nur der erkannte Text wird an den Browser zurückgegeben.
+1. Nach dem Stoppen speichert der Browser genau eine Aufnahme im internen app-eigenen IndexedDB-Speicher.
+2. Die Aufnahme bleibt als `Noch nicht übertragen` erhalten, auch wenn die Seite neu geladen wird.
+3. Erst nach `Jetzt übertragen` sendet der Browser die Audiodatei an den PlauderBox-Server.
+4. Der Server überträgt sie an OpenAI `/v1/audio/transcriptions` mit `gpt-transcribe`.
+5. Nach bestätigter Transkription löscht der Browser die lokale Aufnahme und zeigt den erkannten Text.
 
-PlauderBox speichert weder Aufnahme noch Transkript dauerhaft. Für die Verarbeitung durch OpenAI gelten die Bedingungen und Datenschutzregeln des konfigurierten API-Kontos.
+PlauderBox speichert die noch nicht übertragene Aufnahme intern im Browser. Sie erscheint nicht in Downloads, Galerie, SD-Karte oder Cloud. Für die Verarbeitung durch OpenAI gelten die Bedingungen und Datenschutzregeln des konfigurierten API-Kontos.
 
 ## Grenzen
 
@@ -51,7 +52,10 @@ PlauderBox speichert weder Aufnahme noch Transkript dauerhaft. Für die Verarbei
 - `docs/D002 - Coding Guidelines für PlauderBox.md`
 - `docs/D003 - Qualitätsanforderungen und Prüfablauf für PlauderBox.md`
 - `docs/D004 - Testbereitstellung auf Delphi01 vorbereiten.md`
+- `docs/D005 - Anforderungen an die intern gespeicherte Einzelaufnahme.md`
 - `docs/LD001 - Lokaler Aufnahmeprototyp mit OpenAI-Transkription.md`
 - `docs/LD002 - PlauderBox Testumgebung Delphi01.md`
+- `docs/LD003 - Vue Oberfläche mit intern gespeicherter Einzelaufnahme.md`
+- `docs/T002 - Einzelne Aufnahme intern speichern und nach Bestätigung löschen.md`
 - `docs/T001 - Mikrofonaufnahme im Browser transkribieren.md`
 

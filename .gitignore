@@ -3,6 +3,9 @@ obj/
 .local/
 appsettings.Local.json
 deploy/**/secrets/
+src/PlauderBox.UI.Client/node_modules/
 *.user
 *.suo
+**/.vs/
+*.tsbuildinfo
 

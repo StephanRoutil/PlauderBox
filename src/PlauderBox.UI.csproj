@@ -11,10 +11,13 @@
     <Compile Remove="PlauderBox.Logik\**\*.cs" />
     <Content Remove="PlauderBox.Datenmanagement\**\*" />
     <Content Remove="PlauderBox.Logik\**\*" />
+    <Content Remove="PlauderBox.UI.Client\**\*" />
     <EmbeddedResource Remove="PlauderBox.Datenmanagement\**\*" />
     <EmbeddedResource Remove="PlauderBox.Logik\**\*" />
+    <EmbeddedResource Remove="PlauderBox.UI.Client\**\*" />
     <None Remove="PlauderBox.Datenmanagement\**\*" />
     <None Remove="PlauderBox.Logik\**\*" />
+    <None Remove="PlauderBox.UI.Client\**\*" />
   </ItemGroup>
 
   <ItemGroup>

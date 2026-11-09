@@ -7,6 +7,8 @@ datum: 2026-11-09
 
 # LD001 – Lokaler Aufnahmeprototyp mit OpenAI-Transkription
 
+> Historischer Stand des ersten Funktionsnachweises. Der aktuelle Oberflächen- und Speicherstand ist in [[LD003 - Vue Oberfläche mit intern gespeicherter Einzelaufnahme]] dokumentiert.
+
 ## Gültiger Stand
 
 PlauderBox stellt lokal einen einzigen Ablauf bereit: Der Benutzer startet und stoppt im Browser eine Mikrofonaufnahme. Erst nach dem Stoppen sendet der Browser die abgeschlossene Aufnahme an den lokalen Server. Dieser ruft OpenAI serverseitig auf und gibt ausschliesslich den erkannten Text an den Browser zurück.
