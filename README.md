@@ -52,5 +52,6 @@ PlauderBox speichert weder Aufnahme noch Transkript dauerhaft. Für die Verarbei
 - `docs/D003 - Qualitätsanforderungen und Prüfablauf für PlauderBox.md`
 - `docs/D004 - Testbereitstellung auf Delphi01 vorbereiten.md`
 - `docs/LD001 - Lokaler Aufnahmeprototyp mit OpenAI-Transkription.md`
+- `docs/LD002 - PlauderBox Testumgebung Delphi01.md`
 - `docs/T001 - Mikrofonaufnahme im Browser transkribieren.md`
 
