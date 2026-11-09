@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>PlauderBox.UI</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="PlauderBox.Datenmanagement\**\*.cs" />
+    <Compile Remove="PlauderBox.Logik\**\*.cs" />
+    <Content Remove="PlauderBox.Datenmanagement\**\*" />
+    <Content Remove="PlauderBox.Logik\**\*" />
+    <EmbeddedResource Remove="PlauderBox.Datenmanagement\**\*" />
+    <EmbeddedResource Remove="PlauderBox.Logik\**\*" />
+    <None Remove="PlauderBox.Datenmanagement\**\*" />
+    <None Remove="PlauderBox.Logik\**\*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="PlauderBox.Logik\PlauderBox.Logik.csproj" />
+    <ProjectReference Include="PlauderBox.Datenmanagement\PlauderBox.Datenmanagement.csproj" />
+  </ItemGroup>
+</Project>

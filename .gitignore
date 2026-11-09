@@ -1,0 +1,8 @@
+bin/
+obj/
+.local/
+appsettings.Local.json
+deploy/**/secrets/
+*.user
+*.suo
+

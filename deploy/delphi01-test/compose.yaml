@@ -1,0 +1,21 @@
+services:
+  app:
+    image: plauderbox:delphi01-test-20261109
+    network_mode: host
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp:size=128m,mode=1777
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      PlauderBox__Url: http://127.0.0.1:5187
+      PlauderBox__KI__Schluesseldatei: /run/secrets/openai.json
+    volumes:
+      - ./secrets/openai.json:/run/secrets/openai.json:ro
+    mem_limit: 512m
+    cpus: 1.0
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"

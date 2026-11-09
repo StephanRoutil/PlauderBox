@@ -1,0 +1,9 @@
+.git
+.codex
+.local
+**/bin
+**/obj
+**/*.user
+**/*.suo
+deploy/**/secrets
+appsettings.Local.json
