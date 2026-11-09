@@ -1,10 +1,17 @@
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import {
   ladeInterneAufnahme,
+  ladeLokalesBild,
   loescheInterneAufnahme,
+  loescheLokalesBild,
   speichereEinzelneAufnahme,
+  speichereLokalesBild,
+  speichereLokalenProtokollpunkt,
+  ladeLokalenProtokollpunkt,
   type InterneAufnahme,
+  type LokalerProtokollpunkt,
+  type LokalesProtokollpunktbild,
 } from '@/services/internerAufnahmespeicher'
 
 interface ServerStatus {
@@ -31,6 +38,11 @@ const transkript = ref('')
 const modell = ref('')
 const verbindungsstatus = ref('KI-Anbindung wird geprüft …')
 const kiBereit = ref(false)
+const formularGeladen = ref(false)
+const formularSpeicherstatus = ref('Nur lokal · noch nicht an HappyHour übertragen')
+const lokalesBild = ref<LokalesProtokollpunktbild | null>(null)
+const bildVorschauUrl = ref('')
+const protokollpunkt = reactive<LokalerProtokollpunkt>(erstelleLeerenProtokollpunkt())
 
 let mediaRecorder: MediaRecorder | null = null
 let mediaStream: MediaStream | null = null
@@ -40,6 +52,33 @@ let animationFrame = 0
 let timerIntervall = 0
 let aufgenommenSeit = 0
 let audioTeile: Blob[] = []
+let formularSpeicherTimer = 0
+
+function heutigesDatum(): string {
+  const heute = new Date()
+  const offset = heute.getTimezoneOffset() * 60_000
+  return new Date(heute.getTime() - offset).toISOString().slice(0, 10)
+}
+
+function erstelleLeerenProtokollpunkt(): LokalerProtokollpunkt {
+  return {
+    intProtokollpunktID: 0,
+    intProtokollFKID: 0,
+    intProtokollpunktArtFKID: 0,
+    datProtokollpunkt: heutigesDatum(),
+    blnNachverfolgen: false,
+    intProjektAnsprechpartnerFKID: null,
+    datFrist: null,
+    blnErledigt: true,
+    strRechtsverweis: '',
+    strGruppe: '',
+    intReihenfolge: 0,
+    strProtokollpunkt: '',
+    txtProtokollpunkt: '',
+    GUID: crypto.randomUUID(),
+    aktualisiertAm: new Date().toISOString(),
+  }
+}
 
 const aufnahmeKnopfText = computed(() => aufnahmeLaeuft.value ? 'Aufnahme stoppen' : 'Aufnahme starten')
 const zeitText = computed(() => formatiereDauer(verstricheneSekunden.value))
@@ -57,6 +96,89 @@ function formatiereGroesse(bytes: number): string {
 
 function formatiereZeitpunkt(isoZeit: string): string {
   return new Intl.DateTimeFormat('de-CH', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(isoZeit))
+}
+
+function setzeAnsprechpartnerId(ereignis: Event): void {
+  const wert = (ereignis.target as HTMLInputElement).value
+  protokollpunkt.intProjektAnsprechpartnerFKID = wert ? Number.parseInt(wert, 10) : null
+}
+
+function setzeFrist(ereignis: Event): void {
+  protokollpunkt.datFrist = (ereignis.target as HTMLInputElement).value || null
+}
+
+function aktualisiereNachverfolgung(): void {
+  if (protokollpunkt.blnNachverfolgen) {
+    protokollpunkt.blnErledigt = false
+    if (!protokollpunkt.datFrist) {
+      const frist = new Date()
+      frist.setDate(frist.getDate() + 14)
+      protokollpunkt.datFrist = frist.toISOString().slice(0, 10)
+    }
+  } else {
+    protokollpunkt.blnErledigt = true
+    protokollpunkt.datFrist = null
+  }
+}
+
+async function speichereFormular(): Promise<void> {
+  formularSpeicherstatus.value = 'Wird intern gespeichert …'
+  const zuSpeichern: LokalerProtokollpunkt = {
+    ...protokollpunkt,
+    aktualisiertAm: new Date().toISOString(),
+  }
+  await speichereLokalenProtokollpunkt(zuSpeichern)
+  formularSpeicherstatus.value = 'Lokal gespeichert · nicht an HappyHour übertragen'
+}
+
+function planeFormularspeicherung(): void {
+  if (!formularGeladen.value) return
+  window.clearTimeout(formularSpeicherTimer)
+  formularSpeicherstatus.value = 'Lokale Änderung …'
+  formularSpeicherTimer = window.setTimeout(() => {
+    void speichereFormular().catch(() => {
+      formularSpeicherstatus.value = 'Lokale Speicherung fehlgeschlagen'
+    })
+  }, 250)
+}
+
+function setzeBildVorschau(bild: LokalesProtokollpunktbild | null): void {
+  if (bildVorschauUrl.value) URL.revokeObjectURL(bildVorschauUrl.value)
+  bildVorschauUrl.value = bild ? URL.createObjectURL(bild.bild) : ''
+}
+
+async function waehleBild(ereignis: Event): Promise<void> {
+  const eingabe = ereignis.target as HTMLInputElement
+  const datei = eingabe.files?.[0]
+  eingabe.value = ''
+  if (!datei) return
+  if (!datei.type.startsWith('image/')) {
+    meldung.value = 'Es können nur Bilddateien lokal angefügt werden.'
+    return
+  }
+  if (datei.size > 15 * 1024 * 1024) {
+    meldung.value = 'Das Bild überschreitet die lokale Grenze von 15 MB.'
+    return
+  }
+
+  const bild: LokalesProtokollpunktbild = {
+    dateiname: datei.name,
+    medientyp: datei.type,
+    groesse: datei.size,
+    erstelltAm: new Date().toISOString(),
+    bild: datei,
+  }
+  await speichereLokalesBild(bild)
+  lokalesBild.value = bild
+  setzeBildVorschau(bild)
+  meldung.value = ''
+}
+
+async function verwerfeBild(): Promise<void> {
+  if (!lokalesBild.value || !window.confirm('Bild wirklich aus dem internen App-Speicher löschen?')) return
+  await loescheLokalesBild()
+  lokalesBild.value = null
+  setzeBildVorschau(null)
 }
 
 function unterstuetzterMedientyp(): string {
@@ -234,6 +356,10 @@ async function uebertrageAufnahme(): Promise<void> {
 
     transkript.value = inhalt.text ?? ''
     modell.value = inhalt.modell ?? ''
+    if (!protokollpunkt.txtProtokollpunkt.trim()) {
+      protokollpunkt.txtProtokollpunkt = transkript.value
+      await speichereFormular()
+    }
     await loescheInterneAufnahme(aufnahme.id)
     ausstehendeAufnahme.value = null
     statusText.value = 'Text erkannt'
@@ -280,6 +406,11 @@ onMounted(async () => {
   window.addEventListener('online', aktualisiereOnlinezustand)
   window.addEventListener('offline', aktualisiereOnlinezustand)
   try {
+    const gespeicherterProtokollpunkt = await ladeLokalenProtokollpunkt()
+    if (gespeicherterProtokollpunkt) Object.assign(protokollpunkt, gespeicherterProtokollpunkt)
+    else await speichereFormular()
+    lokalesBild.value = await ladeLokalesBild()
+    setzeBildVorschau(lokalesBild.value)
     ausstehendeAufnahme.value = await ladeInterneAufnahme()
     if (ausstehendeAufnahme.value) {
       statusText.value = 'Noch nicht übertragen'
@@ -288,6 +419,7 @@ onMounted(async () => {
   } catch {
     meldung.value = 'Der interne App-Speicher ist in diesem Browser nicht verfügbar.'
   }
+  formularGeladen.value = true
   await ladeServerstatus()
   zeichneRuhezustand()
 })
@@ -296,7 +428,11 @@ onBeforeUnmount(() => {
   window.removeEventListener('online', aktualisiereOnlinezustand)
   window.removeEventListener('offline', aktualisiereOnlinezustand)
   schliesseMedien()
+  window.clearTimeout(formularSpeicherTimer)
+  if (bildVorschauUrl.value) URL.revokeObjectURL(bildVorschauUrl.value)
 })
+
+watch(protokollpunkt, planeFormularspeicherung, { deep: true })
 </script>
 
 <template>
@@ -306,13 +442,107 @@ onBeforeUnmount(() => {
         <span class="brand__mark" aria-hidden="true"><i></i><i></i><i></i></span>
         <span>PlauderBox</span>
       </a>
-      <span class="prototype-badge">Ausbaustufe 1</span>
+      <span class="prototype-badge">Lokaler Protokollpunkt</span>
     </header>
 
     <section class="recorder" aria-labelledby="titel">
       <p class="eyebrow">Sprache zu Text</p>
       <h1 id="titel">Sag es einfach.</h1>
-      <p class="intro">Die Aufnahme bleibt zuerst im internen App-Speicher. Du entscheidest, wann sie übertragen wird.</p>
+      <p class="intro">Felder, Bild und Aufnahme bleiben im internen App-Speicher. An HappyHour wird nichts übertragen.</p>
+
+      <section class="protocol-form" aria-labelledby="protocol-title">
+        <div class="protocol-form__head">
+          <div>
+            <p class="eyebrow">Lokaler Entwurf</p>
+            <h2 id="protocol-title">Protokollpunkt</h2>
+          </div>
+          <span class="local-only">Keine HappyHour-Übertragung</span>
+        </div>
+
+        <div class="form-grid">
+          <label>
+            <span>Protokoll-ID <small>intProtokollFKID</small></span>
+            <input v-model.number="protokollpunkt.intProtokollFKID" type="number" min="0">
+          </label>
+          <label>
+            <span>Protokollpunktart-ID <small>intProtokollpunktArtFKID</small></span>
+            <input v-model.number="protokollpunkt.intProtokollpunktArtFKID" type="number" min="0">
+          </label>
+          <label>
+            <span>Datum <small>datProtokollpunkt</small></span>
+            <input v-model="protokollpunkt.datProtokollpunkt" type="date">
+          </label>
+          <label>
+            <span>Gruppe <small>strGruppe</small></span>
+            <input v-model.trim="protokollpunkt.strGruppe" type="text" maxlength="250" placeholder="z. B. Brandschutz">
+          </label>
+          <label class="form-grid__wide">
+            <span>Protokollpunkt <small>strProtokollpunkt</small></span>
+            <input v-model.trim="protokollpunkt.strProtokollpunkt" type="text" maxlength="250" placeholder="Kurzer Titel des Punkts">
+          </label>
+          <label>
+            <span>Verantwortlicher <small>intProjektAnsprechpartnerFKID</small></span>
+            <input
+              :value="protokollpunkt.intProjektAnsprechpartnerFKID ?? ''"
+              type="number"
+              min="0"
+              placeholder="lokale ID"
+              @input="setzeAnsprechpartnerId"
+            >
+          </label>
+          <label>
+            <span>Rechtsverweis <small>strRechtsverweis</small></span>
+            <input v-model.trim="protokollpunkt.strRechtsverweis" type="text" maxlength="250" placeholder="optional">
+          </label>
+          <label class="checkbox-field">
+            <input v-model="protokollpunkt.blnNachverfolgen" type="checkbox" @change="aktualisiereNachverfolgung">
+            <span>Nachverfolgen <small>blnNachverfolgen</small></span>
+          </label>
+          <label v-if="protokollpunkt.blnNachverfolgen">
+            <span>Frist <small>datFrist</small></span>
+            <input :value="protokollpunkt.datFrist ?? ''" type="date" @input="setzeFrist">
+          </label>
+          <label v-if="protokollpunkt.blnNachverfolgen" class="checkbox-field">
+            <input v-model="protokollpunkt.blnErledigt" type="checkbox">
+            <span>Erledigt <small>blnErledigt</small></span>
+          </label>
+          <label class="form-grid__wide">
+            <span>Inhalt <small>txtProtokollpunkt</small></span>
+            <textarea v-model="protokollpunkt.txtProtokollpunkt" rows="6" placeholder="Der erkannte Text wird hier lokal eingesetzt, solange das Feld leer ist."></textarea>
+          </label>
+        </div>
+
+        <section class="local-image" aria-labelledby="image-title">
+          <div class="local-image__head">
+            <div>
+              <h3 id="image-title">Bild</h3>
+              <p>Genau ein Bild, nur im internen App-Speicher.</p>
+            </div>
+            <label class="image-action">
+              {{ lokalesBild ? 'Bild ersetzen' : 'Bild aufnehmen oder wählen' }}
+              <input type="file" accept="image/*" capture="environment" @change="waehleBild">
+            </label>
+          </div>
+          <div v-if="lokalesBild" class="local-image__preview">
+            <img :src="bildVorschauUrl" alt="Lokal gespeichertes Bild des Protokollpunkts">
+            <div>
+              <strong>{{ lokalesBild.dateiname }}</strong>
+              <span>{{ formatiereGroesse(lokalesBild.groesse) }} · lokal gespeichert</span>
+              <button class="text-action" type="button" @click="verwerfeBild">Bild löschen</button>
+            </div>
+          </div>
+        </section>
+
+        <details class="technical-fields">
+          <summary>Technische lokale Felder</summary>
+          <dl>
+            <div><dt>intProtokollpunktID</dt><dd>{{ protokollpunkt.intProtokollpunktID }}</dd></div>
+            <div><dt>intReihenfolge</dt><dd>{{ protokollpunkt.intReihenfolge }}</dd></div>
+            <div><dt>GUID</dt><dd>{{ protokollpunkt.GUID }}</dd></div>
+          </dl>
+        </details>
+        <p class="save-state" aria-live="polite">{{ formularSpeicherstatus }}</p>
+      </section>
 
       <div class="recording-stage" :class="{ 'is-recording': aufnahmeLaeuft }">
         <canvas ref="visualizer" width="520" height="180" aria-hidden="true"></canvas>

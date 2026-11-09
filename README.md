@@ -1,6 +1,6 @@
 # PlauderBox
 
-Browserprototyp für einen kontrollierten Ablauf: aufnehmen, intern als `Noch nicht übertragen` speichern, bewusst an OpenAI zur Transkription senden und den erkannten Text anzeigen.
+Browserprototyp für einen kontrollierten Ablauf: einen Protokollpunkt mit Bild lokal erfassen, eine Aufnahme intern als `Noch nicht übertragen` speichern, bewusst an OpenAI zur Transkription senden und den erkannten Text lokal einsetzen.
 
 ## Start
 
@@ -20,25 +20,25 @@ Für Visual Studio die Solution `src/PlauderBox.sln` öffnen. `PlauderBox.sln` u
 - `PlauderBox.Logik`: Fachregeln, Anwendungsabläufe und providerunabhängige Verträge,
 - `PlauderBox.Datenmanagement`: PostgreSQL, Dateispeicher und externe Schnittstellen.
 
-Der aktuelle HTML-/JavaScript-Aufnahmeprototyp bleibt bis zur ausdrücklich beauftragten Vue-Migration im UI-Projekt erhalten.
-
 Der lokale Starter verwendet den bereits vorhandenen PaperTrap-Schlüsseldateipfad, sofern weder `PlauderBox__KI__ApiKey` noch `PlauderBox__KI__Schluesseldatei` gesetzt sind. Der Schlüssel wird nicht kopiert und nicht an den Browser ausgegeben.
 
 ## Datenfluss
 
-1. Nach dem Stoppen speichert der Browser genau eine Aufnahme im internen app-eigenen IndexedDB-Speicher.
-2. Die Aufnahme bleibt als `Noch nicht übertragen` erhalten, auch wenn die Seite neu geladen wird.
-3. Erst nach `Jetzt übertragen` sendet der Browser die Audiodatei an den PlauderBox-Server.
-4. Der Server überträgt sie an OpenAI `/v1/audio/transcriptions` mit `gpt-transcribe`.
-5. Nach bestätigter Transkription löscht der Browser die lokale Aufnahme und zeigt den erkannten Text.
+1. Der Browser speichert genau einen Protokollpunkt und ein Bild in getrennten app-eigenen IndexedDB-Speichern.
+2. Nach dem Stoppen speichert er zusätzlich genau eine Aufnahme mit dem Status `Noch nicht übertragen`.
+3. Formular, Bild und Aufnahme bleiben beim Neuladen erhalten.
+4. Erst nach `Jetzt übertragen` sendet der Browser ausschliesslich die Audiodatei an den PlauderBox-Server.
+5. Der Server überträgt sie an OpenAI `/v1/audio/transcriptions` mit `gpt-transcribe`.
+6. Nach bestätigter Transkription löscht der Browser nur die lokale Aufnahme und setzt den Text in ein noch leeres Inhaltsfeld ein.
 
-PlauderBox speichert die noch nicht übertragene Aufnahme intern im Browser. Sie erscheint nicht in Downloads, Galerie, SD-Karte oder Cloud. Für die Verarbeitung durch OpenAI gelten die Bedingungen und Datenschutzregeln des konfigurierten API-Kontos.
+PlauderBox speichert Protokollpunkt, Bild und die noch nicht übertragene Aufnahme intern im Browser. Diese Daten erscheinen nicht in Downloads, Galerie, SD-Karte oder Cloud. Formular und Bild werden weder an HappyHour noch an den PlauderBox-Server übertragen. Für die Verarbeitung der bewusst übertragenen Audioaufnahme durch OpenAI gelten die Bedingungen und Datenschutzregeln des konfigurierten API-Kontos.
 
 ## Grenzen
 
 - Nur lokaler Loopback-Betrieb, keine Benutzeranmeldung.
 - Maximal 20 MB Audio je Aufnahme.
-- Keine Projekte, Fotos, Protokollstrukturierung oder HappyHour-Anbindung.
+- Genau ein lokaler Protokollpunkt, ein Bild und eine ausstehende Audioaufnahme.
+- Keine HappyHour-Anbindung und keine Referenzdaten-Auswahllisten.
 - Keine produktive oder öffentliche Bereitstellung.
 
 ## Dokumentation
@@ -53,9 +53,12 @@ PlauderBox speichert die noch nicht übertragene Aufnahme intern im Browser. Sie
 - `docs/D003 - Qualitätsanforderungen und Prüfablauf für PlauderBox.md`
 - `docs/D004 - Testbereitstellung auf Delphi01 vorbereiten.md`
 - `docs/D005 - Anforderungen an die intern gespeicherte Einzelaufnahme.md`
+- `docs/D006 - Lokalen Protokollpunkt mit Bild erfassen.md`
 - `docs/LD001 - Lokaler Aufnahmeprototyp mit OpenAI-Transkription.md`
 - `docs/LD002 - PlauderBox Testumgebung Delphi01.md`
 - `docs/LD003 - Vue Oberfläche mit intern gespeicherter Einzelaufnahme.md`
+- `docs/LD004 - Lokaler Protokollpunktentwurf mit Bild.md`
 - `docs/T002 - Einzelne Aufnahme intern speichern und nach Bestätigung löschen.md`
 - `docs/T001 - Mikrofonaufnahme im Browser transkribieren.md`
+- `docs/T003 - Protokollpunktfelder und Bild lokal speichern.md`
 

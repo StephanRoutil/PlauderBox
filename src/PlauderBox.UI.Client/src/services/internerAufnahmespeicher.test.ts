@@ -2,9 +2,16 @@ import { IDBFactory } from 'fake-indexeddb'
 import { beforeEach, describe, expect, it } from 'vitest'
 import {
   ladeInterneAufnahme,
+  ladeLokalesBild,
+  ladeLokalenProtokollpunkt,
   loescheInterneAufnahme,
+  loescheLokalesBild,
   speichereEinzelneAufnahme,
+  speichereLokalesBild,
+  speichereLokalenProtokollpunkt,
   type InterneAufnahme,
+  type LokalerProtokollpunkt,
+  type LokalesProtokollpunktbild,
 } from './internerAufnahmespeicher'
 
 function erstelleAufnahme(id: string, text: string): InterneAufnahme {
@@ -56,5 +63,50 @@ describe('interner Aufnahmespeicher', () => {
     await loescheInterneAufnahme('aufnahme-1')
 
     await expect(ladeInterneAufnahme()).resolves.toBeNull()
+  })
+
+  it('speichert die tblProtokollpunkt-Felder getrennt von der Audioaufnahme', async () => {
+    const protokollpunkt: LokalerProtokollpunkt = {
+      intProtokollpunktID: 0,
+      intProtokollFKID: 799,
+      intProtokollpunktArtFKID: 1,
+      datProtokollpunkt: '2026-11-09',
+      blnNachverfolgen: true,
+      intProjektAnsprechpartnerFKID: 42,
+      datFrist: '2026-11-23',
+      blnErledigt: false,
+      strRechtsverweis: 'VKF 12-15',
+      strGruppe: 'Brandschutz',
+      intReihenfolge: 0,
+      strProtokollpunkt: 'Gefahrstoffraum',
+      txtProtokollpunkt: 'Lokaler Entwurf',
+      GUID: '00000000-0000-4000-8000-000000000001',
+      aktualisiertAm: '2026-11-09T20:00:00.000Z',
+    }
+
+    await speichereLokalenProtokollpunkt(protokollpunkt)
+    await speichereEinzelneAufnahme(erstelleAufnahme('aufnahme-1', 'audio'))
+    await loescheInterneAufnahme('aufnahme-1')
+
+    await expect(ladeLokalenProtokollpunkt()).resolves.toEqual(protokollpunkt)
+  })
+
+  it('speichert und löscht genau ein lokales Protokollpunktbild', async () => {
+    const bild: LokalesProtokollpunktbild = {
+      dateiname: 'mangel.jpg',
+      medientyp: 'image/jpeg',
+      groesse: 4,
+      erstelltAm: '2026-11-09T20:00:00.000Z',
+      bild: new Blob(['bild'], { type: 'image/jpeg' }),
+    }
+
+    await speichereLokalesBild(bild)
+    const geladen = await ladeLokalesBild()
+
+    expect(geladen?.dateiname).toBe('mangel.jpg')
+    expect(await geladen?.bild.text()).toBe('bild')
+
+    await loescheLokalesBild()
+    await expect(ladeLokalesBild()).resolves.toBeNull()
   })
 })
