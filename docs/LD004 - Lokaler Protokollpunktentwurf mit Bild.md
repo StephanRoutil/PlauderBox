@@ -1,7 +1,7 @@
 ---
 typ: loesungsdokumentation
 id: LD004
-status: lokal-geprueft
+status: testbereit-delphi01
 datum: 2026-11-09
 ---
 
@@ -24,7 +24,7 @@ Die vorhandene Audiofunktion bleibt getrennt: Nur die Aufnahme wird nach bewusst
 | Statische Produktionsausgabe | `src/wwwroot/` | durch Vite erzeugt |
 | Gesamtprüfung | `tests/Pruefe-Prototyp.ps1` | lokal bestanden |
 
-Branch und Commit werden nach der Veröffentlichung ergänzt. Der manuelle Test auf Delphi01 und Android bleibt gemäss T003 offen.
+Branch: `main`, Commit `f30fac1`. Das daraus auf Delphi01 gebaute Image `plauderbox:delphi01-test-20261109` besitzt die Image-ID `sha256:20d3f2b1d246…`. HTTPS-Einstieg, neues Frontend-Asset, KI-Status und laufender Container wurden erfolgreich geprüft. Der manuelle Formular- und Bildtest auf Android bleibt gemäss T003 offen.
 
 ## Speichergrenzen
 
