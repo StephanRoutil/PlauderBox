@@ -15,7 +15,7 @@ PlauderBox soll auch bei Rundgängen in Kellern und anderen Bereichen ohne Mobil
 
 1. PlauderBox muss im Offlinebetrieb keinen Text erzeugen.
 2. Vor Beginn werden die App und der benötigte Protokollkontext bei bestehender Verbindung auf das Gerät geladen.
-3. Aufnahme und zugehörige Metadaten werden ohne Verbindung dauerhaft lokal vorgemerkt und eindeutig als `Noch nicht übertragen` angezeigt.
+3. Aufnahme, Fotos und zugehörige Metadaten werden ohne Verbindung im internen, app-eigenen Speicher des Mobilgeräts dauerhaft vorgemerkt und eindeutig als `Noch nicht übertragen` angezeigt. Sie werden nicht in Downloads, Galerie, SD-Karte oder eine Cloudablage geschrieben.
 4. Jede lokale Erfassung erhält eine stabile Kennung. Wiederholte Übertragungsversuche dürfen keine Duplikate erzeugen.
 5. Sobald PlauderBox wieder eine Verbindung erkennt, startet sie die Übertragung und Transkription automatisch. Beim erneuten Öffnen der App werden ausstehende Übertragungen ebenfalls fortgesetzt.
 6. Eine manuelle Wiederholung bleibt verfügbar, falls die automatische Übertragung fehlschlägt oder vom Betriebssystem im Hintergrund nicht ausgeführt wurde.
@@ -32,6 +32,7 @@ PlauderBox soll auch bei Rundgängen in Kellern und anderen Bereichen ohne Mobil
 ## Folgen
 
 - Die mobile Anwendung benötigt eine offlinefähige App-Hülle und dauerhafte lokale Speicherung.
+- Der lokale Speicher liegt in der durch Browser beziehungsweise installierte PWA verwalteten Sandbox. Die konkrete Umsetzung darf IndexedDB und/oder Origin Private File System verwenden, aber keinen gemeinsam sichtbaren Medien- oder Downloadordner.
 - Übertragungszustand, Fehler und ausstehende Elemente müssen verständlich sichtbar sein.
 - Die Synchronisierung benötigt stabile Kennungen und serverseitigen Duplikatschutz.
 - Benutzer dürfen die App-Daten nicht löschen, solange noch nicht übertragene Aufnahmen bestehen; PlauderBox muss davor sichtbar warnen.
