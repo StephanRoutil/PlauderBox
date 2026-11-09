@@ -22,6 +22,7 @@ PlauderBox läuft als getrennte Testumgebung auf Delphi01. FileBox und der zentr
 | Anwendungslistener | `127.0.0.1:5187` auf Delphi01 |
 | Interner HTTPS-Zugriff | `https://192.168.68.8` |
 | Zertifikatsdownload | `http://192.168.68.8:8080/delphi01-root.crt` |
+| Android-Zertifikat | `http://192.168.68.8:8080/delphi01-android.cer`, DER-Format |
 | Anwendung | eigener PlauderBox-Container, unprivilegierter Benutzer |
 | HTTPS | eigener Caddy-Container mit interner CA |
 | Datenbank | keine; der aktuelle Prototyp persistiert nichts |

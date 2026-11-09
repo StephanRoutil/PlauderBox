@@ -8,10 +8,20 @@ https://192.168.68.8 {
 }
 
 http://192.168.68.8:8080 {
+    @androidzertifikat path /delphi01-android.cer
+    handle @androidzertifikat {
+        rewrite * /android-root.cer
+        root * /data
+        header Content-Type application/x-x509-ca-cert
+        header Content-Disposition "attachment; filename=delphi01-android.cer"
+        file_server
+    }
+
     @stammzertifikat path /delphi01-root.crt
     handle @stammzertifikat {
         rewrite * /caddy/pki/authorities/local/root.crt
         root * /data
+        header Content-Type application/x-x509-ca-cert
         header Content-Disposition "attachment; filename=delphi01-root.crt"
         file_server
     }

@@ -11,6 +11,7 @@ Diese Ablage ist eine vorbereitete, noch nicht veröffentlichte Testkonfiguratio
 - Anwendungslistener: ausschliesslich `127.0.0.1:5187` auf Delphi01
 - interner HTTPS-Zugriff: `https://192.168.68.8` über einen eigenen Caddy-Container
 - Zertifikatsdownload im internen Netz: ausschliesslich `http://192.168.68.8:8080/delphi01-root.crt`
+- Android-Zertifikat im DER-Format: `http://192.168.68.8:8080/delphi01-android.cer`
 - kein Internetzugang, kein öffentlicher DNS-Eintrag, keine HappyHour-Verbindung
 - noch keine PostgreSQL-Datenbank, weil der aktuelle Aufnahmeprototyp nichts persistiert
 - OpenAI-Schlüssel nur als geschützte Datei auf Delphi01, nicht in Git oder Image
@@ -31,6 +32,8 @@ Diese Ablage ist eine vorbereitete, noch nicht veröffentlichte Testkonfiguratio
 `secrets` muss dem administrierenden Benutzer gehören und Modus `700` besitzen. `openai.json` muss Modus `600` besitzen. Die Datei wird nicht aus PaperTrap kopiert; ihre Bereitstellung auf Delphi01 benötigt einen gesondert kontrollierten Schritt.
 
 Für Mikrofonzugriff vom Handy muss das durch Caddy erzeugte Stammzertifikat auf dem Testgerät installiert und als vertrauenswürdig aktiviert werden. Das Stammzertifikat ist öffentlich; der private Schlüssel bleibt ausschliesslich im geschützten Caddy-Datenverzeichnis.
+
+Unter Android wird die `.cer`-Datei über die Sicherheitseinstellungen als **CA-Zertifikat** installiert. Direktes Antippen des Downloads ist je nach Hersteller nicht ausreichend.
 
 ## Noch nicht freigegebene Schritte
 
