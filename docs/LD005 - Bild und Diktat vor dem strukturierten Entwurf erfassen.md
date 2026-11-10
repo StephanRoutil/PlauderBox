@@ -1,7 +1,7 @@
 ---
 typ: loesungsdokumentation
 id: LD005
-status: lokal-geprueft
+status: testbereit-delphi01
 datum: 2026-11-10
 ---
 
@@ -22,7 +22,7 @@ Die mobile Oberfläche zeigt bei einem neuen Punkt zuerst die Bildauswahl und di
 | OpenAI Responses API mit strengem JSON-Schema | `src/PlauderBox.Datenmanagement/OpenAiProtokollpunktStrukturierer.cs` | umgesetzt |
 | HTTP-Endpunkt und Composition Root | `src/Program.cs` | umgesetzt |
 
-Branch und Commit werden nach der Veröffentlichung ergänzt. Die echte KI-Auswertung und mobile Darstellung auf Delphi01 bleiben gemäss T004 offen.
+Branch: `main`, Commit `3161047`. Das daraus auf Delphi01 gebaute Image besitzt die Image-ID `sha256:4348801d00c0…` und läuft unter dem bestehenden internen HTTPS-Testzugang. Einstieg, neues Frontend-Asset, KI-Status mit Strukturmodell, Content-Security-Policy für lokale Bildvorschauen und Containerstart sind geprüft. Die echte Audio- und Strukturierungsauswertung auf dem Android-Gerät bleibt gemäss T004 offen.
 
 ## Grenzen
 
