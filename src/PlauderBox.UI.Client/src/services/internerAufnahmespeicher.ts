@@ -22,6 +22,7 @@ export interface LokalerProtokollpunkt {
   blnErledigt: boolean
   strRechtsverweis: string
   strGruppe: string
+  strOrt: string
   intReihenfolge: number
   strProtokollpunkt: string
   txtProtokollpunkt: string
@@ -35,6 +36,37 @@ export interface LokalesProtokollpunktbild {
   groesse: number
   erstelltAm: string
   bild: Blob
+}
+
+export interface ProtokollpunktStrukturvorschlaege {
+  gruppe?: string
+  thema?: string
+  ort?: string
+  transkript?: string
+}
+
+export function uebernehmeStrukturvorschlaege(
+  protokollpunkt: LokalerProtokollpunkt,
+  vorschlaege: ProtokollpunktStrukturvorschlaege,
+): boolean {
+  let geaendert = false
+  if (!protokollpunkt.strGruppe.trim() && vorschlaege.gruppe?.trim()) {
+    protokollpunkt.strGruppe = vorschlaege.gruppe.trim()
+    geaendert = true
+  }
+  if (!protokollpunkt.strProtokollpunkt.trim() && vorschlaege.thema?.trim()) {
+    protokollpunkt.strProtokollpunkt = vorschlaege.thema.trim()
+    geaendert = true
+  }
+  if (!protokollpunkt.strOrt.trim() && vorschlaege.ort?.trim()) {
+    protokollpunkt.strOrt = vorschlaege.ort.trim()
+    geaendert = true
+  }
+  if (!protokollpunkt.txtProtokollpunkt.trim() && vorschlaege.transkript?.trim()) {
+    protokollpunkt.txtProtokollpunkt = vorschlaege.transkript.trim()
+    geaendert = true
+  }
+  return geaendert
 }
 
 const datenbankname = 'PlauderBoxInternerSpeicher'

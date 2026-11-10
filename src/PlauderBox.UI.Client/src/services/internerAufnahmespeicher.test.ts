@@ -9,6 +9,7 @@ import {
   speichereEinzelneAufnahme,
   speichereLokalesBild,
   speichereLokalenProtokollpunkt,
+  uebernehmeStrukturvorschlaege,
   type InterneAufnahme,
   type LokalerProtokollpunkt,
   type LokalesProtokollpunktbild,
@@ -25,6 +26,27 @@ function erstelleAufnahme(id: string, text: string): InterneAufnahme {
     dauerSekunden: 4,
     status: 'noch_nicht_uebertragen',
     audio,
+  }
+}
+
+function erstelleProtokollpunkt(): LokalerProtokollpunkt {
+  return {
+    intProtokollpunktID: 0,
+    intProtokollFKID: 799,
+    intProtokollpunktArtFKID: 1,
+    datProtokollpunkt: '2026-11-10',
+    blnNachverfolgen: false,
+    intProjektAnsprechpartnerFKID: null,
+    datFrist: null,
+    blnErledigt: true,
+    strRechtsverweis: '',
+    strGruppe: '',
+    strOrt: '',
+    intReihenfolge: 0,
+    strProtokollpunkt: '',
+    txtProtokollpunkt: '',
+    GUID: '00000000-0000-4000-8000-000000000001',
+    aktualisiertAm: '2026-11-10T07:00:00.000Z',
   }
 }
 
@@ -77,6 +99,7 @@ describe('interner Aufnahmespeicher', () => {
       blnErledigt: false,
       strRechtsverweis: 'VKF 12-15',
       strGruppe: 'Brandschutz',
+      strOrt: 'Untergeschoss 2, Technikraum',
       intReihenfolge: 0,
       strProtokollpunkt: 'Gefahrstoffraum',
       txtProtokollpunkt: 'Lokaler Entwurf',
@@ -108,5 +131,43 @@ describe('interner Aufnahmespeicher', () => {
 
     await loescheLokalesBild()
     await expect(ladeLokalesBild()).resolves.toBeNull()
+  })
+
+  it('füllt erkannte Gruppe, Thema, Ort und Transkript in leere Felder', () => {
+    const protokollpunkt = erstelleProtokollpunkt()
+
+    const geaendert = uebernehmeStrukturvorschlaege(protokollpunkt, {
+      gruppe: 'Brandschutz',
+      thema: 'Fehlender Feuerlöscher',
+      ort: 'Untergeschoss 2, Technikraum',
+      transkript: 'Im Technikraum fehlt der Feuerlöscher.',
+    })
+
+    expect(geaendert).toBe(true)
+    expect(protokollpunkt.strGruppe).toBe('Brandschutz')
+    expect(protokollpunkt.strProtokollpunkt).toBe('Fehlender Feuerlöscher')
+    expect(protokollpunkt.strOrt).toBe('Untergeschoss 2, Technikraum')
+    expect(protokollpunkt.txtProtokollpunkt).toBe('Im Technikraum fehlt der Feuerlöscher.')
+  })
+
+  it('überschreibt keine bereits kontrollierten Felder', () => {
+    const protokollpunkt = erstelleProtokollpunkt()
+    protokollpunkt.strGruppe = 'Manuelle Gruppe'
+    protokollpunkt.strProtokollpunkt = 'Manuelles Thema'
+    protokollpunkt.strOrt = 'Manueller Ort'
+    protokollpunkt.txtProtokollpunkt = 'Manueller Inhalt'
+
+    const geaendert = uebernehmeStrukturvorschlaege(protokollpunkt, {
+      gruppe: 'KI-Gruppe',
+      thema: 'KI-Thema',
+      ort: 'KI-Ort',
+      transkript: 'KI-Inhalt',
+    })
+
+    expect(geaendert).toBe(false)
+    expect(protokollpunkt.strGruppe).toBe('Manuelle Gruppe')
+    expect(protokollpunkt.strProtokollpunkt).toBe('Manuelles Thema')
+    expect(protokollpunkt.strOrt).toBe('Manueller Ort')
+    expect(protokollpunkt.txtProtokollpunkt).toBe('Manueller Inhalt')
   })
 })

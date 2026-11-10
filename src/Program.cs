@@ -4,6 +4,8 @@ using System.Text.Json;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.RateLimiting;
+using PlauderBox.Datenmanagement;
+using PlauderBox.Logik;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 builder.Logging.ClearProviders();
@@ -11,6 +13,11 @@ builder.Logging.AddConsole();
 builder.WebHost.UseUrls(builder.Configuration["PlauderBox:Url"] ?? "http://127.0.0.1:5187");
 
 const long maximaleDateigroesse = 20L * 1024 * 1024;
+(string? apiKey, string? konfigurationsfehler) = LadeApiKey(builder.Configuration);
+string modell = builder.Configuration["PlauderBox:KI:Modell"] ?? "gpt-transcribe";
+string strukturmodell = builder.Configuration["PlauderBox:KI:Strukturmodell"] ?? "gpt-6-luna";
+string? erlaubterUrsprung = builder.Configuration["PlauderBox:ErlaubterUrsprung"]?.TrimEnd('/');
+
 builder.Services.Configure<FormOptions>(options =>
 {
     options.MemoryBufferThreshold = (int)maximaleDateigroesse;
@@ -21,6 +28,11 @@ builder.Services.AddHttpClient("OpenAI", client =>
     client.BaseAddress = new Uri("https://api.openai.com/v1/");
     client.Timeout = TimeSpan.FromSeconds(120);
 });
+builder.Services.AddScoped<IProtokollpunktStrukturierer>(services =>
+    new OpenAiProtokollpunktStrukturierer(
+        services.GetRequiredService<IHttpClientFactory>().CreateClient("OpenAI"),
+        apiKey ?? string.Empty,
+        strukturmodell));
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
@@ -34,10 +46,6 @@ builder.Services.AddRateLimiter(options =>
         }));
 });
 
-(string? apiKey, string? konfigurationsfehler) = LadeApiKey(builder.Configuration);
-string modell = builder.Configuration["PlauderBox:KI:Modell"] ?? "gpt-transcribe";
-string? erlaubterUrsprung = builder.Configuration["PlauderBox:ErlaubterUrsprung"]?.TrimEnd('/');
-
 WebApplication app = builder.Build();
 app.Use(async (context, next) =>
 {
@@ -50,7 +58,7 @@ app.Use(async (context, next) =>
     context.Response.Headers["Cache-Control"] = "no-store";
     context.Response.Headers["X-Content-Type-Options"] = "nosniff";
     context.Response.Headers["Referrer-Policy"] = "no-referrer";
-    context.Response.Headers["Content-Security-Policy"] = "default-src 'self'; connect-src 'self'; media-src 'self' blob:; script-src 'self'; style-src 'self'; img-src 'self' data:";
+    context.Response.Headers["Content-Security-Policy"] = "default-src 'self'; connect-src 'self'; media-src 'self' blob:; script-src 'self'; style-src 'self'; img-src 'self' data: blob:";
 
     if (HttpMethods.IsPost(context.Request.Method) && context.Request.Path.StartsWithSegments("/api"))
     {
@@ -77,10 +85,15 @@ app.MapGet("/api/status", () => Results.Ok(new
 {
     kiBereit = !string.IsNullOrWhiteSpace(apiKey),
     modell,
+    strukturmodell,
     hinweis = konfigurationsfehler
 }));
 
-app.MapPost("/api/transkribieren", async (HttpRequest request, IHttpClientFactory clientFactory, CancellationToken token) =>
+app.MapPost("/api/transkribieren", async (
+    HttpRequest request,
+    IHttpClientFactory clientFactory,
+    IProtokollpunktStrukturierer strukturierer,
+    CancellationToken token) =>
 {
     if (string.IsNullOrWhiteSpace(apiKey))
         return Problem("Die KI-Anbindung ist lokal noch nicht konfiguriert.", StatusCodes.Status503ServiceUnavailable);
@@ -144,7 +157,17 @@ app.MapPost("/api/transkribieren", async (HttpRequest request, IHttpClientFactor
             || string.IsNullOrWhiteSpace(textElement.GetString()))
             return Problem("OpenAI hat keinen erkannten Text zurückgegeben.", StatusCodes.Status502BadGateway);
 
-        return Results.Ok(new { text = textElement.GetString(), modell });
+        string transkript = textElement.GetString()!;
+        ProtokollpunktStrukturierung struktur = await strukturierer.StrukturierenAsync(transkript, token);
+        return Results.Ok(new
+        {
+            text = transkript,
+            gruppe = struktur.Gruppe,
+            thema = struktur.Thema,
+            ort = struktur.Ort,
+            modell,
+            strukturmodell
+        });
     }
     catch (OperationCanceledException) when (!token.IsCancellationRequested)
     {
@@ -152,7 +175,11 @@ app.MapPost("/api/transkribieren", async (HttpRequest request, IHttpClientFactor
     }
     catch (HttpRequestException)
     {
-        return Problem("OpenAI ist momentan nicht erreichbar.", StatusCodes.Status502BadGateway);
+        return Problem("OpenAI ist momentan nicht erreichbar oder konnte das Diktat nicht strukturieren.", StatusCodes.Status502BadGateway);
+    }
+    catch (InvalidDataException)
+    {
+        return Problem("Die strukturierte Auswertung konnte nicht gelesen werden.", StatusCodes.Status502BadGateway);
     }
 }).DisableAntiforgery().RequireRateLimiting("Transkription");
 

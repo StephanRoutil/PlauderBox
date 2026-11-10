@@ -9,6 +9,7 @@ import {
   speichereLokalesBild,
   speichereLokalenProtokollpunkt,
   ladeLokalenProtokollpunkt,
+  uebernehmeStrukturvorschlaege,
   type InterneAufnahme,
   type LokalerProtokollpunkt,
   type LokalesProtokollpunktbild,
@@ -22,7 +23,11 @@ interface ServerStatus {
 
 interface Transkriptionsantwort {
   text?: string
+  gruppe?: string
+  thema?: string
+  ort?: string
   modell?: string
+  strukturmodell?: string
   detail?: string
 }
 
@@ -72,6 +77,7 @@ function erstelleLeerenProtokollpunkt(): LokalerProtokollpunkt {
     blnErledigt: true,
     strRechtsverweis: '',
     strGruppe: '',
+    strOrt: '',
     intReihenfolge: 0,
     strProtokollpunkt: '',
     txtProtokollpunkt: '',
@@ -355,9 +361,14 @@ async function uebertrageAufnahme(): Promise<void> {
     if (!antwort.ok) throw new Error(inhalt.detail || 'Die Transkription ist fehlgeschlagen.')
 
     transkript.value = inhalt.text ?? ''
-    modell.value = inhalt.modell ?? ''
-    if (!protokollpunkt.txtProtokollpunkt.trim()) {
-      protokollpunkt.txtProtokollpunkt = transkript.value
+    modell.value = [inhalt.modell, inhalt.strukturmodell].filter(Boolean).join(' + ')
+    const formularGeaendert = uebernehmeStrukturvorschlaege(protokollpunkt, {
+      gruppe: inhalt.gruppe,
+      thema: inhalt.thema,
+      ort: inhalt.ort,
+      transkript: transkript.value,
+    })
+    if (formularGeaendert) {
       await speichereFormular()
     }
     await loescheInterneAufnahme(aufnahme.id)
@@ -450,99 +461,33 @@ watch(protokollpunkt, planeFormularspeicherung, { deep: true })
       <h1 id="titel">Sag es einfach.</h1>
       <p class="intro">Felder, Bild und Aufnahme bleiben im internen App-Speicher. An HappyHour wird nichts übertragen.</p>
 
-      <section class="protocol-form" aria-labelledby="protocol-title">
-        <div class="protocol-form__head">
+      <section class="local-image local-image--capture" aria-labelledby="image-title">
+        <div class="local-image__head">
           <div>
-            <p class="eyebrow">Lokaler Entwurf</p>
-            <h2 id="protocol-title">Protokollpunkt</h2>
+            <p class="eyebrow">Erfassung</p>
+            <h2 id="image-title">Bild zum neuen Punkt</h2>
+            <p>Genau ein Bild, nur im internen App-Speicher.</p>
           </div>
-          <span class="local-only">Keine HappyHour-Übertragung</span>
-        </div>
-
-        <div class="form-grid">
-          <label>
-            <span>Protokoll-ID <small>intProtokollFKID</small></span>
-            <input v-model.number="protokollpunkt.intProtokollFKID" type="number" min="0">
-          </label>
-          <label>
-            <span>Protokollpunktart-ID <small>intProtokollpunktArtFKID</small></span>
-            <input v-model.number="protokollpunkt.intProtokollpunktArtFKID" type="number" min="0">
-          </label>
-          <label>
-            <span>Datum <small>datProtokollpunkt</small></span>
-            <input v-model="protokollpunkt.datProtokollpunkt" type="date">
-          </label>
-          <label>
-            <span>Gruppe <small>strGruppe</small></span>
-            <input v-model.trim="protokollpunkt.strGruppe" type="text" maxlength="250" placeholder="z. B. Brandschutz">
-          </label>
-          <label class="form-grid__wide">
-            <span>Protokollpunkt <small>strProtokollpunkt</small></span>
-            <input v-model.trim="protokollpunkt.strProtokollpunkt" type="text" maxlength="250" placeholder="Kurzer Titel des Punkts">
-          </label>
-          <label>
-            <span>Verantwortlicher <small>intProjektAnsprechpartnerFKID</small></span>
-            <input
-              :value="protokollpunkt.intProjektAnsprechpartnerFKID ?? ''"
-              type="number"
-              min="0"
-              placeholder="lokale ID"
-              @input="setzeAnsprechpartnerId"
-            >
-          </label>
-          <label>
-            <span>Rechtsverweis <small>strRechtsverweis</small></span>
-            <input v-model.trim="protokollpunkt.strRechtsverweis" type="text" maxlength="250" placeholder="optional">
-          </label>
-          <label class="checkbox-field">
-            <input v-model="protokollpunkt.blnNachverfolgen" type="checkbox" @change="aktualisiereNachverfolgung">
-            <span>Nachverfolgen <small>blnNachverfolgen</small></span>
-          </label>
-          <label v-if="protokollpunkt.blnNachverfolgen">
-            <span>Frist <small>datFrist</small></span>
-            <input :value="protokollpunkt.datFrist ?? ''" type="date" @input="setzeFrist">
-          </label>
-          <label v-if="protokollpunkt.blnNachverfolgen" class="checkbox-field">
-            <input v-model="protokollpunkt.blnErledigt" type="checkbox">
-            <span>Erledigt <small>blnErledigt</small></span>
-          </label>
-          <label class="form-grid__wide">
-            <span>Inhalt <small>txtProtokollpunkt</small></span>
-            <textarea v-model="protokollpunkt.txtProtokollpunkt" rows="6" placeholder="Der erkannte Text wird hier lokal eingesetzt, solange das Feld leer ist."></textarea>
+          <label class="image-action">
+            {{ lokalesBild ? 'Bild ersetzen' : 'Bild aufnehmen oder wählen' }}
+            <input type="file" accept="image/*" capture="environment" @change="waehleBild">
           </label>
         </div>
-
-        <section class="local-image" aria-labelledby="image-title">
-          <div class="local-image__head">
-            <div>
-              <h3 id="image-title">Bild</h3>
-              <p>Genau ein Bild, nur im internen App-Speicher.</p>
-            </div>
-            <label class="image-action">
-              {{ lokalesBild ? 'Bild ersetzen' : 'Bild aufnehmen oder wählen' }}
-              <input type="file" accept="image/*" capture="environment" @change="waehleBild">
-            </label>
+        <div v-if="lokalesBild" class="local-image__preview">
+          <img :src="bildVorschauUrl" alt="Lokal gespeichertes Bild des Protokollpunkts">
+          <div>
+            <strong>{{ lokalesBild.dateiname }}</strong>
+            <span>{{ formatiereGroesse(lokalesBild.groesse) }} · lokal gespeichert</span>
+            <button class="text-action" type="button" @click="verwerfeBild">Bild löschen</button>
           </div>
-          <div v-if="lokalesBild" class="local-image__preview">
-            <img :src="bildVorschauUrl" alt="Lokal gespeichertes Bild des Protokollpunkts">
-            <div>
-              <strong>{{ lokalesBild.dateiname }}</strong>
-              <span>{{ formatiereGroesse(lokalesBild.groesse) }} · lokal gespeichert</span>
-              <button class="text-action" type="button" @click="verwerfeBild">Bild löschen</button>
-            </div>
-          </div>
-        </section>
-
-        <details class="technical-fields">
-          <summary>Technische lokale Felder</summary>
-          <dl>
-            <div><dt>intProtokollpunktID</dt><dd>{{ protokollpunkt.intProtokollpunktID }}</dd></div>
-            <div><dt>intReihenfolge</dt><dd>{{ protokollpunkt.intReihenfolge }}</dd></div>
-            <div><dt>GUID</dt><dd>{{ protokollpunkt.GUID }}</dd></div>
-          </dl>
-        </details>
-        <p class="save-state" aria-live="polite">{{ formularSpeicherstatus }}</p>
+        </div>
       </section>
+
+      <div class="capture-audio-head">
+        <p class="eyebrow">Erfassung</p>
+        <h2>Situation diktieren</h2>
+        <p>Nenne möglichst Gruppe, Thema, Ort und die beobachtete Situation.</p>
+      </div>
 
       <div class="recording-stage" :class="{ 'is-recording': aufnahmeLaeuft }">
         <canvas ref="visualizer" width="520" height="180" aria-hidden="true"></canvas>
@@ -579,7 +524,7 @@ watch(protokollpunkt, planeFormularspeicherung, { deep: true })
         <p>Die Audiodatei liegt nicht in Downloads, Galerie, SD-Karte oder Cloud.</p>
         <div class="pending__actions">
           <button class="primary-action" type="button" :disabled="wirdVerarbeitet || !online" @click="uebertrageAufnahme">
-            {{ online ? 'Jetzt übertragen' : 'Warte auf Verbindung' }}
+            {{ online ? 'Diktat jetzt auswerten' : 'Warte auf Verbindung' }}
           </button>
           <button class="secondary-action" type="button" :disabled="wirdVerarbeitet" @click="verwerfeAufnahme">Aufnahme löschen</button>
         </div>
@@ -587,7 +532,7 @@ watch(protokollpunkt, planeFormularspeicherung, { deep: true })
 
       <div v-if="wirdVerarbeitet" class="processing" role="status">
         <span class="spinner" aria-hidden="true"></span>
-        <div><strong>Gesprochenes wird erkannt</strong><small>Nach bestätigter Übernahme wird die lokale Aufnahme gelöscht.</small></div>
+        <div><strong>Gesprochenes wird erkannt und geordnet</strong><small>Gruppe, Thema und Ort werden nur übernommen, wenn sie erkennbar und die Felder noch leer sind.</small></div>
       </div>
 
       <section v-if="transkript" id="ergebnis" class="result" aria-labelledby="result-title">
@@ -599,11 +544,90 @@ watch(protokollpunkt, planeFormularspeicherung, { deep: true })
         <p>{{ transkript }}</p>
       </section>
 
+      <section class="protocol-form" aria-labelledby="protocol-title">
+        <div class="protocol-form__head">
+          <div>
+            <p class="eyebrow">Lokal erkannter Entwurf</p>
+            <h2 id="protocol-title">Protokollpunkt kontrollieren</h2>
+          </div>
+          <span class="local-only">Keine HappyHour-Übertragung</span>
+        </div>
+
+        <p class="structure-hint">Gruppe, Thema und Ort werden beim Auswerten des Diktats soweit erkennbar in noch leere Felder übernommen.</p>
+
+        <div class="form-grid">
+          <label>
+            <span>Gruppe <small>strGruppe</small></span>
+            <input v-model.trim="protokollpunkt.strGruppe" type="text" maxlength="250" placeholder="z. B. Brandschutz">
+          </label>
+          <label>
+            <span>Ort <small>lokaler Erfassungskontext</small></span>
+            <input v-model.trim="protokollpunkt.strOrt" type="text" maxlength="250" placeholder="z. B. Untergeschoss 2, Technikraum">
+          </label>
+          <label class="form-grid__wide">
+            <span>Thema <small>strProtokollpunkt</small></span>
+            <input v-model.trim="protokollpunkt.strProtokollpunkt" type="text" maxlength="250" placeholder="Kurzer Titel des Punkts">
+          </label>
+          <label class="form-grid__wide">
+            <span>Inhalt <small>txtProtokollpunkt</small></span>
+            <textarea v-model="protokollpunkt.txtProtokollpunkt" rows="6" placeholder="Das Transkript wird hier lokal eingesetzt, solange das Feld leer ist."></textarea>
+          </label>
+          <label>
+            <span>Protokoll-ID <small>intProtokollFKID</small></span>
+            <input v-model.number="protokollpunkt.intProtokollFKID" type="number" min="0">
+          </label>
+          <label>
+            <span>Protokollpunktart-ID <small>intProtokollpunktArtFKID</small></span>
+            <input v-model.number="protokollpunkt.intProtokollpunktArtFKID" type="number" min="0">
+          </label>
+          <label>
+            <span>Datum <small>datProtokollpunkt</small></span>
+            <input v-model="protokollpunkt.datProtokollpunkt" type="date">
+          </label>
+          <label>
+            <span>Verantwortlicher <small>intProjektAnsprechpartnerFKID</small></span>
+            <input
+              :value="protokollpunkt.intProjektAnsprechpartnerFKID ?? ''"
+              type="number"
+              min="0"
+              placeholder="lokale ID"
+              @input="setzeAnsprechpartnerId"
+            >
+          </label>
+          <label class="form-grid__wide">
+            <span>Rechtsverweis <small>strRechtsverweis</small></span>
+            <input v-model.trim="protokollpunkt.strRechtsverweis" type="text" maxlength="250" placeholder="optional">
+          </label>
+          <label class="checkbox-field">
+            <input v-model="protokollpunkt.blnNachverfolgen" type="checkbox" @change="aktualisiereNachverfolgung">
+            <span>Nachverfolgen <small>blnNachverfolgen</small></span>
+          </label>
+          <label v-if="protokollpunkt.blnNachverfolgen">
+            <span>Frist <small>datFrist</small></span>
+            <input :value="protokollpunkt.datFrist ?? ''" type="date" @input="setzeFrist">
+          </label>
+          <label v-if="protokollpunkt.blnNachverfolgen" class="checkbox-field">
+            <input v-model="protokollpunkt.blnErledigt" type="checkbox">
+            <span>Erledigt <small>blnErledigt</small></span>
+          </label>
+        </div>
+
+        <details class="technical-fields">
+          <summary>Technische lokale Felder</summary>
+          <dl>
+            <div><dt>intProtokollpunktID</dt><dd>{{ protokollpunkt.intProtokollpunktID }}</dd></div>
+            <div><dt>intReihenfolge</dt><dd>{{ protokollpunkt.intReihenfolge }}</dd></div>
+            <div><dt>GUID</dt><dd>{{ protokollpunkt.GUID }}</dd></div>
+          </dl>
+        </details>
+        <p class="save-state" aria-live="polite">{{ formularSpeicherstatus }}</p>
+      </section>
+
       <div v-if="meldung" class="message" role="alert">{{ meldung }}</div>
 
       <p class="privacy-note">
         <span aria-hidden="true">◈</span>
-        Genau eine Aufnahme wird intern gespeichert. Sie wird erst nach deiner bewussten Aktion übertragen und erst nach erfolgreicher Transkription lokal gelöscht.
+        Genau eine Aufnahme wird intern gespeichert. Sie wird erst nach deiner bewussten Aktion zur Transkription und Strukturierung übertragen und erst nach erfolgreicher Auswertung lokal gelöscht.
       </p>
     </section>
 
