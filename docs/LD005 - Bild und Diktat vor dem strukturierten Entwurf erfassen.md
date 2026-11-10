@@ -22,7 +22,7 @@ Die mobile Oberfläche zeigt bei einem neuen Punkt zuerst die Bildauswahl und di
 | OpenAI Responses API mit strengem JSON-Schema | `src/PlauderBox.Datenmanagement/OpenAiProtokollpunktStrukturierer.cs` | umgesetzt |
 | HTTP-Endpunkt und Composition Root | `src/Program.cs` | umgesetzt |
 
-Branch: `main`, Commit `3161047`. Das daraus auf Delphi01 gebaute Image besitzt die Image-ID `sha256:4348801d00c0…` und läuft unter dem bestehenden internen HTTPS-Testzugang. Einstieg, neues Frontend-Asset, KI-Status mit Strukturmodell, Content-Security-Policy für lokale Bildvorschauen und Containerstart sind geprüft. Die echte Audio- und Strukturierungsauswertung auf dem Android-Gerät bleibt gemäss T004 offen.
+Branch: `main`, Commit `1cf6d05`. Das daraus auf Delphi01 gebaute Image besitzt die Image-ID `sha256:d31e44fa62c5…` und läuft unter dem bestehenden internen HTTPS-Testzugang. Einstieg, korrigiertes Frontend-Asset, KI-Status mit Strukturmodell, Content-Security-Policy für lokale Bildvorschauen und Containerstart sind geprüft. Die echte Audio- und Strukturierungsauswertung auf dem Android-Gerät bleibt gemäss T004 offen.
 
 ## Grenzen
 

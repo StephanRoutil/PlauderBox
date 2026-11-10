@@ -1,7 +1,7 @@
 ---
 typ: loesungsdokumentation
 id: LD006
-status: lokal-geprueft
+status: testbereit-delphi01
 datum: 2026-11-10
 ---
 
@@ -22,7 +22,7 @@ Die ausstehende Audioaufnahme bleibt ein separater Datensatz. `Aufnahme löschen
 | Mehrere Bilddatensätze und Rückwärtskompatibilität | `src/PlauderBox.UI.Client/src/services/internerAufnahmespeicher.ts` | umgesetzt |
 | Getrennte Speicherprüfung | `src/PlauderBox.UI.Client/src/services/internerAufnahmespeicher.test.ts` | automatisiert bestanden |
 
-Branch, Commit und Delphi01-Image werden nach der Veröffentlichung ergänzt. Der mobile Test bleibt gemäss T005 offen.
+Branch: `main`, Commit `1cf6d05`. Das auf Delphi01 laufende Image besitzt die Image-ID `sha256:d31e44fa62c5…`. HTTPS-Einstieg, neues Mehrbild-Frontend, KI-Status und Containerstart sind geprüft. Der mobile Mehrbild- und Verwerftest bleibt gemäss T005 offen.
 
 ## Verknüpfungen
 
