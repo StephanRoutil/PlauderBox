@@ -2,7 +2,7 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import {
   ladeInterneAufnahme,
-  ladeLokalesBild,
+  ladeLokaleBilder,
   loescheInterneAufnahme,
   loescheLokalesBild,
   speichereEinzelneAufnahme,
@@ -25,7 +25,8 @@ interface Transkriptionsantwort {
   text?: string
   gruppe?: string
   thema?: string
-  ort?: string
+  inhalt?: string
+  rechtsverweis?: string
   modell?: string
   strukturmodell?: string
   detail?: string
@@ -45,8 +46,8 @@ const verbindungsstatus = ref('KI-Anbindung wird geprüft …')
 const kiBereit = ref(false)
 const formularGeladen = ref(false)
 const formularSpeicherstatus = ref('Nur lokal · noch nicht an HappyHour übertragen')
-const lokalesBild = ref<LokalesProtokollpunktbild | null>(null)
-const bildVorschauUrl = ref('')
+const lokaleBilder = ref<LokalesProtokollpunktbild[]>([])
+const bildVorschauUrls = ref<Record<string, string>>({})
 const protokollpunkt = reactive<LokalerProtokollpunkt>(erstelleLeerenProtokollpunkt())
 
 let mediaRecorder: MediaRecorder | null = null
@@ -77,7 +78,6 @@ function erstelleLeerenProtokollpunkt(): LokalerProtokollpunkt {
     blnErledigt: true,
     strRechtsverweis: '',
     strGruppe: '',
-    strOrt: '',
     intReihenfolge: 0,
     strProtokollpunkt: '',
     txtProtokollpunkt: '',
@@ -148,43 +148,52 @@ function planeFormularspeicherung(): void {
   }, 250)
 }
 
-function setzeBildVorschau(bild: LokalesProtokollpunktbild | null): void {
-  if (bildVorschauUrl.value) URL.revokeObjectURL(bildVorschauUrl.value)
-  bildVorschauUrl.value = bild ? URL.createObjectURL(bild.bild) : ''
+function erneuereBildVorschauen(bilder: LokalesProtokollpunktbild[]): void {
+  Object.values(bildVorschauUrls.value).forEach((url) => URL.revokeObjectURL(url))
+  bildVorschauUrls.value = Object.fromEntries(
+    bilder.map((bild) => [bild.id, URL.createObjectURL(bild.bild)]),
+  )
 }
 
-async function waehleBild(ereignis: Event): Promise<void> {
+async function waehleBilder(ereignis: Event): Promise<void> {
   const eingabe = ereignis.target as HTMLInputElement
-  const datei = eingabe.files?.[0]
+  const dateien = Array.from(eingabe.files ?? [])
   eingabe.value = ''
-  if (!datei) return
-  if (!datei.type.startsWith('image/')) {
-    meldung.value = 'Es können nur Bilddateien lokal angefügt werden.'
-    return
-  }
-  if (datei.size > 15 * 1024 * 1024) {
-    meldung.value = 'Das Bild überschreitet die lokale Grenze von 15 MB.'
-    return
+  if (!dateien.length) return
+
+  const fehler: string[] = []
+  for (const datei of dateien) {
+    if (!datei.type.startsWith('image/')) {
+      fehler.push(`${datei.name}: keine Bilddatei`)
+      continue
+    }
+    if (datei.size > 15 * 1024 * 1024) {
+      fehler.push(`${datei.name}: grösser als 15 MB`)
+      continue
+    }
+
+    const bild: LokalesProtokollpunktbild = {
+      id: crypto.randomUUID(),
+      dateiname: datei.name,
+      medientyp: datei.type,
+      groesse: datei.size,
+      erstelltAm: new Date().toISOString(),
+      bild: datei,
+    }
+    await speichereLokalesBild(bild)
   }
 
-  const bild: LokalesProtokollpunktbild = {
-    dateiname: datei.name,
-    medientyp: datei.type,
-    groesse: datei.size,
-    erstelltAm: new Date().toISOString(),
-    bild: datei,
-  }
-  await speichereLokalesBild(bild)
-  lokalesBild.value = bild
-  setzeBildVorschau(bild)
-  meldung.value = ''
+  lokaleBilder.value = await ladeLokaleBilder()
+  erneuereBildVorschauen(lokaleBilder.value)
+  meldung.value = fehler.length ? `Nicht gespeichert: ${fehler.join('; ')}` : ''
 }
 
-async function verwerfeBild(): Promise<void> {
-  if (!lokalesBild.value || !window.confirm('Bild wirklich aus dem internen App-Speicher löschen?')) return
-  await loescheLokalesBild()
-  lokalesBild.value = null
-  setzeBildVorschau(null)
+async function verwerfeBild(id: string): Promise<void> {
+  const bild = lokaleBilder.value.find((eintrag) => eintrag.id === id)
+  if (!bild || !window.confirm(`Bild „${bild.dateiname}“ wirklich aus dem internen App-Speicher löschen?`)) return
+  await loescheLokalesBild(id)
+  lokaleBilder.value = await ladeLokaleBilder()
+  erneuereBildVorschauen(lokaleBilder.value)
 }
 
 function unterstuetzterMedientyp(): string {
@@ -365,8 +374,8 @@ async function uebertrageAufnahme(): Promise<void> {
     const formularGeaendert = uebernehmeStrukturvorschlaege(protokollpunkt, {
       gruppe: inhalt.gruppe,
       thema: inhalt.thema,
-      ort: inhalt.ort,
-      transkript: transkript.value,
+      inhalt: inhalt.inhalt,
+      rechtsverweis: inhalt.rechtsverweis,
     })
     if (formularGeaendert) {
       await speichereFormular()
@@ -418,10 +427,15 @@ onMounted(async () => {
   window.addEventListener('offline', aktualisiereOnlinezustand)
   try {
     const gespeicherterProtokollpunkt = await ladeLokalenProtokollpunkt()
-    if (gespeicherterProtokollpunkt) Object.assign(protokollpunkt, gespeicherterProtokollpunkt)
-    else await speichereFormular()
-    lokalesBild.value = await ladeLokalesBild()
-    setzeBildVorschau(lokalesBild.value)
+    if (gespeicherterProtokollpunkt) {
+      const bereinigterProtokollpunkt = { ...gespeicherterProtokollpunkt } as LokalerProtokollpunkt & { strOrt?: unknown }
+      const hatteVeraltetesOrtsfeld = 'strOrt' in bereinigterProtokollpunkt
+      delete bereinigterProtokollpunkt.strOrt
+      Object.assign(protokollpunkt, bereinigterProtokollpunkt)
+      if (hatteVeraltetesOrtsfeld) await speichereFormular()
+    } else await speichereFormular()
+    lokaleBilder.value = await ladeLokaleBilder()
+    erneuereBildVorschauen(lokaleBilder.value)
     ausstehendeAufnahme.value = await ladeInterneAufnahme()
     if (ausstehendeAufnahme.value) {
       statusText.value = 'Noch nicht übertragen'
@@ -440,7 +454,7 @@ onBeforeUnmount(() => {
   window.removeEventListener('offline', aktualisiereOnlinezustand)
   schliesseMedien()
   window.clearTimeout(formularSpeicherTimer)
-  if (bildVorschauUrl.value) URL.revokeObjectURL(bildVorschauUrl.value)
+  Object.values(bildVorschauUrls.value).forEach((url) => URL.revokeObjectURL(url))
 })
 
 watch(protokollpunkt, planeFormularspeicherung, { deep: true })
@@ -466,19 +480,21 @@ watch(protokollpunkt, planeFormularspeicherung, { deep: true })
           <div>
             <p class="eyebrow">Erfassung</p>
             <h2 id="image-title">Bild zum neuen Punkt</h2>
-            <p>Genau ein Bild, nur im internen App-Speicher.</p>
+            <p>Mehrere Bilder, nur im internen App-Speicher.</p>
           </div>
           <label class="image-action">
-            {{ lokalesBild ? 'Bild ersetzen' : 'Bild aufnehmen oder wählen' }}
-            <input type="file" accept="image/*" capture="environment" @change="waehleBild">
+            {{ lokaleBilder.length ? 'Weiteres Bild aufnehmen oder wählen' : 'Bild aufnehmen oder wählen' }}
+            <input type="file" accept="image/*" capture="environment" multiple @change="waehleBilder">
           </label>
         </div>
-        <div v-if="lokalesBild" class="local-image__preview">
-          <img :src="bildVorschauUrl" alt="Lokal gespeichertes Bild des Protokollpunkts">
-          <div>
-            <strong>{{ lokalesBild.dateiname }}</strong>
-            <span>{{ formatiereGroesse(lokalesBild.groesse) }} · lokal gespeichert</span>
-            <button class="text-action" type="button" @click="verwerfeBild">Bild löschen</button>
+        <div v-if="lokaleBilder.length" class="local-image__previews">
+          <div v-for="bild in lokaleBilder" :key="bild.id" class="local-image__preview">
+            <img :src="bildVorschauUrls[bild.id]" :alt="`Lokal gespeichertes Bild ${bild.dateiname}`">
+            <div>
+              <strong>{{ bild.dateiname }}</strong>
+              <span>{{ formatiereGroesse(bild.groesse) }} · lokal gespeichert</span>
+              <button class="text-action" type="button" @click="verwerfeBild(bild.id)">Bild löschen</button>
+            </div>
           </div>
         </div>
       </section>
@@ -486,7 +502,7 @@ watch(protokollpunkt, planeFormularspeicherung, { deep: true })
       <div class="capture-audio-head">
         <p class="eyebrow">Erfassung</p>
         <h2>Situation diktieren</h2>
-        <p>Nenne möglichst Gruppe, Thema, Ort und die beobachtete Situation.</p>
+        <p>Sprich möglichst in der Reihenfolge: Gruppe, Thema, Inhalt und allenfalls Rechtsverweis.</p>
       </div>
 
       <div class="recording-stage" :class="{ 'is-recording': aufnahmeLaeuft }">
@@ -532,7 +548,7 @@ watch(protokollpunkt, planeFormularspeicherung, { deep: true })
 
       <div v-if="wirdVerarbeitet" class="processing" role="status">
         <span class="spinner" aria-hidden="true"></span>
-        <div><strong>Gesprochenes wird erkannt und geordnet</strong><small>Gruppe, Thema und Ort werden nur übernommen, wenn sie erkennbar und die Felder noch leer sind.</small></div>
+        <div><strong>Gesprochenes wird erkannt und geordnet</strong><small>Gruppe, Thema, Inhalt und ein genannter Rechtsverweis werden nur in noch leere Felder übernommen.</small></div>
       </div>
 
       <section v-if="transkript" id="ergebnis" class="result" aria-labelledby="result-title">
@@ -553,7 +569,7 @@ watch(protokollpunkt, planeFormularspeicherung, { deep: true })
           <span class="local-only">Keine HappyHour-Übertragung</span>
         </div>
 
-        <p class="structure-hint">Gruppe, Thema und Ort werden beim Auswerten des Diktats soweit erkennbar in noch leere Felder übernommen.</p>
+        <p class="structure-hint">Sprechschema: Gruppe → Thema → Inhalt → allenfalls Rechtsverweis. Nicht genannte Angaben bleiben leer.</p>
 
         <div class="form-grid">
           <label>
@@ -561,16 +577,16 @@ watch(protokollpunkt, planeFormularspeicherung, { deep: true })
             <input v-model.trim="protokollpunkt.strGruppe" type="text" maxlength="250" placeholder="z. B. Brandschutz">
           </label>
           <label>
-            <span>Ort <small>lokaler Erfassungskontext</small></span>
-            <input v-model.trim="protokollpunkt.strOrt" type="text" maxlength="250" placeholder="z. B. Untergeschoss 2, Technikraum">
-          </label>
-          <label class="form-grid__wide">
             <span>Thema <small>strProtokollpunkt</small></span>
             <input v-model.trim="protokollpunkt.strProtokollpunkt" type="text" maxlength="250" placeholder="Kurzer Titel des Punkts">
           </label>
           <label class="form-grid__wide">
             <span>Inhalt <small>txtProtokollpunkt</small></span>
-            <textarea v-model="protokollpunkt.txtProtokollpunkt" rows="6" placeholder="Das Transkript wird hier lokal eingesetzt, solange das Feld leer ist."></textarea>
+            <textarea v-model="protokollpunkt.txtProtokollpunkt" rows="6" placeholder="Der erkannte Inhalt wird hier lokal eingesetzt, solange das Feld leer ist."></textarea>
+          </label>
+          <label class="form-grid__wide">
+            <span>Rechtsverweis <small>strRechtsverweis</small></span>
+            <input v-model.trim="protokollpunkt.strRechtsverweis" type="text" maxlength="250" placeholder="optional, nur wenn im Diktat genannt">
           </label>
           <label>
             <span>Protokoll-ID <small>intProtokollFKID</small></span>
@@ -593,10 +609,6 @@ watch(protokollpunkt, planeFormularspeicherung, { deep: true })
               placeholder="lokale ID"
               @input="setzeAnsprechpartnerId"
             >
-          </label>
-          <label class="form-grid__wide">
-            <span>Rechtsverweis <small>strRechtsverweis</small></span>
-            <input v-model.trim="protokollpunkt.strRechtsverweis" type="text" maxlength="250" placeholder="optional">
           </label>
           <label class="checkbox-field">
             <input v-model="protokollpunkt.blnNachverfolgen" type="checkbox" @change="aktualisiereNachverfolgung">

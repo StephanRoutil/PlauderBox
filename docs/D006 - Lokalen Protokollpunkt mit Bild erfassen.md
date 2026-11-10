@@ -1,7 +1,7 @@
 ---
 typ: anforderung
 id: D006
-status: umgesetzt-testoffen
+status: teilweise-abgeloest
 datum: 2026-11-09
 ---
 
@@ -9,7 +9,7 @@ datum: 2026-11-09
 
 ## Ziel
 
-PlauderBox bildet genau einen lokalen Protokollpunkt mit den Feldern von `tblProtokollpunkt` ab. Der Mitarbeiter kann zusätzlich genau ein Bild mit der Kamera aufnehmen oder aus einer Datei wählen. Formular und Bild bleiben im internen, app-eigenen IndexedDB-Speicher und werden nicht an HappyHour oder den PlauderBox-Server übertragen.
+PlauderBox bildet genau einen lokalen Protokollpunkt mit den Feldern von `tblProtokollpunkt` ab. Der Mitarbeiter kann Bilder mit der Kamera aufnehmen oder aus Dateien wählen. Formular und Bilder bleiben im internen, app-eigenen IndexedDB-Speicher und werden nicht an HappyHour oder den PlauderBox-Server übertragen.
 
 ## Abgebildete Felder
 
@@ -35,7 +35,7 @@ PlauderBox bildet genau einen lokalen Protokollpunkt mit den Feldern von `tblPro
 - Alle oben genannten Felder sind lokal abgebildet und bleiben nach einem Neuladen erhalten.
 - Änderungen am Formular werden automatisch in IndexedDB gespeichert.
 - Nachverfolgung setzt bei erstmaliger Aktivierung eine Frist von 14 Tagen und den Status auf nicht erledigt; beim Deaktivieren wird die Frist entfernt und der Punkt als erledigt markiert.
-- Genau ein Bild kann über Kamera oder Dateiauswahl angefügt und ersetzt werden.
+- Mehrere Bilder können nacheinander über Kamera oder Dateiauswahl angefügt werden.
 - Das Bild bleibt nach einem Neuladen erhalten und kann erst nach Bestätigung gelöscht werden.
 - Es werden nur Bilddateien bis 15 MB angenommen.
 - Formular und Bild werden unabhängig von der lokalen Audioaufnahme gespeichert und beim Löschen oder erfolgreichen Übertragen der Aufnahme nicht entfernt.
@@ -45,7 +45,7 @@ PlauderBox bildet genau einen lokalen Protokollpunkt mit den Feldern von `tblPro
 ## Nicht Bestandteil
 
 - Lesen von Referenzdaten oder Schreiben von Daten in HappyHour,
-- mehrere Protokollpunkte oder mehrere Bilder,
+- mehrere Protokollpunkte,
 - serverseitige Speicherung von Formular oder Bild,
 - vollständig offline ladbare App-Hülle,
 - produktive Benutzer-, Berechtigungs- oder Datenschutzfreigabe.
@@ -56,3 +56,7 @@ PlauderBox bildet genau einen lokalen Protokollpunkt mit den Feldern von `tblPro
 - [[E002 - Aufnahmen offline sichern und später transkribieren]]
 - [[T003 - Protokollpunktfelder und Bild lokal speichern]]
 - [[LD004 - Lokaler Protokollpunktentwurf mit Bild]]
+
+## Ablösung
+
+Die ursprüngliche Begrenzung auf genau ein Bild wurde am 10.11.2026 durch [[D008 - Aufnahme verwerfen und mehrere Bilder lokal erfassen]] abgelöst. Die übrigen Anforderungen dieses Dokuments bleiben gültig.

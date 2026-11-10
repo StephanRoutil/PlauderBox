@@ -22,7 +22,6 @@ export interface LokalerProtokollpunkt {
   blnErledigt: boolean
   strRechtsverweis: string
   strGruppe: string
-  strOrt: string
   intReihenfolge: number
   strProtokollpunkt: string
   txtProtokollpunkt: string
@@ -31,6 +30,7 @@ export interface LokalerProtokollpunkt {
 }
 
 export interface LokalesProtokollpunktbild {
+  id: string
   dateiname: string
   medientyp: string
   groesse: number
@@ -41,8 +41,8 @@ export interface LokalesProtokollpunktbild {
 export interface ProtokollpunktStrukturvorschlaege {
   gruppe?: string
   thema?: string
-  ort?: string
-  transkript?: string
+  inhalt?: string
+  rechtsverweis?: string
 }
 
 export function uebernehmeStrukturvorschlaege(
@@ -58,12 +58,12 @@ export function uebernehmeStrukturvorschlaege(
     protokollpunkt.strProtokollpunkt = vorschlaege.thema.trim()
     geaendert = true
   }
-  if (!protokollpunkt.strOrt.trim() && vorschlaege.ort?.trim()) {
-    protokollpunkt.strOrt = vorschlaege.ort.trim()
+  if (!protokollpunkt.txtProtokollpunkt.trim() && vorschlaege.inhalt?.trim()) {
+    protokollpunkt.txtProtokollpunkt = vorschlaege.inhalt.trim()
     geaendert = true
   }
-  if (!protokollpunkt.txtProtokollpunkt.trim() && vorschlaege.transkript?.trim()) {
-    protokollpunkt.txtProtokollpunkt = vorschlaege.transkript.trim()
+  if (!protokollpunkt.strRechtsverweis.trim() && vorschlaege.rechtsverweis?.trim()) {
+    protokollpunkt.strRechtsverweis = vorschlaege.rechtsverweis.trim()
     geaendert = true
   }
   return geaendert
@@ -74,7 +74,6 @@ const aufnahmespeichername = 'aufnahmen'
 const protokollpunktspeichername = 'protokollpunkt'
 const protokollpunktschluessel = 'aktueller-protokollpunkt'
 const bildspeichername = 'protokollpunktbild'
-const bildschluessel = 'aktuelles-bild'
 const datenbankversion = 3
 
 function oeffneDatenbank(): Promise<IDBDatabase> {
@@ -172,32 +171,40 @@ export async function speichereLokalesBild(bild: LokalesProtokollpunktbild): Pro
   const datenbank = await oeffneDatenbank()
   try {
     const transaktion = datenbank.transaction(bildspeichername, 'readwrite')
-    transaktion.objectStore(bildspeichername).put(bild, bildschluessel)
+    transaktion.objectStore(bildspeichername).put(bild, bild.id)
     await warteAufTransaktion(transaktion)
   } finally {
     datenbank.close()
   }
 }
 
-export async function ladeLokalesBild(): Promise<LokalesProtokollpunktbild | null> {
+export async function ladeLokaleBilder(): Promise<LokalesProtokollpunktbild[]> {
   const datenbank = await oeffneDatenbank()
   try {
     return await new Promise((resolve, reject) => {
       const transaktion = datenbank.transaction(bildspeichername, 'readonly')
-      const anfrage = transaktion.objectStore(bildspeichername).get(bildschluessel)
-      anfrage.addEventListener('success', () => resolve((anfrage.result as LokalesProtokollpunktbild | undefined) ?? null))
-      anfrage.addEventListener('error', () => reject(anfrage.error ?? new Error('Das lokale Bild konnte nicht gelesen werden.')))
+      const speicher = transaktion.objectStore(bildspeichername)
+      const bildanfrage = speicher.getAll()
+      const schluesselanfrage = speicher.getAllKeys()
+      transaktion.addEventListener('complete', () => {
+        const bilder = bildanfrage.result as Array<Omit<LokalesProtokollpunktbild, 'id'> & { id?: string }>
+        resolve(bilder.map((bild, index) => ({
+          ...bild,
+          id: bild.id ?? String(schluesselanfrage.result[index]),
+        })))
+      })
+      transaktion.addEventListener('error', () => reject(transaktion.error ?? new Error('Die lokalen Bilder konnten nicht gelesen werden.')))
     })
   } finally {
     datenbank.close()
   }
 }
 
-export async function loescheLokalesBild(): Promise<void> {
+export async function loescheLokalesBild(id: string): Promise<void> {
   const datenbank = await oeffneDatenbank()
   try {
     const transaktion = datenbank.transaction(bildspeichername, 'readwrite')
-    transaktion.objectStore(bildspeichername).delete(bildschluessel)
+    transaktion.objectStore(bildspeichername).delete(id)
     await warteAufTransaktion(transaktion)
   } finally {
     datenbank.close()

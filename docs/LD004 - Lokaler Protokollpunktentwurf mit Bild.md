@@ -1,7 +1,7 @@
 ---
 typ: loesungsdokumentation
 id: LD004
-status: testbereit-delphi01
+status: abgeloest
 datum: 2026-11-09
 ---
 
@@ -38,3 +38,7 @@ Branch: `main`, Commit `f30fac1`. Das daraus auf Delphi01 gebaute Image `plauder
 - [[D006 - Lokalen Protokollpunkt mit Bild erfassen]]
 - [[T003 - Protokollpunktfelder und Bild lokal speichern]]
 - [[LD003 - Vue Oberfläche mit intern gespeicherter Einzelaufnahme]]
+
+## Ablösung
+
+Die hier dokumentierte Begrenzung auf genau ein Bild wurde am 10.11.2026 durch [[LD006 - Mehrere lokale Bilder und verwerfbare Aufnahme]] abgelöst. Dieser frühere Stand bleibt als Nachweis der ersten Ausbaustufe erhalten.

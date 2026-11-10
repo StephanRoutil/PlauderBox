@@ -164,7 +164,8 @@ app.MapPost("/api/transkribieren", async (
             text = transkript,
             gruppe = struktur.Gruppe,
             thema = struktur.Thema,
-            ort = struktur.Ort,
+            inhalt = struktur.Inhalt,
+            rechtsverweis = struktur.Rechtsverweis,
             modell,
             strukturmodell
         });

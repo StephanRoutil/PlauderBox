@@ -13,4 +13,8 @@ public interface IProtokollpunktStrukturierer
 /// <summary>
 /// Strukturierte, noch zu kontrollierende Vorschläge für einen lokalen Protokollpunkt.
 /// </summary>
-public sealed record ProtokollpunktStrukturierung(string Gruppe, string Thema, string Ort);
+public sealed record ProtokollpunktStrukturierung(
+    string Gruppe,
+    string Thema,
+    string Inhalt,
+    string Rechtsverweis);

@@ -1,6 +1,6 @@
 # PlauderBox
 
-Browserprototyp für einen kontrollierten Ablauf: zuerst Bild und Diktat erfassen, die Aufnahme intern als `Noch nicht übertragen` speichern, bewusst an OpenAI zur Transkription und Strukturierung senden und Gruppe, Thema, Ort sowie Text lokal kontrollieren.
+Browserprototyp für einen kontrollierten Ablauf: zuerst mehrere Bilder und ein Diktat erfassen, die Aufnahme intern als `Noch nicht übertragen` speichern, bewusst auswerten und Gruppe, Thema, Inhalt sowie einen allenfalls genannten Rechtsverweis lokal kontrollieren.
 
 ## Start
 
@@ -24,12 +24,12 @@ Der lokale Starter verwendet den bereits vorhandenen PaperTrap-Schlüsseldateipf
 
 ## Datenfluss
 
-1. Der Browser speichert genau einen Protokollpunkt und ein Bild in getrennten app-eigenen IndexedDB-Speichern.
+1. Der Browser speichert genau einen Protokollpunkt und mehrere Bilder in getrennten app-eigenen IndexedDB-Speichern.
 2. Nach dem Stoppen speichert er zusätzlich genau eine Aufnahme mit dem Status `Noch nicht übertragen`.
 3. Formular, Bild und Aufnahme bleiben beim Neuladen erhalten.
 4. Erst nach `Diktat jetzt auswerten` sendet der Browser ausschliesslich die Audiodatei an den PlauderBox-Server.
 5. Der Server transkribiert sie über OpenAI `/v1/audio/transcriptions` und strukturiert das Transkript anschliessend über die Responses API.
-6. Gruppe, Thema, Ort und Text werden nur in noch leere lokale Felder eingesetzt.
+6. Gruppe, Thema, Inhalt und ein allenfalls genannter Rechtsverweis werden nur in noch leere lokale Felder eingesetzt.
 7. Nach bestätigter Gesamtauswertung löscht der Browser nur die lokale Aufnahme.
 
 PlauderBox speichert Protokollpunkt, Bild und die noch nicht übertragene Aufnahme intern im Browser. Diese Daten erscheinen nicht in Downloads, Galerie, SD-Karte oder Cloud. Formular und Bild werden weder an HappyHour noch an den PlauderBox-Server übertragen. Für die Verarbeitung der bewusst übertragenen Audioaufnahme durch OpenAI gelten die Bedingungen und Datenschutzregeln des konfigurierten API-Kontos.
@@ -38,7 +38,7 @@ PlauderBox speichert Protokollpunkt, Bild und die noch nicht übertragene Aufnah
 
 - Nur lokaler Loopback-Betrieb, keine Benutzeranmeldung.
 - Maximal 20 MB Audio je Aufnahme.
-- Genau ein lokaler Protokollpunkt, ein Bild und eine ausstehende Audioaufnahme.
+- Genau ein lokaler Protokollpunkt, mehrere Bilder und eine ausstehende Audioaufnahme.
 - Keine HappyHour-Anbindung und keine Referenzdaten-Auswahllisten.
 - Keine produktive oder öffentliche Bereitstellung.
 
@@ -57,13 +57,16 @@ PlauderBox speichert Protokollpunkt, Bild und die noch nicht übertragene Aufnah
 - `docs/D005 - Anforderungen an die intern gespeicherte Einzelaufnahme.md`
 - `docs/D006 - Lokalen Protokollpunkt mit Bild erfassen.md`
 - `docs/D007 - Neuen Protokollpunkt zuerst mit Bild und Sprache erfassen.md`
+- `docs/D008 - Aufnahme verwerfen und mehrere Bilder lokal erfassen.md`
 - `docs/LD001 - Lokaler Aufnahmeprototyp mit OpenAI-Transkription.md`
 - `docs/LD002 - PlauderBox Testumgebung Delphi01.md`
 - `docs/LD003 - Vue Oberfläche mit intern gespeicherter Einzelaufnahme.md`
 - `docs/LD004 - Lokaler Protokollpunktentwurf mit Bild.md`
 - `docs/LD005 - Bild und Diktat vor dem strukturierten Entwurf erfassen.md`
+- `docs/LD006 - Mehrere lokale Bilder und verwerfbare Aufnahme.md`
 - `docs/T002 - Einzelne Aufnahme intern speichern und nach Bestätigung löschen.md`
 - `docs/T001 - Mikrofonaufnahme im Browser transkribieren.md`
 - `docs/T003 - Protokollpunktfelder und Bild lokal speichern.md`
 - `docs/T004 - Erkennungsfelder aus dem Diktat lokal übernehmen.md`
+- `docs/T005 - Aufnahme verwerfen und mehrere Bilder getrennt verwalten.md`
 

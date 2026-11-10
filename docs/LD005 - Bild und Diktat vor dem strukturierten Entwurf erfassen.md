@@ -9,15 +9,15 @@ datum: 2026-11-10
 
 ## Gültiger Stand
 
-Die mobile Oberfläche zeigt bei einem neuen Punkt zuerst die Bildauswahl und die Sprachaufnahme. Der lokale Protokollpunkt folgt als Kontrollbereich. Nach der bewussten Audioauswertung liefert der Server neben dem Transkript strukturierte Vorschläge für Gruppe, Thema und Ort. Nur leere lokale Felder werden ergänzt.
+Die mobile Oberfläche zeigt bei einem neuen Punkt zuerst die Bildauswahl und die Sprachaufnahme. Der lokale Protokollpunkt folgt als Kontrollbereich. Nach der bewussten Audioauswertung liefert der Server neben dem Transkript strukturierte Vorschläge für Gruppe, Thema, Inhalt und einen allenfalls genannten Rechtsverweis. Nur leere lokale Felder werden ergänzt.
 
 ## Umsetzung
 
 | Bestandteil | Originalpfad | Stand |
 |---|---|---|
 | UI-Reihenfolge und lokale Übernahme | `src/PlauderBox.UI.Client/src/App.vue` | umgesetzt |
-| Lokales Ortsfeld und geschützte Vorschlagsübernahme | `src/PlauderBox.UI.Client/src/services/internerAufnahmespeicher.ts` | umgesetzt |
-| Frontendtests | `src/PlauderBox.UI.Client/src/services/internerAufnahmespeicher.test.ts` | 7 Tests bestanden |
+| Geschützte Vorschlagsübernahme und Bereinigung des verworfenen Ortsfelds | `src/PlauderBox.UI.Client/src/services/internerAufnahmespeicher.ts`, `src/PlauderBox.UI.Client/src/App.vue` | umgesetzt |
+| Frontendtests | `src/PlauderBox.UI.Client/src/services/internerAufnahmespeicher.test.ts` | 8 Tests bestanden |
 | Providerunabhängiger Strukturierungsvertrag | `src/PlauderBox.Logik/IProtokollpunktStrukturierer.cs` | umgesetzt |
 | OpenAI Responses API mit strengem JSON-Schema | `src/PlauderBox.Datenmanagement/OpenAiProtokollpunktStrukturierer.cs` | umgesetzt |
 | HTTP-Endpunkt und Composition Root | `src/Program.cs` | umgesetzt |
@@ -26,7 +26,7 @@ Branch: `main`, Commit `3161047`. Das daraus auf Delphi01 gebaute Image besitzt 
 
 ## Grenzen
 
-- `strOrt` ist ausschliesslich lokaler Erfassungskontext und kein Feld von `tblProtokollpunkt`.
+- Es wird kein separates Ortsfeld geführt; ein aus der Vorversion lokal gespeicherter Wert wird beim Laden entfernt.
 - Die Strukturierung ist ein KI-Vorschlag und muss vom Mitarbeiter kontrolliert werden.
 - Formular und Bild bleiben lokal; nur die bewusst freigegebene Audioaufnahme und ihr Transkript werden durch die konfigurierten OpenAI-Dienste verarbeitet.
 

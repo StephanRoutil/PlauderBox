@@ -27,15 +27,21 @@ public sealed class OpenAiProtokollpunktStrukturierer : IProtokollpunktStrukturi
         CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(transkript))
-            return new ProtokollpunktStrukturierung(string.Empty, string.Empty, string.Empty);
+            return new ProtokollpunktStrukturierung(
+                string.Empty,
+                string.Empty,
+                string.Empty,
+                string.Empty);
 
         object anfrage = new
         {
             model = _modell,
             store = false,
             instructions =
-                "Extrahiere aus einem deutschsprachigen Baustellen- oder Rundgangsdiktat Gruppe, Thema und Ort. " +
-                "Gruppe ist die fachliche Rubrik, Thema eine kurze sachliche Überschrift und Ort die konkrete Lage im Gebäude oder auf der Baustelle. " +
+                "Extrahiere aus einem deutschsprachigen Baustellen- oder Rundgangsdiktat Gruppe, Thema, Inhalt und einen allenfalls genannten Rechtsverweis. " +
+                "Das erwartete Sprechschema lautet: Gruppe, Thema, Inhalt, optional Rechtsverweis. " +
+                "Gruppe ist die fachliche Rubrik, Thema eine kurze sachliche Überschrift und Inhalt die vollständige sachliche Feststellung ohne die gesprochenen Feldbezeichnungen. " +
+                "Ein Rechtsverweis darf nur übernommen werden, wenn er ausdrücklich genannt wird. " +
                 "Verwende ausschliesslich Angaben aus dem Text. Wenn etwas nicht erkennbar ist, gib dafür eine leere Zeichenfolge zurück.",
             input = transkript,
             text = new
@@ -52,9 +58,10 @@ public sealed class OpenAiProtokollpunktStrukturierer : IProtokollpunktStrukturi
                         {
                             gruppe = new { type = "string" },
                             thema = new { type = "string" },
-                            ort = new { type = "string" }
+                            inhalt = new { type = "string" },
+                            rechtsverweis = new { type = "string" }
                         },
-                        required = new[] { "gruppe", "thema", "ort" },
+                        required = new[] { "gruppe", "thema", "inhalt", "rechtsverweis" },
                         additionalProperties = false
                     }
                 }
@@ -82,7 +89,8 @@ public sealed class OpenAiProtokollpunktStrukturierer : IProtokollpunktStrukturi
         return new ProtokollpunktStrukturierung(
             struktur.Gruppe?.Trim() ?? string.Empty,
             struktur.Thema?.Trim() ?? string.Empty,
-            struktur.Ort?.Trim() ?? string.Empty);
+            struktur.Inhalt?.Trim() ?? string.Empty,
+            struktur.Rechtsverweis?.Trim() ?? string.Empty);
     }
 
     private static string? LeseAusgabetext(JsonElement antwort)
@@ -111,7 +119,10 @@ public sealed class OpenAiProtokollpunktStrukturierer : IProtokollpunktStrukturi
         [JsonPropertyName("thema")]
         public string? Thema { get; init; }
 
-        [JsonPropertyName("ort")]
-        public string? Ort { get; init; }
+        [JsonPropertyName("inhalt")]
+        public string? Inhalt { get; init; }
+
+        [JsonPropertyName("rechtsverweis")]
+        public string? Rechtsverweis { get; init; }
     }
 }
