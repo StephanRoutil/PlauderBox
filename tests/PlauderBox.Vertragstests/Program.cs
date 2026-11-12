@@ -239,6 +239,8 @@ static async Task PruefeServerstrukturAsync()
     Pruefe(naechsterAufgerufen, "Erlaubte Proxyquelle mit passendem Ursprung wurde abgewiesen.");
     Pruefe(QuellUndUrsprungsMiddleware.ErmittleQuellPartition(proxyKontext, "172.22.0.0/24") == "198.51.100.42", "Bestätigte Clientquelle wurde nicht als Partition verwendet.");
     Pruefe(proxyKontext.Response.Headers["Cache-Control"] == "no-store", "Sicherheitsheader fehlt.");
+    Pruefe(proxyKontext.Response.Headers["Permissions-Policy"] == "camera=(self), microphone=(self), geolocation=()", "Permissions-Policy fehlt.");
+    Pruefe(proxyKontext.Response.Headers["Content-Security-Policy"].ToString().Contains("frame-ancestors 'self'", StringComparison.Ordinal), "CSP begrenzt frame-ancestors nicht.");
 }
 
 static async Task PruefeHappyHourFehlerabbildungAsync()

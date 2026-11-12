@@ -31,7 +31,8 @@ public sealed class QuellUndUrsprungsMiddleware
         context.Response.Headers["Cache-Control"] = "no-store";
         context.Response.Headers["X-Content-Type-Options"] = "nosniff";
         context.Response.Headers["Referrer-Policy"] = "no-referrer";
-        context.Response.Headers["Content-Security-Policy"] = "default-src 'self'; connect-src 'self'; media-src 'self' blob:; script-src 'self'; style-src 'self'; img-src 'self' data: blob:";
+        context.Response.Headers["Permissions-Policy"] = "camera=(self), microphone=(self), geolocation=()";
+        context.Response.Headers["Content-Security-Policy"] = "default-src 'self'; connect-src 'self'; media-src 'self' blob:; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; frame-ancestors 'self'";
 
         if (HttpMethods.IsPost(context.Request.Method)
             && context.Request.Path.StartsWithSegments("/api"))
