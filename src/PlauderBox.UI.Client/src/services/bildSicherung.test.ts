@@ -57,11 +57,40 @@ describe('einmalige Sicherung aller Begehungsbilder', () => {
     const dateien = sammleBegehungsbilder(begehung())
     expect(dateien.map((datei) => datei.name)).toEqual([
       '450_P003_01_Loschgerate-UG_01.jpg',
-      '450_P003_01_Loschgerate-UG_02.jpeg',
+      '450_P003_01_Loschgerate-UG_02.jpg',
       '450_P003_02_Ohne-Gruppe_01.jpg',
     ])
     expect(dateien.every((datei) => datei.type === 'image/jpeg')).toBe(true)
     expect(await Promise.all(dateien.map((datei) => datei.text()))).toEqual(['eins', 'zwei', 'drei'])
+  })
+
+  it('leitet die Dateiendung aus den zugelassenen Bildtypen ab', () => {
+    const rundgang = begehung()
+    const formate = [
+      ['tiff-alt.jpg', 'image/tiff'],
+      ['gif-alt.bmp', 'image/gif'],
+      ['png-alt.webp', 'image/png'],
+      ['jpeg-alt.jpeg', 'image/jpeg'],
+    ] as const
+    rundgang.eintraege[0]!.bilder = formate.map(([dateiname, medientyp], index) => {
+      const datei = new Blob([medientyp], { type: medientyp })
+      return {
+        id: `bild-${index}`,
+        dateiname,
+        medientyp,
+        groesse: datei.size,
+        erstelltAm: '2026-11-11T08:00:00Z',
+        bild: datei,
+      }
+    })
+    rundgang.eintraege[1]!.bilder = []
+
+    expect(sammleBegehungsbilder(rundgang).map((datei) => datei.name)).toEqual([
+      '450_P003_01_Loschgerate-UG_01.tiff',
+      '450_P003_01_Loschgerate-UG_02.gif',
+      '450_P003_01_Loschgerate-UG_03.png',
+      '450_P003_01_Loschgerate-UG_04.jpg',
+    ])
   })
 
   it('übergibt alle einzelnen Bilder mit genau einem Share-Aufruf', async () => {

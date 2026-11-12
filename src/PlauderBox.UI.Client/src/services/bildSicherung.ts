@@ -1,5 +1,5 @@
 import type { LokaleBegehung, LokalesBild } from './begehungsSpeicher'
-import { istUnterstuetzterBildtyp, maximaleBildgroesse } from '@logik/clientPruefungen'
+import { istUnterstuetzterBildtyp, maximaleBildgroesse, unterstuetzteBildtypen } from '@logik/clientPruefungen'
 
 export type BildSicherungsart = 'geteilt' | 'heruntergeladen' | 'keine_bilder'
 export interface BildSicherungsErgebnis { art: BildSicherungsart; anzahl: number }
@@ -9,6 +9,8 @@ export interface BildTeiler {
 }
 
 type BildDownloader = (datei: File) => void
+
+const bildendungen = new Map(unterstuetzteBildtypen.map((bildtyp) => [bildtyp, standardendung(bildtyp)]))
 
 export interface BildAuswahlErgebnis { bilder: LokalesBild[]; fehler: string[] }
 
@@ -94,12 +96,14 @@ function ladeBildHerunter(datei: File): void {
 }
 
 function ermittleEndung(bild: LokalesBild): string {
-  const dateiEndung = bild.dateiname.match(/\.([A-Za-z0-9]{2,5})$/)?.[1]?.toLocaleLowerCase('de-CH')
-  if (dateiEndung && ['jpg', 'jpeg', 'png', 'webp', 'heic', 'heif', 'gif', 'bmp'].includes(dateiEndung)) return dateiEndung
-  if (bild.medientyp.includes('png')) return 'png'
-  if (bild.medientyp.includes('webp')) return 'webp'
-  if (bild.medientyp.includes('heic')) return 'heic'
-  if (bild.medientyp.includes('heif')) return 'heif'
+  const bildtyp = (bild.medientyp || bild.bild.type).toLocaleLowerCase('en-US')
+  return bildendungen.get(bildtyp) ?? 'jpg'
+}
+
+function standardendung(bildtyp: string): string {
+  if (bildtyp === 'image/png') return 'png'
+  if (bildtyp === 'image/gif') return 'gif'
+  if (bildtyp === 'image/tiff' || bildtyp === 'image/tif') return 'tiff'
   return 'jpg'
 }
 
