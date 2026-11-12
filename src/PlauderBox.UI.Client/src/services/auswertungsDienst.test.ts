@@ -43,7 +43,7 @@ describe('Auswertungsdienst', () => {
       gruppe: 'Brandschutz',
     })
     const aufruf = fetchFunktion.mock.calls[0]
-    expect(aufruf?.[0]).toBe('/api/transkribieren')
+    expect(aufruf?.[0]).toBe('/api/v1/transkribieren')
     const formular = aufruf?.[1]?.body as FormData
     expect(formular.get('erfassungsId')).toBe(eintrag.id)
     expect(formular.get('audio')).toBeInstanceOf(Blob)

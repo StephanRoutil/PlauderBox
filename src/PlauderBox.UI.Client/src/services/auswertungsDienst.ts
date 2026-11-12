@@ -19,7 +19,7 @@ export async function sendeAudioZurAuswertung(
   const formular = new FormData()
   formular.append('audio', eintrag.audio.audio, eintrag.audio.dateiname)
   formular.append('erfassungsId', eintrag.id)
-  const antwort = await fetchFunktion('/api/transkribieren', {
+  const antwort = await fetchFunktion('/api/v1/transkribieren', {
     method: 'POST',
     headers: { 'X-PlauderBox-Freigabe': freigabeToken },
     body: formular,

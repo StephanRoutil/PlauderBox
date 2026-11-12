@@ -50,7 +50,7 @@ describe('HappyHour-Begehungsfreigabe', () => {
     )
     await expect(ladeHappyHourProtokollKontext(freigabe, fetchFunktion)).resolves.toEqual(kontext)
     expect(fetchFunktion).toHaveBeenCalledWith(
-      `/api/happyhour/freigaben/${token}`,
+      `/api/v1/happyhour/freigaben/${token}`,
       expect.objectContaining({ credentials: 'same-origin' }),
     )
   })

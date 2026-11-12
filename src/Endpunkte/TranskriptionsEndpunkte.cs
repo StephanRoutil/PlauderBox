@@ -7,12 +7,18 @@ public static class TranskriptionsEndpunkte
 {
     public static void MappeTranskriptionsEndpunkte(this WebApplication app)
     {
-        app.MapGet("/api/status", (PlauderBoxOptionen optionen) => Results.Ok(new
+        MappeTranskriptionsEndpunkte(app, "/api/v1");
+        MappeTranskriptionsEndpunkte(app, "/api");
+    }
+
+    private static void MappeTranskriptionsEndpunkte(WebApplication app, string praefix)
+    {
+        app.MapGet($"{praefix}/status", (PlauderBoxOptionen optionen) => Results.Ok(new
         {
             kiBereit = !string.IsNullOrWhiteSpace(optionen.ApiKey)
         }));
 
-        app.MapPost("/api/transkribieren", TranskribiereAsync)
+        app.MapPost($"{praefix}/transkribieren", TranskribiereAsync)
             .DisableAntiforgery()
             .RequireRateLimiting("Transkription");
     }

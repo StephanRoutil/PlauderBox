@@ -10,7 +10,7 @@ test('sichert offline, übersteht den Neustart und übergibt nach Wiederverbindu
       get: () => localStorage.getItem('plauderbox-test-online') !== 'false',
     })
   })
-  await page.route('**/api/transkribieren', async (route) => {
+  await page.route('**/api/v1/transkribieren', async (route) => {
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -25,7 +25,7 @@ test('sichert offline, übersteht den Neustart und übergibt nach Wiederverbindu
       }),
     })
   })
-  await page.route('**/api/happyhour/protokollpunkte/uebergeben', async (route) => {
+  await page.route('**/api/v1/happyhour/protokollpunkte/uebergeben', async (route) => {
     const anforderung = route.request().postDataJSON() as { eintraege: Array<{ erfassungsId: string }> }
     await route.fulfill({
       status: 200,

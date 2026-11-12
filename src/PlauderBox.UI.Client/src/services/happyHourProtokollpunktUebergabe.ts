@@ -78,7 +78,7 @@ export async function uebergebeProtokollpunkte(
 
   let antwort: Response
   try {
-    antwort = await fetchFunktion('/api/happyhour/protokollpunkte/uebergeben', {
+    antwort = await fetchFunktion('/api/v1/happyhour/protokollpunkte/uebergeben', {
       method: 'POST',
       credentials: 'same-origin',
       headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
@@ -131,7 +131,7 @@ async function uebergebeBilder(
       let antwort: Response
       try {
         antwort = await fetchFunktion(
-          `/api/happyhour/protokollpunkte/${punkt.protokollpunktId}/bilder/${encodeURIComponent(bild.id)}`,
+          `/api/v1/happyhour/protokollpunkte/${punkt.protokollpunktId}/bilder/${encodeURIComponent(bild.id)}`,
           {
             method: 'POST',
             credentials: 'same-origin',

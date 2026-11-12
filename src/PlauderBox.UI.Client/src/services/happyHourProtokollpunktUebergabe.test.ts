@@ -88,7 +88,7 @@ describe('HappyHour-Protokollpunktübergabe', () => {
       { erfassungsId: begehung.eintraege[0]!.id, protokollpunktId: 41, erstellt: true },
     ])
     const aufruf = fetchFunktion.mock.calls[0]!
-    expect(aufruf[0]).toBe('/api/happyhour/protokollpunkte/uebergeben')
+    expect(aufruf[0]).toBe('/api/v1/happyhour/protokollpunkte/uebergeben')
     const optionen = aufruf[1]!
     const payload = JSON.parse(String(optionen.body))
     expect(payload.eintraege[0]).toEqual({
@@ -105,7 +105,7 @@ describe('HappyHour-Protokollpunktübergabe', () => {
     expect(String(optionen.body)).not.toContain('foto.jpg')
     expect(fetchFunktion).toHaveBeenCalledTimes(2)
     const bildAufruf = fetchFunktion.mock.calls[1]!
-    expect(bildAufruf[0]).toBe('/api/happyhour/protokollpunkte/41/bilder/10000000-0000-4000-8000-000000000001')
+    expect(bildAufruf[0]).toBe('/api/v1/happyhour/protokollpunkte/41/bilder/10000000-0000-4000-8000-000000000001')
     expect(bildAufruf[1]!.body).toBeInstanceOf(FormData)
     expect((bildAufruf[1]!.body as FormData).get('aufnahmezeitpunkt')).toBe(
       begehung.eintraege[0]!.bilder[0]!.erstelltAm,
@@ -203,7 +203,7 @@ describe('HappyHour-Protokollpunktübergabe', () => {
     const punktPayload = JSON.parse(String(fetchFunktion.mock.calls[0]![1]!.body))
     expect(punktPayload.begehungStatus).toBe('lokal_abgeschlossen')
     expect(fetchFunktion.mock.calls[1]![0]).toBe(
-      '/api/happyhour/protokollpunkte/2283/bilder/10000000-0000-4000-8000-000000000001',
+      '/api/v1/happyhour/protokollpunkte/2283/bilder/10000000-0000-4000-8000-000000000001',
     )
   })
 

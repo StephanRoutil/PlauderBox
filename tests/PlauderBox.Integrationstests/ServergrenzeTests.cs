@@ -9,6 +9,19 @@ namespace PlauderBox.Integrationstests;
 
 public sealed class ServergrenzeTests
 {
+    [Theory]
+    [InlineData("/api/v1/status")]
+    [InlineData("/api/status")]
+    public async Task VersionierterPfadUndUebergangsAliasSindErreichbar(string pfad)
+    {
+        await using IntegrationstestFabrik fabrik = new();
+        using HttpClient client = fabrik.CreateClient();
+
+        using HttpResponseMessage antwort = await client.GetAsync(pfad);
+
+        Assert.Equal(HttpStatusCode.OK, antwort.StatusCode);
+    }
+
     [Fact]
     public async Task FremdeQuelleWirdAbgewiesen()
     {

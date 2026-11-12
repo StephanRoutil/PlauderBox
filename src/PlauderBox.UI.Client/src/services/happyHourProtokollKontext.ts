@@ -50,7 +50,7 @@ export async function ladeHappyHourProtokollKontext(
 ): Promise<HappyHourProtokollKontext> {
   let antwort: Response
   try {
-    antwort = await fetchFunktion(`/api/happyhour/freigaben/${encodeURIComponent(freigabe.token)}`, {
+    antwort = await fetchFunktion(`/api/v1/happyhour/freigaben/${encodeURIComponent(freigabe.token)}`, {
       method: 'GET',
       credentials: 'same-origin',
       headers: { Accept: 'application/json' },
