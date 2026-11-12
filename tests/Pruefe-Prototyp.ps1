@@ -13,6 +13,8 @@ pnpm --dir $clientordner run test
 if ($LASTEXITCODE -ne 0) { throw "PlauderBox-Frontendtests fehlgeschlagen (Exitcode $LASTEXITCODE)." }
 pnpm --dir $clientordner run build
 if ($LASTEXITCODE -ne 0) { throw "PlauderBox-Frontendbuild fehlgeschlagen (Exitcode $LASTEXITCODE)." }
+pnpm --dir $clientordner run test:browser
+if ($LASTEXITCODE -ne 0) { throw "PlauderBox-Browsertests fehlgeschlagen (Exitcode $LASTEXITCODE)." }
 
 dotnet build (Join-Path $projektordner 'src\PlauderBox.sln') -c Release
 if ($LASTEXITCODE -ne 0) { throw "PlauderBox-Build fehlgeschlagen (Exitcode $LASTEXITCODE)." }

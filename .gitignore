@@ -4,6 +4,8 @@ obj/
 appsettings.Local.json
 deploy/**/secrets/
 src/PlauderBox.UI.Client/node_modules/
+src/PlauderBox.UI.Client/playwright-report/
+src/PlauderBox.UI.Client/test-results/
 *.user
 *.suo
 **/.vs/
