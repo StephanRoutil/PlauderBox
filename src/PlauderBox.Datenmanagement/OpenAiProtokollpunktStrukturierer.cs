@@ -76,13 +76,20 @@ public sealed class OpenAiProtokollpunktStrukturierer : IProtokollpunktStrukturi
         if (!response.IsSuccessStatusCode)
             throw new HttpRequestException("Die strukturierte KI-Auswertung ist fehlgeschlagen.");
 
-        await using Stream antwort = await response.Content.ReadAsStreamAsync(cancellationToken);
-        using JsonDocument json = await JsonDocument.ParseAsync(antwort, cancellationToken: cancellationToken);
-        string? ausgabetext = LeseAusgabetext(json.RootElement);
-        if (string.IsNullOrWhiteSpace(ausgabetext))
-            throw new InvalidDataException("Die strukturierte KI-Auswertung enthält keine Antwort.");
-
-        StrukturierteAntwort? struktur = JsonSerializer.Deserialize<StrukturierteAntwort>(ausgabetext);
+        StrukturierteAntwort? struktur;
+        try
+        {
+            await using Stream antwort = await response.Content.ReadAsStreamAsync(cancellationToken);
+            using JsonDocument json = await JsonDocument.ParseAsync(antwort, cancellationToken: cancellationToken);
+            string? ausgabetext = LeseAusgabetext(json.RootElement);
+            if (string.IsNullOrWhiteSpace(ausgabetext))
+                throw new InvalidDataException("Die strukturierte KI-Auswertung enthält keine Antwort.");
+            struktur = JsonSerializer.Deserialize<StrukturierteAntwort>(ausgabetext);
+        }
+        catch (Exception ex) when (ex is JsonException or InvalidOperationException)
+        {
+            throw new InvalidDataException("Die strukturierte KI-Auswertung ist ungültig.", ex);
+        }
         if (struktur is null)
             throw new InvalidDataException("Die strukturierte KI-Auswertung ist ungültig.");
 
@@ -95,15 +102,21 @@ public sealed class OpenAiProtokollpunktStrukturierer : IProtokollpunktStrukturi
 
     private static string? LeseAusgabetext(JsonElement antwort)
     {
-        if (!antwort.TryGetProperty("output", out JsonElement ausgaben)) return null;
+        if (!antwort.TryGetProperty("output", out JsonElement ausgaben)
+            || ausgaben.ValueKind != JsonValueKind.Array) return null;
         foreach (JsonElement ausgabe in ausgaben.EnumerateArray())
         {
-            if (!ausgabe.TryGetProperty("content", out JsonElement inhalte)) continue;
+            if (ausgabe.ValueKind != JsonValueKind.Object
+                || !ausgabe.TryGetProperty("content", out JsonElement inhalte)
+                || inhalte.ValueKind != JsonValueKind.Array) continue;
             foreach (JsonElement inhalt in inhalte.EnumerateArray())
             {
-                if (inhalt.TryGetProperty("type", out JsonElement typ)
+                if (inhalt.ValueKind == JsonValueKind.Object
+                    && inhalt.TryGetProperty("type", out JsonElement typ)
+                    && typ.ValueKind == JsonValueKind.String
                     && typ.GetString() == "output_text"
-                    && inhalt.TryGetProperty("text", out JsonElement text))
+                    && inhalt.TryGetProperty("text", out JsonElement text)
+                    && text.ValueKind == JsonValueKind.String)
                     return text.GetString();
             }
         }

@@ -119,6 +119,24 @@ static async Task PruefeKiSchemaAsync()
     Pruefe(!schema.GetProperty("additionalProperties").GetBoolean(), "Zusätzliche KI-Felder müssen verboten sein.");
     string[] eigenschaften = schema.GetProperty("properties").EnumerateObject().Select(e => e.Name).Order().ToArray();
     Pruefe(eigenschaften.SequenceEqual(new[] { "gruppe", "inhalt", "rechtsverweis", "thema" }), "KI-Schema darf insbesondere kein Ort-Feld enthalten.");
+
+    await PruefeStrukturantwortUngueltigAsync("kein-json");
+    await PruefeStrukturantwortUngueltigAsync("{\"output\":{}}");
+}
+
+static async Task PruefeStrukturantwortUngueltigAsync(string antwort)
+{
+    AufzeichnenderHandler handler = new(_ => new HttpResponseMessage(HttpStatusCode.OK)
+    {
+        Content = new StringContent(antwort, Encoding.UTF8, "application/json")
+    });
+    OpenAiProtokollpunktStrukturierer strukturierer = new(
+        new HttpClient(handler) { BaseAddress = new Uri("https://api.openai.test/v1/") },
+        "synthetischer-testschluessel",
+        "synthetisches-testmodell");
+    await PruefeAusnahmeAsync<InvalidDataException>(() => strukturierer.StrukturierenAsync(
+        "Synthetisches Diktat",
+        CancellationToken.None));
 }
 
 static async Task PruefeTranskriptionsdienstAsync()

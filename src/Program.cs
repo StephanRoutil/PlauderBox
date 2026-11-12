@@ -47,6 +47,7 @@ builder.Services.AddScoped<ITranskriptionsdienst>(services => new OpenAiTranskri
     optionen.ApiKey ?? string.Empty,
     optionen.Modell));
 builder.Services.AddMemoryCache();
+builder.Services.AddProblemDetails();
 builder.Services.AddSingleton<Freigabekontingent>();
 builder.Services.AddRateLimiter(ratenlimit =>
 {
@@ -70,6 +71,13 @@ builder.Services.AddRateLimiter(ratenlimit =>
 });
 
 WebApplication app = builder.Build();
+app.UseExceptionHandler(fehleranwendung => fehleranwendung.Run(async context =>
+{
+    context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+    await Results.Problem(
+        title: "Interner Serverfehler",
+        statusCode: StatusCodes.Status500InternalServerError).ExecuteAsync(context);
+}));
 app.UseMiddleware<QuellUndUrsprungsMiddleware>();
 app.UseRateLimiter();
 app.UseDefaultFiles();

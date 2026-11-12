@@ -159,6 +159,12 @@ public static class TranskriptionsEndpunkte
                     "Die strukturierte Auswertung konnte nicht gelesen werden.",
                     StatusCodes.Status502BadGateway);
             }
+            catch (System.Text.Json.JsonException)
+            {
+                return Problem(
+                    "Die strukturierte Auswertung konnte nicht gelesen werden.",
+                    StatusCodes.Status502BadGateway);
+            }
         }, HappyHourFehlerkontext.Transkriptionsfreigabe);
     }
 
