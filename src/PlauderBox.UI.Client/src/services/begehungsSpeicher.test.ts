@@ -40,6 +40,38 @@ const protokoll: HappyHourProtokollKontext = {
   protokollpunktArten: [{ id: 1, bezeichnung: 'Feststellung' }],
 }
 
+async function speichereVersionEins(wert: unknown): Promise<void> {
+  const datenbank = await new Promise<IDBDatabase>((resolve, reject) => {
+    const anfrage = indexedDB.open('PlauderBoxBegehungsspeicher', 1)
+    anfrage.addEventListener('upgradeneeded', () => anfrage.result.createObjectStore('begehungen'))
+    anfrage.addEventListener('success', () => resolve(anfrage.result))
+    anfrage.addEventListener('error', () => reject(anfrage.error))
+  })
+  const transaktion = datenbank.transaction('begehungen', 'readwrite')
+  transaktion.objectStore('begehungen').put(wert, 'aktive-begehung')
+  await new Promise<void>((resolve, reject) => {
+    transaktion.addEventListener('complete', () => resolve())
+    transaktion.addEventListener('error', () => reject(transaktion.error))
+  })
+  datenbank.close()
+}
+
+async function leseDatenbankstand(version: number): Promise<{ version: number; wert: unknown; stores: string[] }> {
+  const datenbank = await new Promise<IDBDatabase>((resolve, reject) => {
+    const anfrage = indexedDB.open('PlauderBoxBegehungsspeicher', version)
+    anfrage.addEventListener('success', () => resolve(anfrage.result))
+    anfrage.addEventListener('error', () => reject(anfrage.error))
+  })
+  const anfrage = datenbank.transaction('begehungen', 'readonly').objectStore('begehungen').get('aktive-begehung')
+  const wert = await new Promise<unknown>((resolve, reject) => {
+    anfrage.addEventListener('success', () => resolve(anfrage.result))
+    anfrage.addEventListener('error', () => reject(anfrage.error))
+  })
+  const ergebnis = { version: datenbank.version, wert, stores: Array.from(datenbank.objectStoreNames) }
+  datenbank.close()
+  return ergebnis
+}
+
 describe('Begehungsspeicher und Fachzustände', () => {
   beforeEach(() => {
     Object.defineProperty(globalThis, 'indexedDB', { configurable: true, value: new IDBFactory() })
@@ -62,6 +94,37 @@ describe('Begehungsspeicher und Fachzustände', () => {
     expect(await geladen?.eintraege[0]?.bilder[0]?.bild.text()).toBe('bild')
     await loescheBegehung()
     await expect(ladeBegehung()).resolves.toBeNull()
+  })
+
+  it('migriert Version 1 atomar in getrennte Audio- und Bildspeicher ohne Datenverlust', async () => {
+    const alt = erstelleBegehung(protokoll)
+    const eintrag = erstelleEintrag()
+    eintrag.audio = { dateiname: 'alt.webm', medientyp: 'audio/webm', groesse: 5, dauerSekunden: 2, audio: new Blob(['alt-audio']) }
+    eintrag.bilder.push({ id: 'alt-bild', dateiname: 'alt.jpg', medientyp: 'image/jpeg', groesse: 4, erstelltAm: eintrag.erstelltAm, bild: new Blob(['alt-bild']) })
+    alt.eintraege.push(eintrag)
+    await speichereVersionEins(alt)
+
+    const geladen = await ladeBegehung()
+    const datenbankstand = await leseDatenbankstand(2)
+
+    expect(await geladen?.eintraege[0]?.audio?.audio.text()).toBe('alt-audio')
+    expect(await geladen?.eintraege[0]?.bilder[0]?.bild.text()).toBe('alt-bild')
+    expect(datenbankstand.stores.sort()).toEqual(['audio', 'begehungen', 'bilder'])
+    expect(datenbankstand.wert).toMatchObject({ schemaVersion: 2, eintraege: [{ audioSchluessel: expect.any(String), bildSchluessel: [expect.any(String)] }] })
+    expect((datenbankstand.wert as { eintraege: Array<Record<string, unknown>> }).eintraege[0]).not.toHaveProperty('audio')
+    expect((datenbankstand.wert as { eintraege: Array<Record<string, unknown>> }).eintraege[0]).not.toHaveProperty('bilder')
+  })
+
+  it('lässt Version-1-Daten bei abgebrochener Migration unverändert', async () => {
+    const unlesbar = { id: 'altbestand', aktualisiertAm: '2026-11-10T00:00:00Z', eintraege: null }
+    await speichereVersionEins(unlesbar)
+
+    await expect(ladeBegehung()).rejects.toBeTruthy()
+    const datenbankstand = await leseDatenbankstand(1)
+
+    expect(datenbankstand.version).toBe(1)
+    expect(datenbankstand.stores).toEqual(['begehungen'])
+    expect(datenbankstand.wert).toEqual(unlesbar)
   })
 
   it('entfernt Vue-Proxys an der IndexedDB-Grenze und startet die mobile Begehung dauerhaft', async () => {
