@@ -21,7 +21,7 @@ public sealed record ProtokollpunktBildUebergabe(
     string Dateiname,
     string Medientyp,
     DateTimeOffset Aufnahmezeitpunkt,
-    byte[] Inhalt);
+    Stream Inhalt);
 
 public sealed record ProtokollpunktBildUebergabeErgebnis(
     Guid BildId,

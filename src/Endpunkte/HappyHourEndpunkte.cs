@@ -140,13 +140,14 @@ public static class HappyHourEndpunkte
                     title: "Der Aufnahmezeitpunkt ist ungültig.",
                     statusCode: StatusCodes.Status400BadRequest);
 
-            await using MemoryStream inhalt = new((int)datei.Length);
-            await datei.CopyToAsync(inhalt, token);
-            byte[] bildinhalt = inhalt.ToArray();
-            if (!Bildpruefung.IstGueltig(datei.ContentType, bildinhalt))
+            await using Stream bildinhalt = datei.OpenReadStream();
+            byte[] signatur = new byte[4];
+            int signaturlaenge = await bildinhalt.ReadAsync(signatur, token);
+            if (!Bildpruefung.IstGueltig(datei.ContentType, signatur.AsSpan(0, signaturlaenge)))
                 return Results.Problem(
                     title: "Das Bildformat stimmt nicht mit dem Bildinhalt überein.",
                     statusCode: StatusCodes.Status400BadRequest);
+            bildinhalt.Position = 0;
             ProtokollpunktBildUebergabeErgebnis ergebnis = await ziel.SchreibeBildAsync(
                 freigabe.Wert,
                 new ProtokollpunktBildUebergabe(

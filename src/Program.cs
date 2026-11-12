@@ -21,7 +21,6 @@ builder.WebHost.UseUrls(optionen.Url);
 builder.Services.AddSingleton(optionen);
 builder.Services.Configure<FormOptions>(formular =>
 {
-    formular.MemoryBufferThreshold = (int)optionen.MaximaleAudiodateigroesseBytes;
     formular.MultipartBodyLengthLimit = optionen.MaximaleAudiodateigroesseBytes;
 });
 builder.Services.AddHttpClient("OpenAI", client =>
