@@ -9,7 +9,8 @@ await PruefeHappyHourProviderAsync();
 await PruefeHappyHourSchreibenAsync();
 await PruefeHappyHourBildSchreibenAsync();
 await PruefeKiSchemaAsync();
-Console.WriteLine("PlauderBox-Vertragstests bestanden: serverseitige Erfassungs-ID, Token, HappyHour-Provider und striktes KI-Schema.");
+await PruefeTranskriptionsdienstAsync();
+Console.WriteLine("PlauderBox-Vertragstests bestanden: serverseitige Erfassungs-ID, Token, HappyHour-Provider, Transkriptionsdienst und striktes KI-Schema.");
 
 static Task PruefeLogikAsync()
 {
@@ -109,6 +110,77 @@ static async Task PruefeKiSchemaAsync()
     Pruefe(!schema.GetProperty("additionalProperties").GetBoolean(), "Zusätzliche KI-Felder müssen verboten sein.");
     string[] eigenschaften = schema.GetProperty("properties").EnumerateObject().Select(e => e.Name).Order().ToArray();
     Pruefe(eigenschaften.SequenceEqual(new[] { "gruppe", "inhalt", "rechtsverweis", "thema" }), "KI-Schema darf insbesondere kein Ort-Feld enthalten.");
+}
+
+static async Task PruefeTranskriptionsdienstAsync()
+{
+    Pruefe(AudioformatPruefung.ErmittleDateiendung("audio/webm") == ".webm", "WebM-Endung wurde nicht erkannt.");
+    Pruefe(AudioformatPruefung.ErmittleDateiendung("audio/x-wav") == ".wav", "WAV-Endung wurde nicht erkannt.");
+    Pruefe(AudioformatPruefung.ErmittleDateiendung("text/plain") is null, "Fremder Audiotyp wurde akzeptiert.");
+
+    AufzeichnenderHandler erfolgHandler = new(_ => new HttpResponseMessage(HttpStatusCode.OK)
+    {
+        Content = new StringContent("{\"text\":\"Brandschutztüre blockiert\"}", Encoding.UTF8, "application/json")
+    });
+    OpenAiTranskriptionsdienst dienst = new(
+        new HttpClient(erfolgHandler) { BaseAddress = new Uri("https://api.openai.test/v1/") },
+        "synthetischer-testschluessel",
+        "synthetisches-testmodell");
+    await using MemoryStream audio = new([0x52, 0x49, 0x46, 0x46]);
+    Transkriptionsergebnis ergebnis = await dienst.TranskribierenAsync(
+        audio,
+        "audio/wav",
+        ".wav",
+        CancellationToken.None);
+    Pruefe(ergebnis.Text == "Brandschutztüre blockiert", "Transkription wurde nicht korrekt gelesen.");
+    Pruefe(erfolgHandler.LetzteMethode == HttpMethod.Post, "Transkriptionsvertrag muss POST verwenden.");
+    Pruefe(erfolgHandler.LetzteUri?.AbsolutePath == "/v1/audio/transcriptions", "Transkriptionsdienst verwendet nicht den gebundenen Pfad.");
+    Pruefe(erfolgHandler.LetzterInhalt?.Contains("synthetisches-testmodell", StringComparison.Ordinal) == true, "Transkriptionsmodell fehlt im Multipart-Inhalt.");
+
+    await PruefeTranskriptionsstatusAsync<TranskriptionszugangAbgelehntException>(HttpStatusCode.Unauthorized);
+    await PruefeTranskriptionsstatusAsync<TranskriptionskontingentException>(HttpStatusCode.TooManyRequests);
+    await PruefeTranskriptionsstatusAsync<TranskriptionsaufnahmeUngueltigException>(HttpStatusCode.BadRequest);
+
+    AufzeichnenderHandler timeoutHandler = new(_ => throw new OperationCanceledException("Synthetische Zeitüberschreitung"));
+    OpenAiTranskriptionsdienst timeoutDienst = new(
+        new HttpClient(timeoutHandler) { BaseAddress = new Uri("https://api.openai.test/v1/") },
+        "synthetischer-testschluessel",
+        "synthetisches-testmodell");
+    await using MemoryStream timeoutAudio = new([0x52, 0x49, 0x46, 0x46]);
+    await PruefeAusnahmeAsync<OperationCanceledException>(() => timeoutDienst.TranskribierenAsync(
+        timeoutAudio,
+        "audio/wav",
+        ".wav",
+        CancellationToken.None));
+}
+
+static async Task PruefeTranskriptionsstatusAsync<TAusnahme>(HttpStatusCode status)
+    where TAusnahme : Exception
+{
+    AufzeichnenderHandler handler = new(_ => new HttpResponseMessage(status));
+    OpenAiTranskriptionsdienst dienst = new(
+        new HttpClient(handler) { BaseAddress = new Uri("https://api.openai.test/v1/") },
+        "synthetischer-testschluessel",
+        "synthetisches-testmodell");
+    await using MemoryStream audio = new([0x52, 0x49, 0x46, 0x46]);
+    await PruefeAusnahmeAsync<TAusnahme>(() => dienst.TranskribierenAsync(
+        audio,
+        "audio/wav",
+        ".wav",
+        CancellationToken.None));
+}
+
+static async Task PruefeAusnahmeAsync<TAusnahme>(Func<Task> aktion)
+    where TAusnahme : Exception
+{
+    try
+    {
+        await aktion();
+        throw new InvalidOperationException($"Erwartete Ausnahme {typeof(TAusnahme).Name} wurde nicht ausgelöst.");
+    }
+    catch (TAusnahme)
+    {
+    }
 }
 
 static void Pruefe(bool bedingung, string meldung) { if (!bedingung) throw new InvalidOperationException(meldung); }

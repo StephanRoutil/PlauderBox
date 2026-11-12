@@ -1,5 +1,4 @@
 using System.Net;
-using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Http.Features;
@@ -57,6 +56,11 @@ builder.Services.AddScoped<IProtokollpunktStrukturierer>(services =>
         services.GetRequiredService<IHttpClientFactory>().CreateClient("OpenAI"),
         apiKey ?? string.Empty,
         strukturmodell));
+builder.Services.AddScoped<ITranskriptionsdienst>(services =>
+    new OpenAiTranskriptionsdienst(
+        services.GetRequiredService<IHttpClientFactory>().CreateClient("OpenAI"),
+        apiKey ?? string.Empty,
+        modell));
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
@@ -308,9 +312,9 @@ app.MapPost("/api/happyhour/protokollpunkte/{protokollpunktId:int}/bilder/{bildI
 
 app.MapPost("/api/transkribieren", async (
     HttpRequest request,
-    IHttpClientFactory clientFactory,
     IHappyHourFreigabeQuelle freigabeQuelle,
     IProtokollpunktStrukturierer strukturierer,
+    ITranskriptionsdienst transkriptionsdienst,
     IMemoryCache freigabeKontingente,
     CancellationToken token) =>
 {
@@ -341,7 +345,7 @@ app.MapPost("/api/transkribieren", async (
     if (!ReserviereFreigabeKontingent(freigabeKontingente, freigabeKontingentSperre, "transkription", freigabe.Wert, 20))
         return Results.Problem(title: "Transkriptionskontingent ausgeschöpft", statusCode: StatusCodes.Status429TooManyRequests);
 
-    if (string.IsNullOrWhiteSpace(apiKey))
+    if (!transkriptionsdienst.IstKonfiguriert)
         return Problem("Die KI-Anbindung ist lokal noch nicht konfiguriert.", StatusCodes.Status503ServiceUnavailable);
     if (!request.HasFormContentType)
         return Problem("Es wurde keine Audioaufnahme übermittelt.", StatusCodes.Status400BadRequest);
@@ -359,53 +363,19 @@ app.MapPost("/api/transkribieren", async (
         return Problem("Die Aufnahme überschreitet 20 MB.", StatusCodes.Status413PayloadTooLarge);
 
     string medientyp = audio.ContentType.Split(';', 2)[0].Trim().ToLowerInvariant();
-    string? endung = medientyp switch
-    {
-        "audio/webm" => ".webm",
-        "audio/ogg" => ".ogg",
-        "audio/mp4" => ".mp4",
-        "audio/mpeg" => ".mp3",
-        "audio/wav" or "audio/x-wav" => ".wav",
-        _ => null
-    };
+    string? endung = AudioformatPruefung.ErmittleDateiendung(medientyp);
     if (endung is null)
         return Problem("Dieses Audioformat wird nicht unterstützt.", StatusCodes.Status415UnsupportedMediaType);
 
     try
     {
         using Stream audioStream = audio.OpenReadStream();
-        using StreamContent audioInhalt = new(audioStream);
-        audioInhalt.Headers.ContentType = new MediaTypeHeaderValue(medientyp);
-        using MultipartFormDataContent inhalt = new();
-        inhalt.Add(audioInhalt, "file", "aufnahme" + endung);
-        inhalt.Add(new StringContent(modell), "model");
-        inhalt.Add(new StringContent("de"), "language");
-        inhalt.Add(new StringContent("Transkribiere das Gesprochene in deutscher Standardsprache. Erhalte Inhalt, Zahlen, Masse, Namen und Fachbegriffe. Erfinde nichts."), "prompt");
-
-        using HttpRequestMessage apiRequest = new(HttpMethod.Post, "audio/transcriptions");
-        apiRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
-        apiRequest.Content = inhalt;
-        using HttpResponseMessage apiResponse = await clientFactory.CreateClient("OpenAI").SendAsync(apiRequest, token);
-
-        if (!apiResponse.IsSuccessStatusCode)
-        {
-            string meldung = apiResponse.StatusCode switch
-            {
-                HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden => "OpenAI weist den konfigurierten Schlüssel zurück.",
-                HttpStatusCode.TooManyRequests => "OpenAI-Kontingent oder Anfragelimit erreicht.",
-                HttpStatusCode.BadRequest => "OpenAI konnte diese Aufnahme nicht verarbeiten.",
-                _ => "Die Transkription ist momentan nicht verfügbar."
-            };
-            return Problem(meldung, StatusCodes.Status502BadGateway);
-        }
-
-        await using Stream antwort = await apiResponse.Content.ReadAsStreamAsync(token);
-        using JsonDocument json = await JsonDocument.ParseAsync(antwort, cancellationToken: token);
-        if (!json.RootElement.TryGetProperty("text", out JsonElement textElement)
-            || string.IsNullOrWhiteSpace(textElement.GetString()))
-            return Problem("OpenAI hat keinen erkannten Text zurückgegeben.", StatusCodes.Status502BadGateway);
-
-        string transkript = textElement.GetString()!;
+        Transkriptionsergebnis transkription = await transkriptionsdienst.TranskribierenAsync(
+            audioStream,
+            medientyp,
+            endung,
+            token);
+        string transkript = transkription.Text;
         ProtokollpunktStrukturierung struktur = await strukturierer.StrukturierenAsync(transkript, token);
         return Results.Ok(new
         {
@@ -421,6 +391,26 @@ app.MapPost("/api/transkribieren", async (
     catch (OperationCanceledException) when (!token.IsCancellationRequested)
     {
         return Problem("Die Transkription hat zu lange gedauert.", StatusCodes.Status504GatewayTimeout);
+    }
+    catch (TranskriptionszugangAbgelehntException)
+    {
+        return Problem("OpenAI weist den konfigurierten Schlüssel zurück.", StatusCodes.Status502BadGateway);
+    }
+    catch (TranskriptionskontingentException)
+    {
+        return Problem("OpenAI-Kontingent oder Anfragelimit erreicht.", StatusCodes.Status502BadGateway);
+    }
+    catch (TranskriptionsaufnahmeUngueltigException)
+    {
+        return Problem("OpenAI konnte diese Aufnahme nicht verarbeiten.", StatusCodes.Status502BadGateway);
+    }
+    catch (TranskriptionsdienstNichtVerfuegbarException)
+    {
+        return Problem("Die Transkription ist momentan nicht verfügbar.", StatusCodes.Status502BadGateway);
+    }
+    catch (TranskriptionsantwortLeerException)
+    {
+        return Problem("OpenAI hat keinen erkannten Text zurückgegeben.", StatusCodes.Status502BadGateway);
     }
     catch (HttpRequestException)
     {
