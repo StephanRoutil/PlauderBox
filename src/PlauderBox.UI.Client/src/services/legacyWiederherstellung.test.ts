@@ -54,19 +54,17 @@ async function speichereLegacyDaten(aufnahme: InterneAufnahme, punkt?: LokalerPr
   transaktion.objectStore('aufnahmen').put(aufnahme)
   if (punkt) {
     transaktion.objectStore('protokollpunkt').put(punkt, 'aktueller-protokollpunkt')
-    transaktion
-      .objectStore('protokollpunktbild')
-      .put(
-        {
-          id: 'bild-alt',
-          dateiname: 'alt.jpg',
-          medientyp: 'image/jpeg',
-          groesse: 4,
-          erstelltAm: '2026-11-10T00:00:00Z',
-          bild: new Blob(['bild']),
-        },
-        'bild-alt',
-      )
+    transaktion.objectStore('protokollpunktbild').put(
+      {
+        id: 'bild-alt',
+        dateiname: 'alt.jpg',
+        medientyp: 'image/jpeg',
+        groesse: 4,
+        erstelltAm: '2026-11-10T00:00:00Z',
+        bild: new Blob(['bild']),
+      },
+      'bild-alt',
+    )
   }
   await new Promise<void>((resolve, reject) => {
     transaktion.addEventListener('complete', () => resolve())

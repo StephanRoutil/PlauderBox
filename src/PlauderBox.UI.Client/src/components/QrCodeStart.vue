@@ -75,12 +75,7 @@ function geheZurueck(): void {
         Kamera öffnen
       </button>
       <button v-else class="mobile-secondary" type="button" @click="stoppeScanner">Scannen abbrechen</button>
-      <button
-        v-if="eigenschaften.erneuerung"
-        class="mobile-secondary"
-        type="button"
-        @click="geheZurueck"
-      >
+      <button v-if="eigenschaften.erneuerung" class="mobile-secondary" type="button" @click="geheZurueck">
         Zurück zum Abschluss
       </button>
 

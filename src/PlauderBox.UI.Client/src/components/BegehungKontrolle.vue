@@ -21,16 +21,13 @@ const offen = computed(
       <h1>Begehung kontrollieren</h1>
       <div class="control-stats">
         <div>
-          <strong>{{ begehung.eintraege.length }}</strong
-          ><span>Einträge</span>
+          <strong>{{ begehung.eintraege.length }}</strong><span>Einträge</span>
         </div>
         <div>
-          <strong>{{ bilder }}</strong
-          ><span>Bilder</span>
+          <strong>{{ bilder }}</strong><span>Bilder</span>
         </div>
         <div :class="{ warning: offen }">
-          <strong>{{ offen }}</strong
-          ><span>offen</span>
+          <strong>{{ offen }}</strong><span>offen</span>
         </div>
       </div>
       <p v-if="offen" class="warning-box">
@@ -48,8 +45,9 @@ const offen = computed(
             class="entry-list-item"
             @click="$emit('bearbeiten', eintrag.id)"
           >
-            <strong>{{ eintrag.thema || 'Noch ohne Thema' }}</strong
-            ><small>{{ eintrag.inhalt || eintrag.status.replaceAll('_', ' ') }}</small>
+            <strong>{{ eintrag.thema || 'Noch ohne Thema' }}</strong><small>{{
+              eintrag.inhalt || eintrag.status.replaceAll('_', ' ')
+            }}</small>
           </button>
         </details>
       </section>
