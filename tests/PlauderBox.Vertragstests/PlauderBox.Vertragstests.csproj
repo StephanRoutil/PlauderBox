@@ -1,1 +1,13 @@
-<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework><Nullable>enable</Nullable><ImplicitUsings>enable</ImplicitUsings></PropertyGroup><ItemGroup><ProjectReference Include="..\..\src\PlauderBox.Logik\PlauderBox.Logik.csproj" /><ProjectReference Include="..\..\src\PlauderBox.Datenmanagement\PlauderBox.Datenmanagement.csproj" /></ItemGroup></Project>
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\PlauderBox.Logik\PlauderBox.Logik.csproj" />
+    <ProjectReference Include="..\..\src\PlauderBox.Datenmanagement\PlauderBox.Datenmanagement.csproj" />
+    <ProjectReference Include="..\..\src\PlauderBox.UI.csproj" />
+  </ItemGroup>
+</Project>

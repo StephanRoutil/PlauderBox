@@ -1,8 +1,14 @@
 using System.Net;
 using System.Text;
 using System.Text.Json;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Configuration;
 using PlauderBox.Datenmanagement;
 using PlauderBox.Logik;
+using PlauderBox.UI;
+using PlauderBox.UI.Endpunkte;
+using PlauderBox.UI.Sicherheit;
 
 await PruefeLogikAsync();
 await PruefeHappyHourProviderAsync();
@@ -10,6 +16,8 @@ await PruefeHappyHourSchreibenAsync();
 await PruefeHappyHourBildSchreibenAsync();
 await PruefeKiSchemaAsync();
 await PruefeTranskriptionsdienstAsync();
+await PruefeServerstrukturAsync();
+await PruefeHappyHourFehlerabbildungAsync();
 Console.WriteLine("PlauderBox-Vertragstests bestanden: serverseitige Erfassungs-ID, Token, HappyHour-Provider, Transkriptionsdienst und striktes KI-Schema.");
 
 static Task PruefeLogikAsync()
@@ -22,11 +30,11 @@ static Task PruefeLogikAsync()
     Pruefe(!token!.ToString().Contains(tokenwert, StringComparison.Ordinal), "Token darf durch ToString nicht protokollierbar sein.");
     Pruefe(!RundgangsfreigabeToken.TryCreate("zu-kurz", out _), "Zu kurzer Token wurde akzeptiert.");
     ProtokollpunktUebergabeEintrag eintrag = new(id, null, 1, 77, "Brandschutz", "Türe", "Blockiert", null);
-    Pruefe(BegehungUebergabePruefung.Pruefe(new BegehungUebergabeAnforderung(tokenwert, "lokal_abgeschlossen", [eintrag])) == BegehungUebergabePruefergebnis.Gueltig, "Vollständige Übergabe wurde abgewiesen.");
-    Pruefe(BegehungUebergabePruefung.Pruefe(new BegehungUebergabeAnforderung(tokenwert, "aktiv", [eintrag])) == BegehungUebergabePruefergebnis.EintragUngueltig, "Aktive Begehung wurde zur Übergabe akzeptiert.");
-    Pruefe(BegehungUebergabePruefung.Pruefe(new BegehungUebergabeAnforderung(tokenwert, "lokal_abgeschlossen", [eintrag, eintrag])) == BegehungUebergabePruefergebnis.DoppelteErfassungsId, "Doppelte Erfassungs-ID wurde nicht erkannt.");
+    Pruefe(BegehungUebergabePruefung.Pruefe(new BegehungUebergabeAnforderung(tokenwert, "lokal_abgeschlossen", [eintrag]), 200) == BegehungUebergabePruefergebnis.Gueltig, "Vollständige Übergabe wurde abgewiesen.");
+    Pruefe(BegehungUebergabePruefung.Pruefe(new BegehungUebergabeAnforderung(tokenwert, "aktiv", [eintrag]), 200) == BegehungUebergabePruefergebnis.EintragUngueltig, "Aktive Begehung wurde zur Übergabe akzeptiert.");
+    Pruefe(BegehungUebergabePruefung.Pruefe(new BegehungUebergabeAnforderung(tokenwert, "lokal_abgeschlossen", [eintrag, eintrag]), 200) == BegehungUebergabePruefergebnis.DoppelteErfassungsId, "Doppelte Erfassungs-ID wurde nicht erkannt.");
     ProtokollpunktUebergabeEintrag ohneZustaendigkeit = eintrag with { ProjektAnsprechpartnerId = 0 };
-    Pruefe(BegehungUebergabePruefung.Pruefe(new BegehungUebergabeAnforderung(tokenwert, "lokal_abgeschlossen", [ohneZustaendigkeit])) == BegehungUebergabePruefergebnis.EintragUngueltig, "Zuständigkeits-ID 0 wurde akzeptiert.");
+    Pruefe(BegehungUebergabePruefung.Pruefe(new BegehungUebergabeAnforderung(tokenwert, "lokal_abgeschlossen", [ohneZustaendigkeit]), 200) == BegehungUebergabePruefergebnis.EintragUngueltig, "Zuständigkeits-ID 0 wurde akzeptiert.");
     return Task.CompletedTask;
 }
 
@@ -152,6 +160,89 @@ static async Task PruefeTranskriptionsdienstAsync()
         "audio/wav",
         ".wav",
         CancellationToken.None));
+}
+
+static async Task PruefeServerstrukturAsync()
+{
+    PlauderBoxOptionen optionen = PlauderBoxOptionen.Lade(new ConfigurationBuilder().Build());
+    Pruefe(optionen.MaximaleAudiodateigroesseBytes == 20L * 1024 * 1024, "Audio-Grenzwert wurde verändert.");
+    Pruefe(optionen.MaximaleBilddateigroesseBytes == 15L * 1024 * 1024, "Bild-Grenzwert wurde verändert.");
+    Pruefe(optionen.TranskriptionsanfragenProStunde == 60, "Transkriptionsratenlimit wurde verändert.");
+    Pruefe(optionen.BildanfragenProStunde == 1000, "Bildratenlimit wurde verändert.");
+    Pruefe(optionen.TranskriptionenJeFreigabe == 20, "Transkriptionskontingent wurde verändert.");
+    Pruefe(optionen.BilderJeFreigabe == 500, "Bildkontingent wurde verändert.");
+    Pruefe(optionen.MaximaleProtokollpunkteJeUebergabe == 200, "Punktgrenze wurde verändert.");
+
+    Pruefe(Ipv4Netz.Enthaelt(IPAddress.Parse("172.22.0.7"), "172.22.0.0/24"), "Adresse im Proxy-Netz wurde abgewiesen.");
+    Pruefe(!Ipv4Netz.Enthaelt(IPAddress.Parse("172.23.0.7"), "172.22.0.0/24"), "Fremde Adresse wurde dem Proxy-Netz zugeordnet.");
+    Pruefe(!Ipv4Netz.Enthaelt(IPAddress.IPv6Loopback, "172.22.0.0/24"), "IPv6-Adresse wurde als IPv4-Netzmitglied akzeptiert.");
+    Pruefe(!Ipv4Netz.Enthaelt(IPAddress.Parse("172.22.0.7"), "172.22.0.0/33"), "Ungültiger Präfix wurde akzeptiert.");
+
+    using MemoryCache cache = new(new MemoryCacheOptions());
+    Freigabekontingent kontingent = new(cache, optionen);
+    Pruefe(kontingent.Reserviere("test", "synthetische-freigabe", 1), "Erste Kontingentreservierung wurde abgewiesen.");
+    Pruefe(!kontingent.Reserviere("test", "synthetische-freigabe", 1), "Kontingentgrenze wurde überschritten.");
+
+    bool naechsterAufgerufen = false;
+    QuellUndUrsprungsMiddleware middleware = new(
+        _ => { naechsterAufgerufen = true; return Task.CompletedTask; },
+        new PlauderBoxOptionen
+        {
+            ErlaubterUrsprung = "https://plauderbox.test",
+            ErlaubtesProxyNetz = "172.22.0.0/24"
+        });
+    DefaultHttpContext fremderKontext = new();
+    fremderKontext.Connection.RemoteIpAddress = IPAddress.Parse("203.0.113.10");
+    await middleware.InvokeAsync(fremderKontext);
+    Pruefe(fremderKontext.Response.StatusCode == StatusCodes.Status403Forbidden, "Fremde Quelle wurde nicht abgewiesen.");
+    Pruefe(!naechsterAufgerufen, "Middleware hat eine fremde Quelle weitergereicht.");
+
+    DefaultHttpContext proxyKontext = new();
+    proxyKontext.Connection.RemoteIpAddress = IPAddress.Parse("172.22.0.5");
+    proxyKontext.Request.Method = HttpMethods.Post;
+    proxyKontext.Request.Path = "/api/transkribieren";
+    proxyKontext.Request.Headers.Origin = "https://plauderbox.test";
+    proxyKontext.Request.Headers["X-Forwarded-For"] = "198.51.100.42";
+    await middleware.InvokeAsync(proxyKontext);
+    Pruefe(naechsterAufgerufen, "Erlaubte Proxyquelle mit passendem Ursprung wurde abgewiesen.");
+    Pruefe(QuellUndUrsprungsMiddleware.ErmittleQuellPartition(proxyKontext, "172.22.0.0/24") == "198.51.100.42", "Bestätigte Clientquelle wurde nicht als Partition verwendet.");
+    Pruefe(proxyKontext.Response.Headers["Cache-Control"] == "no-store", "Sicherheitsheader fehlt.");
+}
+
+static async Task PruefeHappyHourFehlerabbildungAsync()
+{
+    IResult freigabe = await HappyHourFehlerabbildung.FuehreAsync(
+        () => Task.FromException<IResult>(new HappyHourFreigabeUngueltigException()),
+        HappyHourFehlerkontext.Freigabeabruf);
+    PruefeStatusUndTitel(freigabe, StatusCodes.Status410Gone, "Rundgangsfreigabe ungültig");
+
+    IResult nichtKonfiguriert = await HappyHourFehlerabbildung.FuehreAsync(
+        () => Task.FromException<IResult>(new HappyHourNichtKonfiguriertException()),
+        HappyHourFehlerkontext.Protokollpunktuebergabe);
+    PruefeStatusUndTitel(nichtKonfiguriert, StatusCodes.Status503ServiceUnavailable, "HappyHour-Verbindung nicht konfiguriert");
+
+    IResult konflikt = await HappyHourFehlerabbildung.FuehreAsync(
+        () => Task.FromException<IResult>(new HappyHourUebergabeKonfliktException()),
+        HappyHourFehlerkontext.Protokollpunktuebergabe);
+    PruefeStatusUndTitel(konflikt, StatusCodes.Status409Conflict, "Übergabekonflikt");
+
+    IResult bildkontingent = await HappyHourFehlerabbildung.FuehreAsync(
+        () => Task.FromException<IResult>(new HappyHourBildkontingentException()),
+        HappyHourFehlerkontext.Bilduebergabe);
+    PruefeStatusUndTitel(bildkontingent, StatusCodes.Status429TooManyRequests, "Bildkontingent ausgeschöpft");
+
+    IResult antwort = await HappyHourFehlerabbildung.FuehreAsync(
+        () => Task.FromException<IResult>(new HappyHourAntwortUngueltigException()),
+        HappyHourFehlerkontext.Transkriptionsfreigabe);
+    PruefeStatusUndTitel(antwort, StatusCodes.Status502BadGateway, "Ungültige HappyHour-Antwort");
+}
+
+static void PruefeStatusUndTitel(IResult ergebnis, int status, string titel)
+{
+    Pruefe(ergebnis is IStatusCodeHttpResult statusErgebnis && statusErgebnis.StatusCode == status, $"Erwarteter HTTP-Status {status} fehlt.");
+    Pruefe(ergebnis is IValueHttpResult wertErgebnis
+        && wertErgebnis.Value is Microsoft.AspNetCore.Mvc.ProblemDetails problem
+        && problem.Title == titel, $"Erwarteter ProblemDetails-Titel '{titel}' fehlt.");
 }
 
 static async Task PruefeTranskriptionsstatusAsync<TAusnahme>(HttpStatusCode status)

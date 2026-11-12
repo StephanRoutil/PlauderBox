@@ -36,10 +36,18 @@ $serviceWorkerInhalt = Get-Content -Raw -LiteralPath $serviceWorker
 if ($serviceWorkerInhalt -notmatch "url\.pathname\.startsWith\('/api/'\)") { throw 'Service Worker muss API-Anfragen vom App-Cache ausschliessen.' }
 
 $programInhalt = Get-Content -Raw -LiteralPath (Join-Path $projektordner 'src\Program.cs')
+$ipv4Inhalt = Get-Content -Raw -LiteralPath (Join-Path $projektordner 'src\Sicherheit\Ipv4Netz.cs')
+$middlewareInhalt = Get-Content -Raw -LiteralPath (Join-Path $projektordner 'src\Sicherheit\QuellUndUrsprungsMiddleware.cs')
+$happyHourEndpunkteInhalt = Get-Content -Raw -LiteralPath (Join-Path $projektordner 'src\Endpunkte\HappyHourEndpunkte.cs')
+$transkriptionsEndpunkteInhalt = Get-Content -Raw -LiteralPath (Join-Path $projektordner 'src\Endpunkte\TranskriptionsEndpunkte.cs')
+$optionenInhalt = Get-Content -Raw -LiteralPath (Join-Path $projektordner 'src\PlauderBoxOptionen.cs')
 if ($programInhalt -notmatch '\.RemoveAllLoggers\(\)') { throw 'HappyHour-HttpClient-Logger sind nicht vollständig entfernt.' }
 if ($programInhalt -notmatch 'Microsoft\.AspNetCore\.Hosting\.Diagnostics.+LogLevel\.Warning') { throw 'Hosting-Requestlogs sind nicht token-sicher begrenzt.' }
-if ($programInhalt -notmatch 'IstAdresseInIpv4Netz\(context\.Connection\.RemoteIpAddress!?, erlaubtesProxyNetz\)') { throw 'Produktiver Proxyzugriff ist nicht auf das konfigurierte IPv4-Netz begrenzt.' }
-if ($programInhalt -notmatch 'praefixLaenge < 0 \|\| praefixLaenge > 32') { throw 'Proxy-Netzpräfix wird nicht begrenzt validiert.' }
+if ($middlewareInhalt -notmatch 'Ipv4Netz\.Enthaelt\(context\.Connection\.RemoteIpAddress!?, _erlaubtesProxyNetz\)') { throw 'Produktiver Proxyzugriff ist nicht auf das konfigurierte IPv4-Netz begrenzt.' }
+if ($ipv4Inhalt -notmatch 'praefixLaenge < 0[\s\S]+praefixLaenge > 32') { throw 'Proxy-Netzpräfix wird nicht begrenzt validiert.' }
+if (($programInhalt -split "`n").Count -ge 120 -or $programInhalt.TrimEnd() -notmatch 'public partial class Program;$') { throw 'Program.cs ist nicht der geforderte Composition Root unter 120 Zeilen.' }
+if ($programInhalt -match 'app\.Map(Get|Post)' -or $programInhalt -match 'catch \(HappyHour') { throw 'Program.cs enthält weiterhin Endpunkt- oder HappyHour-Fehlerlogik.' }
+if ($optionenInhalt -notmatch 'MaximaleAudiodateigroesseBytes.+20L \* 1024 \* 1024' -or $optionenInhalt -notmatch 'MaximaleBilddateigroesseBytes.+15L \* 1024 \* 1024' -or $optionenInhalt -notmatch 'TranskriptionsanfragenProStunde.+60' -or $optionenInhalt -notmatch 'BildanfragenProStunde.+1000' -or $optionenInhalt -notmatch 'TranskriptionenJeFreigabe.+20' -or $optionenInhalt -notmatch 'BilderJeFreigabe.+500' -or $optionenInhalt -notmatch 'MaximaleProtokollpunkteJeUebergabe.+200') { throw 'Benannte PlauderBox-Grenzwerte fehlen oder wurden verändert.' }
 
 $liveCompose = Get-Content -Raw -LiteralPath (Join-Path $projektordner 'deploy\olymp01-live\compose.yaml')
 if ($liveCompose -match '(?m)^\s*ports:') { throw 'PlauderBox-Livecompose darf keinen Hostport veröffentlichen.' }
@@ -55,12 +63,14 @@ if ($caddySnippet -match '(?m)^\s*log\s*\{') { throw 'PlauderBox-Caddy darf Frei
 if ($caddySnippet -notmatch 'disable_http_challenge') { throw 'Caddy-Site ist nicht auf TLS-ALPN ohne Port 80 vorbereitet.' }
 if ($caddySnippet -notmatch 'reverse_proxy plauderbox:5187') { throw 'Caddy-Site verwendet nicht den internen PlauderBox-Netzalias.' }
 if ($caddySnippet -notmatch 'max_size 24MB') { throw 'Caddy lässt nicht genügend Multipart-Overhead für 20-MiB-Audio zu.' }
-if ($programInhalt -notmatch 'X-PlauderBox-Freigabe') { throw 'Öffentliche KI- und Bildaufrufe sind nicht an den Freigabeheader gebunden.' }
-if ($programInhalt -notmatch 'await freigabeQuelle\.LadeAsync\(freigabe\.Wert, token\)') { throw 'Die Transkription validiert die Rundgangsfreigabe nicht serverseitig gegen HappyHour.' }
-if ($programInhalt -notmatch '!istLoopbackQuelle && !istKonfigurierterUrsprung') { throw 'Öffentliche POST-Aufrufe ohne passenden Origin werden nicht abgewiesen.' }
-if ($programInhalt -notmatch 'LadeQuellPartition\(context, erlaubtesProxyNetz\)') { throw 'Vorgelagerte Ratenlimits sind nicht an die von Caddy bestätigte Clientquelle gebunden.' }
-if ($programInhalt -notmatch 'ReserviereFreigabeKontingent\(freigabeKontingente, freigabeKontingentSperre') { throw 'Nachgelagerte Kontingente für bestätigte Rundgangsfreigaben fehlen.' }
-if ($programInhalt.IndexOf('await freigabeQuelle.LadeAsync(headerFreigabe.Wert, token)') -gt $programInhalt.IndexOf('formular = await request.ReadFormAsync(token)')) { throw 'Die Bildfreigabe wird erst nach dem Einlesen des Multipart-Bodys validiert.' }
+$endpunktInhalt = $happyHourEndpunkteInhalt + "`n" + $transkriptionsEndpunkteInhalt
+if ($endpunktInhalt -notmatch 'X-PlauderBox-Freigabe') { throw 'Öffentliche KI- und Bildaufrufe sind nicht an den Freigabeheader gebunden.' }
+if ($transkriptionsEndpunkteInhalt -notmatch 'await freigabeQuelle\.LadeAsync\(freigabe\.Wert, token\)') { throw 'Die Transkription validiert die Rundgangsfreigabe nicht serverseitig gegen HappyHour.' }
+if ($middlewareInhalt -notmatch '!istLoopbackQuelle && !istKonfigurierterUrsprung') { throw 'Öffentliche POST-Aufrufe ohne passenden Origin werden nicht abgewiesen.' }
+if ($programInhalt -notmatch 'ErmittleQuellPartition\(context, optionen\.ErlaubtesProxyNetz\)') { throw 'Vorgelagerte Ratenlimits sind nicht an die von Caddy bestätigte Clientquelle gebunden.' }
+if ($endpunktInhalt -notmatch 'freigabekontingent\.Reserviere') { throw 'Nachgelagerte Kontingente für bestätigte Rundgangsfreigaben fehlen.' }
+if ($happyHourEndpunkteInhalt.IndexOf('await freigabeQuelle.LadeAsync(headerFreigabe.Wert, token)') -gt $happyHourEndpunkteInhalt.IndexOf('formular = await request.ReadFormAsync(token)')) { throw 'Die Bildfreigabe wird erst nach dem Einlesen des Multipart-Bodys validiert.' }
+if (([regex]::Matches($happyHourEndpunkteInhalt, 'catch \(HappyHourNichtKonfiguriertException')).Count -ne 1 -or ([regex]::Matches($happyHourEndpunkteInhalt, 'catch \(HappyHourFreigabeUngueltigException')).Count -ne 1 -or ([regex]::Matches($happyHourEndpunkteInhalt, 'catch \(HappyHourAntwortUngueltigException')).Count -ne 1 -or ([regex]::Matches($happyHourEndpunkteInhalt, 'catch \(HappyHourNichtErreichbarException')).Count -ne 1) { throw 'Die HappyHour-Ausnahmen werden nicht genau einmal zentral abgebildet.' }
 if ($caddySnippet -notmatch 'header_up X-Forwarded-For \{remote_host\}') { throw 'Caddy überschreibt die weitergeleitete Clientadresse nicht vertrauenswürdig.' }
 if (-not (Test-Path -LiteralPath (Join-Path $projektordner 'deploy\olymp01-live\n8n-compose.plauderbox.patch'))) { throw 'Die bestandssichere Caddy-Netzanbindung ist nicht versioniert.' }
 

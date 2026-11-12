@@ -46,13 +46,17 @@ public enum BegehungUebergabePruefergebnis
 
 public static class BegehungUebergabePruefung
 {
-    public static BegehungUebergabePruefergebnis Pruefe(BegehungUebergabeAnforderung anforderung)
+    public static BegehungUebergabePruefergebnis Pruefe(
+        BegehungUebergabeAnforderung anforderung,
+        int maximaleAnzahlEintraege)
     {
         if (!RundgangsfreigabeToken.TryCreate(anforderung.FreigabeToken, out _))
             return BegehungUebergabePruefergebnis.FreigabeUngueltig;
         if (!string.Equals(anforderung.BegehungStatus, "lokal_abgeschlossen", StringComparison.Ordinal))
             return BegehungUebergabePruefergebnis.EintragUngueltig;
-        if (anforderung.Eintraege is null || anforderung.Eintraege.Count is < 1 or > 200)
+        if (anforderung.Eintraege is null
+            || anforderung.Eintraege.Count < 1
+            || anforderung.Eintraege.Count > maximaleAnzahlEintraege)
             return BegehungUebergabePruefergebnis.AnzahlUngueltig;
         if (anforderung.Eintraege.Select(x => x.ErfassungsId).Distinct().Count() != anforderung.Eintraege.Count)
             return BegehungUebergabePruefergebnis.DoppelteErfassungsId;
