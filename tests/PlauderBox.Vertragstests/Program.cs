@@ -18,6 +18,7 @@ await PruefeKiSchemaAsync();
 await PruefeTranskriptionsdienstAsync();
 await PruefeServerstrukturAsync();
 await PruefeHappyHourFehlerabbildungAsync();
+PruefeSchichtenarchitektur();
 Console.WriteLine("PlauderBox-Vertragstests bestanden: serverseitige Erfassungs-ID, Token, HappyHour-Provider, Transkriptionsdienst und striktes KI-Schema.");
 
 static Task PruefeLogikAsync()
@@ -243,6 +244,23 @@ static void PruefeStatusUndTitel(IResult ergebnis, int status, string titel)
     Pruefe(ergebnis is IValueHttpResult wertErgebnis
         && wertErgebnis.Value is Microsoft.AspNetCore.Mvc.ProblemDetails problem
         && problem.Title == titel, $"Erwarteter ProblemDetails-Titel '{titel}' fehlt.");
+}
+
+static void PruefeSchichtenarchitektur()
+{
+    IReadOnlyList<string> fehler = Architekturpruefung.Pruefe(
+        typeof(ITranskriptionsdienst).Assembly,
+        typeof(OpenAiTranskriptionsdienst).Assembly);
+    Pruefe(fehler.Count == 0, string.Join(Environment.NewLine, fehler));
+
+    IReadOnlyList<string> referenzprobe = Architekturpruefung.PruefePlauderBoxReferenznamen(
+        ["System.Runtime", "PlauderBox.UI"],
+        []);
+    Pruefe(referenzprobe.Count == 1, "Eine verbotene PlauderBox-Referenz würde den Architekturtest nicht auslösen.");
+
+    IReadOnlyList<string> httpProbe = Architekturpruefung.PruefeOeffentlicheHttpSignaturen(
+        [typeof(ArchitekturHttpNegativprobe)]);
+    Pruefe(httpProbe.Count == 1, "Ein öffentlicher System.Net.Http-Typ würde den Architekturtest nicht auslösen.");
 }
 
 static async Task PruefeTranskriptionsstatusAsync<TAusnahme>(HttpStatusCode status)
