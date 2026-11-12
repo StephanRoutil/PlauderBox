@@ -27,11 +27,14 @@ export class BrowserQrCodeScanner implements QrCodeScanner {
   private animationFrame = 0
   private beendet = false
 
+  constructor(private readonly rueckfall: QrCodeScanner = new ZxingQrCodeScanner()) {}
+
   async starten(video: HTMLVideoElement, erkannt: (inhalt: string) => void): Promise<void> {
     this.stoppen()
     this.beendet = false
     const konstruktor = (window as FensterMitBarcodeErkenner).BarcodeDetector
-    if (!konstruktor || !navigator.mediaDevices?.getUserMedia) throw new Error('nicht_unterstuetzt')
+    if (!konstruktor) return this.rueckfall.starten(video, erkannt)
+    if (!navigator.mediaDevices?.getUserMedia) throw new Error('nicht_unterstuetzt')
 
     const erkenner = new konstruktor({ formats: ['qr_code'] })
     try {
@@ -71,5 +74,37 @@ export class BrowserQrCodeScanner implements QrCodeScanner {
     window.cancelAnimationFrame(this.animationFrame)
     this.stream?.getTracks().forEach((spur) => spur.stop())
     this.stream = null
+    this.rueckfall.stoppen()
+  }
+}
+import type { IScannerControls } from '@zxing/browser'
+
+export class ZxingQrCodeScanner implements QrCodeScanner {
+  private steuerung: IScannerControls | null = null
+
+  async starten(video: HTMLVideoElement, erkannt: (inhalt: string) => void): Promise<void> {
+    this.stoppen()
+    if (!navigator.mediaDevices?.getUserMedia) throw new Error('nicht_unterstuetzt')
+    try {
+      const { BrowserQRCodeReader } = await import('@zxing/browser')
+      const leser = new BrowserQRCodeReader()
+      this.steuerung = await leser.decodeFromVideoDevice(undefined, video, (ergebnis, _fehler, steuerung) => {
+        const inhalt = ergebnis?.getText().trim()
+        if (!inhalt) return
+        steuerung.stop()
+        this.steuerung = null
+        erkannt(inhalt)
+      })
+    } catch (fehler: unknown) {
+      this.stoppen()
+      if (fehler instanceof DOMException && fehler.name === 'NotAllowedError') throw new Error('nicht_erlaubt')
+      if (fehler instanceof DOMException && fehler.name === 'NotFoundError') throw new Error('keine_kamera')
+      throw new Error('kamera_fehler')
+    }
+  }
+
+  stoppen(): void {
+    this.steuerung?.stop()
+    this.steuerung = null
   }
 }

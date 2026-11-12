@@ -6,6 +6,7 @@ import BegehungAbschluss from './BegehungAbschluss.vue'
 import BegehungStart from './BegehungStart.vue'
 import EintragErfassen from './EintragErfassen.vue'
 import OfflineHinweis from './OfflineHinweis.vue'
+import QrCodeStart from './QrCodeStart.vue'
 import type { AudioRekorder } from '@/services/audioRekorder'
 import type { BegehungEintrag, HappyHourProtokollKontext, LokaleBegehung } from '@/services/begehungsSpeicher'
 
@@ -185,5 +186,17 @@ describe('mobile Komponenten', () => {
     await flushPromises()
     expect(wrapper.get('[role="alert"]').text()).toContain('lokale Sicherung ist fehlgeschlagen')
     expect(wrapper.text()).toContain('Lokale Sicherung erneut versuchen')
+  })
+
+  it('übergibt einen manuell eingefügten Freigabelink an dieselbe QR-Verarbeitung', async () => {
+    const scanner: import('@/services/qrCodeScanner').QrCodeScanner = {
+      starten: vi.fn(async () => undefined),
+      stoppen: vi.fn(),
+    }
+    const wrapper = mount(QrCodeStart, { props: { scanner } })
+    await wrapper.get('#manueller-code').setValue('  plauderbox://begehung?freigabe=synthetisch  ')
+    await wrapper.get('form.manual-code').trigger('submit')
+
+    expect(wrapper.emitted('erkannt')).toEqual([['plauderbox://begehung?freigabe=synthetisch']])
   })
 })

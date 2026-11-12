@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onBeforeUnmount } from 'vue'
+import { onBeforeUnmount, ref } from 'vue'
 import { BrowserQrCodeScanner, type QrCodeScanner } from '@/services/qrCodeScanner'
 import { verwendeQrCodeStartAblauf } from '@/services/qrCodeStartAblauf'
 
@@ -20,6 +20,7 @@ const emit = defineEmits<{
   erkannt: [inhalt: string]
   zurueck: []
 }>()
+const manuellerCode = ref('')
 
 const { setzeVideo, status, sichtbareMeldung, starteScanner, stoppeScanner } = verwendeQrCodeStartAblauf(
   eigenschaften.scanner,
@@ -32,6 +33,11 @@ onBeforeUnmount(() => eigenschaften.scanner.stoppen())
 function geheZurueck(): void {
   stoppeScanner()
   emit('zurueck')
+}
+
+function uebernehmeManuellenCode(): void {
+  const inhalt = manuellerCode.value.trim()
+  if (inhalt) emit('erkannt', inhalt)
 }
 </script>
 
@@ -75,6 +81,11 @@ function geheZurueck(): void {
         Kamera öffnen
       </button>
       <button v-else class="mobile-secondary" type="button" @click="stoppeScanner">Scannen abbrechen</button>
+      <form class="manual-code" @submit.prevent="uebernehmeManuellenCode">
+        <label for="manueller-code">Freigabecode oder vollständigen Link manuell einfügen</label>
+        <input id="manueller-code" v-model="manuellerCode" autocomplete="off" inputmode="text" />
+        <button class="mobile-secondary" type="submit" :disabled="!manuellerCode.trim()">Code übernehmen</button>
+      </form>
       <button v-if="eigenschaften.erneuerung" class="mobile-secondary" type="button" @click="geheZurueck">
         Zurück zum Abschluss
       </button>
