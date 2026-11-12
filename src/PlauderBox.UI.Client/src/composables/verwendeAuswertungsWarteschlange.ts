@@ -30,15 +30,24 @@ export function verwendeAuswertungsWarteschlange(abhaengigkeiten: AuswertungsWar
     const eintrag = begehung.eintraege.find((wert) => wert.id === id)
     if (!eintrag?.audio || zustand.value.art === 'laeuft') return
     zustand.value = { art: 'laeuft', eintragId: id }
-    eintrag.status = 'wird_ausgewertet'
-    eintrag.fehler = ''
-    await abhaengigkeiten.speichern(begehung)
+    const vorherigerStatus = eintrag.status
+    let auswertungGestartet = false
     try {
+      eintrag.status = 'wird_ausgewertet'
+      eintrag.fehler = ''
+      await abhaengigkeiten.speichern(begehung)
+      auswertungGestartet = true
       const ergebnis = await abhaengigkeiten.auswerten(eintrag, begehung.freigabeToken ?? '')
       uebernehmeAuswertung(eintrag, ergebnis)
       await abhaengigkeiten.speichern(begehung)
       if (ergebnisAnzeigen) abhaengigkeiten.ansicht.value = 'auswertung'
     } catch (fehler: unknown) {
+      if (!auswertungGestartet) {
+        eintrag.status = vorherigerStatus
+        eintrag.fehler = fehler instanceof Error ? fehler.message : 'Die lokale Sicherung ist fehlgeschlagen.'
+        if (ergebnisAnzeigen) abhaengigkeiten.ansicht.value = 'auswertung'
+        return
+      }
       eintrag.status = abhaengigkeiten.istVerbunden() ? 'fehler' : 'wartet_auf_auswertung'
       eintrag.fehler = fehler instanceof Error ? fehler.message : 'Die Auswertung ist fehlgeschlagen.'
       try {

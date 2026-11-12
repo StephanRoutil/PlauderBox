@@ -132,6 +132,40 @@ describe('Begehungsablauf', () => {
 })
 
 describe('Auswertungswarteschlange', () => {
+  it('gibt den Ablauf nach einem ersten Speicherfehler frei und stellt den Eintragsstatus wieder her', async () => {
+    const gespeichert = begehung()
+    const eintrag = erstelleEintrag(() => '00000000-0000-4000-8000-000000000004')
+    eintrag.status = 'wartet_auf_auswertung'
+    eintrag.audio = {
+      dateiname: 'synthetisch.webm',
+      medientyp: 'audio/webm',
+      groesse: 1,
+      dauerSekunden: 1,
+      audio: new Blob(['x']),
+    }
+    gespeichert.eintraege.push(eintrag)
+    const auswerten = vi.fn(async () => {
+      throw new Error('darf nicht aufgerufen werden')
+    })
+    const ansicht = ref('aktiv')
+    const ablauf = verwendeAuswertungsWarteschlange({
+      begehung: ref(gespeichert),
+      ansicht,
+      online: ref(true),
+      speichern: vi.fn(async () => Promise.reject(new Error('Lokale Sicherung fehlgeschlagen'))),
+      auswerten,
+      istVerbunden: () => true,
+    })
+
+    await ablauf.werteEintragAus(eintrag.id, true)
+
+    expect(auswerten).not.toHaveBeenCalled()
+    expect(ablauf.auswertungszustand.value.art).toBe('bereit')
+    expect(eintrag.status).toBe('wartet_auf_auswertung')
+    expect(eintrag.fehler).toBe('Lokale Sicherung fehlgeschlagen')
+    expect(ansicht.value).toBe('auswertung')
+  })
+
   it('meldet Auswertungs- und nachfolgenden Speicherfehler sichtbar', async () => {
     const gespeichert = begehung()
     const eintrag = erstelleEintrag(() => '00000000-0000-4000-8000-000000000003')
