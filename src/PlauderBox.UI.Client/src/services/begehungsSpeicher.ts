@@ -273,6 +273,48 @@ function warteAufTransaktion(transaktion: IDBTransaction): Promise<void> {
   })
 }
 
+function leseAlleMedien<T>(datenbank: IDBDatabase, speicher: string): Promise<Map<string, T>> {
+  return new Promise((resolve, reject) => {
+    const anfrage = datenbank.transaction(speicher, 'readonly').objectStore(speicher).openCursor()
+    const werte = new Map<string, T>()
+    anfrage.addEventListener('success', () => {
+      const cursor = anfrage.result
+      if (!cursor) {
+        resolve(werte)
+        return
+      }
+      werte.set(String(cursor.key), cursor.value as T)
+      cursor.continue()
+    })
+    anfrage.addEventListener('error', () =>
+      reject(anfrage.error ?? new Error('Gespeicherte Mediendaten konnten nicht verglichen werden.')),
+    )
+  })
+}
+
+function istAudioUnveraendert(vorhanden: LokaleAudioaufnahme, erwartet: LokaleAudioaufnahme): boolean {
+  return (
+    vorhanden.dateiname === erwartet.dateiname &&
+    vorhanden.medientyp === erwartet.medientyp &&
+    vorhanden.groesse === erwartet.groesse &&
+    vorhanden.dauerSekunden === erwartet.dauerSekunden &&
+    vorhanden.audio.size === erwartet.audio.size &&
+    vorhanden.audio.type === erwartet.audio.type
+  )
+}
+
+function istBildUnveraendert(vorhanden: LokalesBild, erwartet: LokalesBild): boolean {
+  return (
+    vorhanden.id === erwartet.id &&
+    vorhanden.dateiname === erwartet.dateiname &&
+    vorhanden.medientyp === erwartet.medientyp &&
+    vorhanden.groesse === erwartet.groesse &&
+    vorhanden.erstelltAm === erwartet.erstelltAm &&
+    vorhanden.bild.size === erwartet.bild.size &&
+    vorhanden.bild.type === erwartet.bild.type
+  )
+}
+
 export async function speichereBegehung(
   begehung: LokaleBegehung,
   datenbankOeffnen: () => Promise<IDBDatabase> = oeffneDatenbank,
@@ -281,11 +323,29 @@ export async function speichereBegehung(
   const paket = erstelleSpeicherpaket(begehung, new Date().toISOString())
   const datenbank = await datenbankOeffnen()
   try {
+    const [vorhandeneAudio, vorhandeneBilder] = await Promise.all([
+      leseAlleMedien<LokaleAudioaufnahme>(datenbank, audiospeichername),
+      leseAlleMedien<LokalesBild>(datenbank, bildspeichername),
+    ])
+    const erwarteteAudio = new Map(paket.audio.map((audio) => [audio.schluessel, audio.wert]))
+    const erwarteteBilder = new Map(paket.bilder.map((bild) => [bild.schluessel, bild.wert]))
     const transaktion = datenbank.transaction([speichername, audiospeichername, bildspeichername], 'readwrite')
-    transaktion.objectStore(audiospeichername).clear()
-    transaktion.objectStore(bildspeichername).clear()
-    for (const audio of paket.audio) transaktion.objectStore(audiospeichername).put(audio.wert, audio.schluessel)
-    for (const bild of paket.bilder) transaktion.objectStore(bildspeichername).put(bild.wert, bild.schluessel)
+    const audiospeicher = transaktion.objectStore(audiospeichername)
+    const bildspeicher = transaktion.objectStore(bildspeichername)
+    for (const schluessel of vorhandeneAudio.keys()) {
+      if (!erwarteteAudio.has(schluessel)) audiospeicher.delete(schluessel)
+    }
+    for (const [schluessel, wert] of erwarteteAudio) {
+      const vorhanden = vorhandeneAudio.get(schluessel)
+      if (!vorhanden || !istAudioUnveraendert(vorhanden, wert)) audiospeicher.put(wert, schluessel)
+    }
+    for (const schluessel of vorhandeneBilder.keys()) {
+      if (!erwarteteBilder.has(schluessel)) bildspeicher.delete(schluessel)
+    }
+    for (const [schluessel, wert] of erwarteteBilder) {
+      const vorhanden = vorhandeneBilder.get(schluessel)
+      if (!vorhanden || !istBildUnveraendert(vorhanden, wert)) bildspeicher.put(wert, schluessel)
+    }
     transaktion.objectStore(speichername).put(paket.begehung, aktiverSchluessel)
     if (legacyImportId)
       transaktion

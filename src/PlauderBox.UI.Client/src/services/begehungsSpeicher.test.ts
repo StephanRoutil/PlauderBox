@@ -1,4 +1,4 @@
-import { IDBFactory } from 'fake-indexeddb'
+import { IDBFactory, IDBObjectStore } from 'fake-indexeddb'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { reactive } from 'vue'
 import {
@@ -139,6 +139,40 @@ describe('Begehungsspeicher und Fachzustände', () => {
     expect(await geladen?.eintraege[0]?.bilder[0]?.bild.text()).toBe('bild')
     await loescheBegehung()
     await expect(ladeBegehung()).resolves.toBeNull()
+  })
+
+  it('schreibt bei einer reinen Textänderung keine Audio- oder Bilddaten erneut', async () => {
+    const begehung = erstelleBegehung(protokoll)
+    const eintrag = erstelleEintrag()
+    eintrag.audio = {
+      dateiname: 'aufnahme.webm',
+      medientyp: 'audio/webm',
+      groesse: 5,
+      dauerSekunden: 3,
+      audio: new Blob(['audio'], { type: 'audio/webm' }),
+    }
+    eintrag.bilder.push({
+      id: 'bild-1',
+      dateiname: 'bild.jpg',
+      medientyp: 'image/jpeg',
+      groesse: 4,
+      erstelltAm: eintrag.erstelltAm,
+      bild: new Blob(['bild'], { type: 'image/jpeg' }),
+    })
+    begehung.eintraege.push(eintrag)
+    await speichereBegehung(begehung)
+    const put = vi.spyOn(IDBObjectStore.prototype, 'put')
+    const loeschen = vi.spyOn(IDBObjectStore.prototype, 'delete')
+    const leeren = vi.spyOn(IDBObjectStore.prototype, 'clear')
+
+    eintrag.thema = 'Nur der kontrollierte Text wurde geändert.'
+    await speichereBegehung(begehung)
+
+    const istMedienspeicher = (kontext: unknown) =>
+      kontext instanceof IDBObjectStore && ['audio', 'bilder'].includes(kontext.name)
+    expect(put.mock.contexts.filter(istMedienspeicher)).toHaveLength(0)
+    expect(loeschen.mock.contexts.filter(istMedienspeicher)).toHaveLength(0)
+    expect(leeren.mock.contexts.filter(istMedienspeicher)).toHaveLength(0)
   })
 
   it('migriert Version 1 atomar in getrennte Audio- und Bildspeicher ohne Datenverlust', async () => {
