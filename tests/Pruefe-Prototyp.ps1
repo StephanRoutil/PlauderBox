@@ -20,7 +20,7 @@ if ($LASTEXITCODE -ne 0) { throw "PlauderBox-Build fehlgeschlagen (Exitcode $LAS
 dotnet test (Join-Path $projektordner 'tests\PlauderBox.Integrationstests\PlauderBox.Integrationstests.csproj') -c Release --no-build
 if ($LASTEXITCODE -ne 0) { throw "PlauderBox-Integrationstests fehlgeschlagen (Exitcode $LASTEXITCODE)." }
 
-dotnet run --project (Join-Path $projektordner 'tests\PlauderBox.Vertragstests\PlauderBox.Vertragstests.csproj') -c Release --no-build
+dotnet test (Join-Path $projektordner 'tests\PlauderBox.Vertragstests\PlauderBox.Vertragstests.csproj') -c Release --no-build
 if ($LASTEXITCODE -ne 0) { throw "PlauderBox-Vertragstests fehlgeschlagen (Exitcode $LASTEXITCODE)." }
 
 $html = Get-Content -Raw -LiteralPath (Join-Path $projektordner 'src\wwwroot\index.html')

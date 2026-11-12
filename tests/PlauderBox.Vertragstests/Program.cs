@@ -11,17 +11,38 @@ using PlauderBox.Vertragstests;
 using PlauderBox.UI;
 using PlauderBox.UI.Endpunkte;
 using PlauderBox.UI.Sicherheit;
+using Xunit;
 
-await PruefeLogikAsync();
-await PruefeHappyHourProviderAsync();
-await PruefeHappyHourSchreibenAsync();
-await PruefeHappyHourBildSchreibenAsync();
-await PruefeKiSchemaAsync();
-await PruefeTranskriptionsdienstAsync();
-await PruefeServerstrukturAsync();
-await PruefeHappyHourFehlerabbildungAsync();
-PruefeSchichtenarchitektur();
-Console.WriteLine("PlauderBox-Vertragstests bestanden: serverseitige Erfassungs-ID, Token, HappyHour-Provider, Transkriptionsdienst und striktes KI-Schema.");
+namespace PlauderBox.Vertragstests;
+
+public sealed class Vertragstests
+{
+    [Fact]
+    public Task LogikUndWertobjekte() => PruefeLogikAsync();
+
+    [Fact]
+    public Task HappyHourFreigabeProvider() => PruefeHappyHourProviderAsync();
+
+    [Fact]
+    public Task HappyHourProtokollpunktSchreiben() => PruefeHappyHourSchreibenAsync();
+
+    [Fact]
+    public Task HappyHourBildSchreiben() => PruefeHappyHourBildSchreibenAsync();
+
+    [Fact]
+    public Task OpenAiStrukturierungsschema() => PruefeKiSchemaAsync();
+
+    [Fact]
+    public Task OpenAiTranskriptionsdienst() => PruefeTranskriptionsdienstAsync();
+
+    [Fact]
+    public Task SicherheitsklassenUndMiddleware() => PruefeServerstrukturAsync();
+
+    [Fact]
+    public Task HappyHourFehlerWerdenAbgebildet() => PruefeHappyHourFehlerabbildungAsync();
+
+    [Fact]
+    public void Schichtenarchitektur() => PruefeSchichtenarchitektur();
 
 static Task PruefeLogikAsync()
 {
@@ -327,7 +348,8 @@ static async Task PruefeAusnahmeAsync<TAusnahme>(Func<Task> aktion)
     }
 }
 
-static void Pruefe(bool bedingung, string meldung) { if (!bedingung) throw new InvalidOperationException(meldung); }
+static void Pruefe(bool bedingung, string meldung) => Assert.True(bedingung, meldung);
+}
 
 sealed class SteuerbareZeit(DateTimeOffset jetzt) : TimeProvider
 {
