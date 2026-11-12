@@ -30,6 +30,12 @@ static Task PruefeLogikAsync()
     Pruefe(RundgangsfreigabeToken.TryCreate(tokenwert, out RundgangsfreigabeToken? token) && token is not null, "Gültiger Token wurde abgewiesen.");
     Pruefe(!token!.ToString().Contains(tokenwert, StringComparison.Ordinal), "Token darf durch ToString nicht protokollierbar sein.");
     Pruefe(!RundgangsfreigabeToken.TryCreate("zu-kurz", out _), "Zu kurzer Token wurde akzeptiert.");
+    Pruefe(Bildpruefung.IstGueltig("image/jpeg", [0xFF, 0xD8, 0xFF]), "JPEG-Signatur wurde abgewiesen.");
+    Pruefe(Bildpruefung.IstGueltig("image/png", [0x89, 0x50, 0x4E, 0x47]), "PNG-Signatur wurde abgewiesen.");
+    Pruefe(Bildpruefung.IstGueltig("image/gif", [0x47, 0x49, 0x46, 0x38]), "GIF-Signatur wurde abgewiesen.");
+    Pruefe(Bildpruefung.IstGueltig("image/tiff", [0x49, 0x49, 0x2A, 0x00]), "TIFF-Signatur wurde abgewiesen.");
+    Pruefe(!Bildpruefung.IstGueltig("image/png", [0xFF, 0xD8, 0xFF]), "Abweichender Bildinhalt wurde akzeptiert.");
+    Pruefe(!Bildpruefung.IstGueltig("text/plain", [0x47, 0x49, 0x46, 0x38]), "Fremder Bildmedientyp wurde akzeptiert.");
     ProtokollpunktUebergabeEintrag eintrag = new(id, null, 1, 77, "Brandschutz", "Türe", "Blockiert", null);
     Pruefe(BegehungUebergabePruefung.Pruefe(new BegehungUebergabeAnforderung(tokenwert, "lokal_abgeschlossen", [eintrag]), 200) == BegehungUebergabePruefergebnis.Gueltig, "Vollständige Übergabe wurde abgewiesen.");
     Pruefe(BegehungUebergabePruefung.Pruefe(new BegehungUebergabeAnforderung(tokenwert, "aktiv", [eintrag]), 200) == BegehungUebergabePruefergebnis.EintragUngueltig, "Aktive Begehung wurde zur Übergabe akzeptiert.");

@@ -60,8 +60,8 @@ public sealed class HappyHourFreigabeQuelle(HttpClient httpClient, Uri? basisadr
             bild.Aufnahmezeitpunkt.ToUniversalTime().ToString("O", System.Globalization.CultureInfo.InvariantCulture));
         using ByteArrayContent datei = new(bild.Inhalt);
         if (!System.Net.Http.Headers.MediaTypeHeaderValue.TryParse(bild.Medientyp, out var medientyp)
-            || !medientyp.MediaType!.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
-            medientyp = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
+            || !Bildpruefung.IstGueltig(bild.Medientyp, bild.Inhalt))
+            throw new HappyHourUebergabeUngueltigException();
         datei.Headers.ContentType = medientyp;
         using HttpRequestMessage anfrage = new(
             HttpMethod.Post,

@@ -142,6 +142,11 @@ public static class HappyHourEndpunkte
 
             await using MemoryStream inhalt = new((int)datei.Length);
             await datei.CopyToAsync(inhalt, token);
+            byte[] bildinhalt = inhalt.ToArray();
+            if (!Bildpruefung.IstGueltig(datei.ContentType, bildinhalt))
+                return Results.Problem(
+                    title: "Das Bildformat stimmt nicht mit dem Bildinhalt überein.",
+                    statusCode: StatusCodes.Status400BadRequest);
             ProtokollpunktBildUebergabeErgebnis ergebnis = await ziel.SchreibeBildAsync(
                 freigabe.Wert,
                 new ProtokollpunktBildUebergabe(
@@ -150,7 +155,7 @@ public static class HappyHourEndpunkte
                     Path.GetFileName(datei.FileName),
                     datei.ContentType,
                     aufnahmezeitpunkt,
-                    inhalt.ToArray()),
+                    bildinhalt),
                 token);
             return Results.Ok(ergebnis);
         }, HappyHourFehlerkontext.Bilduebergabe);
