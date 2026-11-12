@@ -223,6 +223,26 @@ static async Task PruefeServerstrukturAsync()
     Pruefe(optionen.BilderJeFreigabe == 500, "Bildkontingent wurde verändert.");
     Pruefe(optionen.MaximaleProtokollpunkteJeUebergabe == 200, "Punktgrenze wurde verändert.");
 
+    Dictionary<string, string?> konfigurierteGrenzen = new()
+    {
+        ["PlauderBox:Grenzen:MaximaleAudiodateigroesseBytes"] = "1048576",
+        ["PlauderBox:Grenzen:MaximaleBilddateigroesseBytes"] = "2097152",
+        ["PlauderBox:Grenzen:TranskriptionsanfragenProStunde"] = "7",
+        ["PlauderBox:Grenzen:RatenlimitFensterSekunden"] = "60",
+        ["PlauderBox:Grenzen:OpenAiZeitlimitSekunden"] = "30"
+    };
+    PlauderBoxOptionen ueberschrieben = PlauderBoxOptionen.Lade(
+        new ConfigurationBuilder().AddInMemoryCollection(konfigurierteGrenzen).Build());
+    Pruefe(ueberschrieben.MaximaleAudiodateigroesseBytes == 1L * 1024 * 1024, "Konfigurierter Audio-Grenzwert wurde nicht übernommen.");
+    Pruefe(ueberschrieben.MaximaleBilddateigroesseBytes == 2L * 1024 * 1024, "Konfigurierter Bild-Grenzwert wurde nicht übernommen.");
+    Pruefe(ueberschrieben.TranskriptionsanfragenProStunde == 7, "Konfiguriertes Transkriptionslimit wurde nicht übernommen.");
+    Pruefe(ueberschrieben.RatenlimitFenster == TimeSpan.FromMinutes(1), "Konfiguriertes Ratenlimitfenster wurde nicht übernommen.");
+    Pruefe(ueberschrieben.OpenAiZeitlimit == TimeSpan.FromSeconds(30), "Konfiguriertes KI-Zeitlimit wurde nicht übernommen.");
+    Pruefe(PlauderBoxOptionen.FormatiereMegabyte(2L * 1024 * 1024) == "2 MB", "Dateigrösse wird nicht vertragsstabil formatiert.");
+    await PruefeAusnahmeAsync<InvalidOperationException>(() => Task.FromResult(
+        PlauderBoxOptionen.Lade(new ConfigurationBuilder().AddInMemoryCollection(
+            new Dictionary<string, string?> { ["PlauderBox:Grenzen:BilderJeFreigabe"] = "0" }).Build())));
+
     Pruefe(Ipv4Netz.Enthaelt(IPAddress.Parse("172.22.0.7"), "172.22.0.0/24"), "Adresse im Proxy-Netz wurde abgewiesen.");
     Pruefe(!Ipv4Netz.Enthaelt(IPAddress.Parse("172.23.0.7"), "172.22.0.0/24"), "Fremde Adresse wurde dem Proxy-Netz zugeordnet.");
     Pruefe(!Ipv4Netz.Enthaelt(IPAddress.IPv6Loopback, "172.22.0.0/24"), "IPv6-Adresse wurde als IPv4-Netzmitglied akzeptiert.");

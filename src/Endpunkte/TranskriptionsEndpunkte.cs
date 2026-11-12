@@ -76,7 +76,7 @@ public static class TranskriptionsEndpunkte
                 return Problem("Die Aufnahme ist leer.", StatusCodes.Status400BadRequest);
             if (audio.Length > optionen.MaximaleAudiodateigroesseBytes)
                 return Problem(
-                    "Die Aufnahme überschreitet 20 MB.",
+                    $"Die Aufnahme überschreitet {PlauderBoxOptionen.FormatiereMegabyte(optionen.MaximaleAudiodateigroesseBytes)}.",
                     StatusCodes.Status413PayloadTooLarge);
 
             string medientyp = audio.ContentType.Split(';', 2)[0].Trim().ToLowerInvariant();

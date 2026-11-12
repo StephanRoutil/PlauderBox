@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Globalization;
 
 namespace PlauderBox.UI;
 
@@ -36,6 +37,17 @@ public sealed class PlauderBoxOptionen
 
         return new PlauderBoxOptionen
         {
+            MaximaleAudiodateigroesseBytes = LeseLong(konfiguration, "MaximaleAudiodateigroesseBytes", 20L * 1024 * 1024, 1, 1024L * 1024 * 1024),
+            MaximaleBilddateigroesseBytes = LeseLong(konfiguration, "MaximaleBilddateigroesseBytes", 15L * 1024 * 1024, 1, 1024L * 1024 * 1024),
+            TranskriptionsanfragenProStunde = LeseInt(konfiguration, "TranskriptionsanfragenProStunde", 60, 1, 1_000_000),
+            BildanfragenProStunde = LeseInt(konfiguration, "BildanfragenProStunde", 1000, 1, 1_000_000),
+            FreigabeabrufeProStunde = LeseInt(konfiguration, "FreigabeabrufeProStunde", 60, 1, 1_000_000),
+            PunktuebergabenProStunde = LeseInt(konfiguration, "PunktuebergabenProStunde", 30, 1, 1_000_000),
+            TranskriptionenJeFreigabe = LeseInt(konfiguration, "TranskriptionenJeFreigabe", 20, 1, 1_000_000),
+            BilderJeFreigabe = LeseInt(konfiguration, "BilderJeFreigabe", 500, 1, 1_000_000),
+            MaximaleProtokollpunkteJeUebergabe = LeseInt(konfiguration, "MaximaleProtokollpunkteJeUebergabe", 200, 1, 10_000),
+            RatenlimitFenster = TimeSpan.FromSeconds(LeseInt(konfiguration, "RatenlimitFensterSekunden", 3600, 1, 86_400)),
+            OpenAiZeitlimit = TimeSpan.FromSeconds(LeseInt(konfiguration, "OpenAiZeitlimitSekunden", 120, 1, 86_400)),
             Url = konfiguration["PlauderBox:Url"] ?? "http://127.0.0.1:5187",
             Modell = konfiguration["PlauderBox:KI:Modell"] ?? "gpt-transcribe",
             Strukturmodell = konfiguration["PlauderBox:KI:Strukturmodell"] ?? "gpt-6-luna",
@@ -45,6 +57,33 @@ public sealed class PlauderBoxOptionen
             ErlaubtesProxyNetz = konfiguration["PlauderBox:ErlaubtesProxyNetz"],
             HappyHourBasisadresse = happyHourBasisadresse
         };
+    }
+
+    public static string FormatiereMegabyte(long bytes)
+    {
+        return (bytes / (1024d * 1024d)).ToString("0.##", CultureInfo.InvariantCulture) + " MB";
+    }
+
+    private static int LeseInt(IConfiguration konfiguration, string name, int standard, int minimum, int maximum)
+    {
+        string? rohwert = konfiguration[$"PlauderBox:Grenzen:{name}"];
+        if (string.IsNullOrWhiteSpace(rohwert)) return standard;
+        if (!int.TryParse(rohwert, NumberStyles.Integer, CultureInfo.InvariantCulture, out int wert)
+            || wert < minimum
+            || wert > maximum)
+            throw new InvalidOperationException($"PlauderBox:Grenzen:{name} muss zwischen {minimum} und {maximum} liegen.");
+        return wert;
+    }
+
+    private static long LeseLong(IConfiguration konfiguration, string name, long standard, long minimum, long maximum)
+    {
+        string? rohwert = konfiguration[$"PlauderBox:Grenzen:{name}"];
+        if (string.IsNullOrWhiteSpace(rohwert)) return standard;
+        if (!long.TryParse(rohwert, NumberStyles.Integer, CultureInfo.InvariantCulture, out long wert)
+            || wert < minimum
+            || wert > maximum)
+            throw new InvalidOperationException($"PlauderBox:Grenzen:{name} muss zwischen {minimum} und {maximum} liegen.");
+        return wert;
     }
 
     private static (string? Schluessel, string? Fehler) LadeApiKey(IConfiguration konfiguration)

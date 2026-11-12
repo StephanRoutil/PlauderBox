@@ -128,7 +128,7 @@ public static class HappyHourEndpunkte
                 || datei.Length <= 0
                 || datei.Length > optionen.MaximaleBilddateigroesseBytes)
                 return Results.Problem(
-                    title: "Das Bild ist leer oder grösser als 15 MB.",
+                    title: $"Das Bild ist leer oder grösser als {PlauderBoxOptionen.FormatiereMegabyte(optionen.MaximaleBilddateigroesseBytes)}.",
                     statusCode: StatusCodes.Status400BadRequest);
             if (!DateTimeOffset.TryParse(
                     formular["aufnahmezeitpunkt"].ToString(),
@@ -181,34 +181,21 @@ internal static class HappyHourFehlerabbildung
         {
             return await aktion();
         }
-        catch (HappyHourNichtKonfiguriertException ausnahme)
+        catch (Exception ausnahme) when (IstHappyHourAusnahme(ausnahme))
         {
             return Erstelle(ausnahme, kontext);
         }
-        catch (HappyHourFreigabeUngueltigException ausnahme)
-        {
-            return Erstelle(ausnahme, kontext);
-        }
-        catch (HappyHourUebergabeUngueltigException ausnahme)
-        {
-            return Erstelle(ausnahme, kontext);
-        }
-        catch (HappyHourUebergabeKonfliktException ausnahme)
-        {
-            return Erstelle(ausnahme, kontext);
-        }
-        catch (HappyHourBildkontingentException ausnahme)
-        {
-            return Erstelle(ausnahme, kontext);
-        }
-        catch (HappyHourAntwortUngueltigException ausnahme)
-        {
-            return Erstelle(ausnahme, kontext);
-        }
-        catch (HappyHourNichtErreichbarException ausnahme)
-        {
-            return Erstelle(ausnahme, kontext);
-        }
+    }
+
+    private static bool IstHappyHourAusnahme(Exception ausnahme)
+    {
+        return ausnahme is HappyHourNichtKonfiguriertException
+            or HappyHourFreigabeUngueltigException
+            or HappyHourUebergabeUngueltigException
+            or HappyHourUebergabeKonfliktException
+            or HappyHourBildkontingentException
+            or HappyHourAntwortUngueltigException
+            or HappyHourNichtErreichbarException;
     }
 
     private static IResult Erstelle(Exception ausnahme, HappyHourFehlerkontext kontext)

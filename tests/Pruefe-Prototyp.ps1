@@ -70,7 +70,7 @@ if ($caddySnippet -match '(?m)^\s*log\s*\{') { throw 'PlauderBox-Caddy darf Frei
 if ($caddySnippet -notmatch 'disable_http_challenge') { throw 'Caddy-Site ist nicht auf TLS-ALPN ohne Port 80 vorbereitet.' }
 if ($caddySnippet -notmatch 'reverse_proxy plauderbox:5187') { throw 'Caddy-Site verwendet nicht den internen PlauderBox-Netzalias.' }
 if ($caddySnippet -notmatch 'max_size 24MB') { throw 'Caddy lässt nicht genügend Multipart-Overhead für 20-MiB-Audio zu.' }
-if (([regex]::Matches($happyHourEndpunkteInhalt, 'catch \(HappyHourNichtKonfiguriertException')).Count -ne 1 -or ([regex]::Matches($happyHourEndpunkteInhalt, 'catch \(HappyHourFreigabeUngueltigException')).Count -ne 1 -or ([regex]::Matches($happyHourEndpunkteInhalt, 'catch \(HappyHourAntwortUngueltigException')).Count -ne 1 -or ([regex]::Matches($happyHourEndpunkteInhalt, 'catch \(HappyHourNichtErreichbarException')).Count -ne 1) { throw 'Die HappyHour-Ausnahmen werden nicht genau einmal zentral abgebildet.' }
+if (([regex]::Matches($happyHourEndpunkteInhalt, 'catch \(Exception ausnahme\) when \(IstHappyHourAusnahme\(ausnahme\)\)')).Count -ne 1 -or $happyHourEndpunkteInhalt -match 'catch \(HappyHour[A-Za-z]+Exception') { throw 'Die HappyHour-Ausnahmen werden nicht genau einmal zentral über den Ausnahmefilter abgebildet.' }
 if ($caddySnippet -notmatch 'header_up X-Forwarded-For \{remote_host\}') { throw 'Caddy überschreibt die weitergeleitete Clientadresse nicht vertrauenswürdig.' }
 if (-not (Test-Path -LiteralPath (Join-Path $projektordner 'deploy\olymp01-live\n8n-compose.plauderbox.patch'))) { throw 'Die bestandssichere Caddy-Netzanbindung ist nicht versioniert.' }
 
