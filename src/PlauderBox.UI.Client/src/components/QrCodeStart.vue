@@ -1,0 +1,68 @@
+<script setup lang="ts">
+import { onBeforeUnmount } from 'vue'
+import { BrowserQrCodeScanner, type QrCodeScanner } from '@/services/qrCodeScanner'
+import { verwendeQrCodeStartAblauf } from '@/services/qrCodeStartAblauf'
+
+const eigenschaften = withDefaults(defineProps<{
+  scanner?: QrCodeScanner
+  externeMeldung?: string
+  erneuerung?: boolean
+}>(), {
+  scanner: () => new BrowserQrCodeScanner(),
+  externeMeldung: '',
+  erneuerung: false,
+})
+
+const emit = defineEmits<{
+  erkannt: [inhalt: string]
+  zurueck: []
+}>()
+
+const { setzeVideo, status, sichtbareMeldung, starteScanner, stoppeScanner } = verwendeQrCodeStartAblauf(
+  eigenschaften.scanner,
+  () => eigenschaften.externeMeldung,
+  (inhalt) => emit('erkannt', inhalt),
+)
+
+onBeforeUnmount(() => eigenschaften.scanner.stoppen())
+</script>
+
+<template>
+  <main class="begehung-shell">
+    <header class="mobile-brand">
+      <span class="mobile-brand__mark" aria-hidden="true">P</span>
+      <strong>PlauderBox</strong>
+    </header>
+
+    <section class="scan-card" aria-labelledby="scan-titel">
+      <p class="eyebrow">{{ eigenschaften.erneuerung ? 'Bestehende Begehung behalten' : 'Begehung öffnen' }}</p>
+      <h1 id="scan-titel">{{ eigenschaften.erneuerung ? 'Freigabe erneuern' : 'Code scannen' }}</h1>
+      <p class="scan-card__intro">{{ eigenschaften.erneuerung ? 'Scanne eine neue Freigabe für dasselbe HappyHour-Protokoll. Alle lokalen Einträge und Bilder bleiben erhalten.' : 'Scanne den QR-Code des vorbereiteten HappyHour-Protokolls.' }}</p>
+
+      <div class="scan-preview" :class="{ 'scan-preview--active': status === 'scannt' }">
+        <video :ref="setzeVideo" muted playsinline aria-label="Kamerabild zum Scannen des QR-Codes"></video>
+        <div class="scan-frame" aria-hidden="true"><span></span></div>
+        <div v-if="status !== 'scannt'" class="scan-placeholder" aria-hidden="true">
+          <span class="scan-placeholder__icon"></span>
+          <small>Kamera ist noch nicht aktiv</small>
+        </div>
+      </div>
+
+      <p v-if="sichtbareMeldung" class="scan-status" :class="{ 'scan-status--error': status === 'fehler' || !!eigenschaften.externeMeldung }" :role="status === 'fehler' || eigenschaften.externeMeldung ? 'alert' : 'status'">
+        {{ sichtbareMeldung }}
+      </p>
+
+      <button v-if="status !== 'scannt'" class="mobile-primary" type="button" @click="starteScanner">
+        Kamera öffnen
+      </button>
+      <button v-else class="mobile-secondary" type="button" @click="stoppeScanner">
+        Scannen abbrechen
+      </button>
+      <button v-if="eigenschaften.erneuerung" class="mobile-secondary" type="button" @click="stoppeScanner(); emit('zurueck')">
+        Zurück zum Abschluss
+      </button>
+
+      <p class="scan-hint">Der Code berechtigt nur zur freigegebenen Begehung und kann zeitlich begrenzt oder widerrufen sein.</p>
+    </section>
+  </main>
+</template>

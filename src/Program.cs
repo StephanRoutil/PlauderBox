@@ -4,12 +4,18 @@ using System.Text.Json;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.Extensions.Caching.Memory;
 using PlauderBox.Datenmanagement;
 using PlauderBox.Logik;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+object freigabeKontingentSperre = new();
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
+// Freigabe-Tokens stehen technisch im Pfad. Diese Kategorien dürfen deshalb keine Request-URLs protokollieren.
+builder.Logging.AddFilter("Microsoft.AspNetCore.Hosting.Diagnostics", LogLevel.Warning);
+builder.Logging.AddFilter("Microsoft.AspNetCore.Server.Kestrel", LogLevel.Warning);
+builder.Logging.AddFilter("System.Net.Http.HttpClient.HappyHour", LogLevel.Warning);
 builder.WebHost.UseUrls(builder.Configuration["PlauderBox:Url"] ?? "http://127.0.0.1:5187");
 
 const long maximaleDateigroesse = 20L * 1024 * 1024;
@@ -17,6 +23,13 @@ const long maximaleDateigroesse = 20L * 1024 * 1024;
 string modell = builder.Configuration["PlauderBox:KI:Modell"] ?? "gpt-transcribe";
 string strukturmodell = builder.Configuration["PlauderBox:KI:Strukturmodell"] ?? "gpt-6-luna";
 string? erlaubterUrsprung = builder.Configuration["PlauderBox:ErlaubterUrsprung"]?.TrimEnd('/');
+string? erlaubtesProxyNetz = builder.Configuration["PlauderBox:ErlaubtesProxyNetz"];
+Uri? happyHourBasisadresse = Uri.TryCreate(
+    builder.Configuration["PlauderBox:HappyHour:Basisadresse"]?.TrimEnd('/') + "/",
+    UriKind.Absolute,
+    out Uri? konfigurierteHappyHourBasisadresse)
+    ? konfigurierteHappyHourBasisadresse
+    : null;
 
 builder.Services.Configure<FormOptions>(options =>
 {
@@ -28,6 +41,17 @@ builder.Services.AddHttpClient("OpenAI", client =>
     client.BaseAddress = new Uri("https://api.openai.com/v1/");
     client.Timeout = TimeSpan.FromSeconds(120);
 });
+builder.Services.AddHttpClient("HappyHour")
+    .RemoveAllLoggers()
+    .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false });
+builder.Services.AddScoped<HappyHourFreigabeQuelle>(services =>
+    new HappyHourFreigabeQuelle(
+        services.GetRequiredService<IHttpClientFactory>().CreateClient("HappyHour"),
+        happyHourBasisadresse));
+builder.Services.AddScoped<IHappyHourFreigabeQuelle>(services => services.GetRequiredService<HappyHourFreigabeQuelle>());
+builder.Services.AddScoped<IHappyHourProtokollpunktZiel>(services => services.GetRequiredService<HappyHourFreigabeQuelle>());
+builder.Services.AddScoped<IHappyHourProtokollpunktBildZiel>(services => services.GetRequiredService<HappyHourFreigabeQuelle>());
+builder.Services.AddMemoryCache();
 builder.Services.AddScoped<IProtokollpunktStrukturierer>(services =>
     new OpenAiProtokollpunktStrukturierer(
         services.GetRequiredService<IHttpClientFactory>().CreateClient("OpenAI"),
@@ -37,10 +61,18 @@ builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
     options.AddPolicy("Transkription", context => RateLimitPartition.GetFixedWindowLimiter(
-        context.Connection.RemoteIpAddress?.ToString() ?? "lokal",
+        "transkription:" + LadeQuellPartition(context, erlaubtesProxyNetz),
         _ => new FixedWindowRateLimiterOptions
         {
-            PermitLimit = 20,
+            PermitLimit = 60,
+            Window = TimeSpan.FromHours(1),
+            QueueLimit = 0
+        }));
+    options.AddPolicy("Bilduebergabe", context => RateLimitPartition.GetFixedWindowLimiter(
+        "bilduebergabe:" + LadeQuellPartition(context, erlaubtesProxyNetz),
+        _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 1000,
             Window = TimeSpan.FromHours(1),
             QueueLimit = 0
         }));
@@ -49,7 +81,10 @@ builder.Services.AddRateLimiter(options =>
 WebApplication app = builder.Build();
 app.Use(async (context, next) =>
 {
-    if (context.Connection.RemoteIpAddress is not null && !IPAddress.IsLoopback(context.Connection.RemoteIpAddress))
+    bool istLoopbackQuelle = context.Connection.RemoteIpAddress is null ||
+        IPAddress.IsLoopback(context.Connection.RemoteIpAddress);
+    if (!istLoopbackQuelle &&
+        !IstAdresseInIpv4Netz(context.Connection.RemoteIpAddress!, erlaubtesProxyNetz))
     {
         context.Response.StatusCode = StatusCodes.Status403Forbidden;
         return;
@@ -68,7 +103,8 @@ app.Use(async (context, next) =>
             && IPAddress.IsLoopback(ip);
         bool istKonfigurierterUrsprung = !string.IsNullOrWhiteSpace(erlaubterUrsprung)
             && string.Equals(origin.TrimEnd('/'), erlaubterUrsprung, StringComparison.OrdinalIgnoreCase);
-        if (!string.IsNullOrWhiteSpace(origin) && !istLoopbackUrsprung && !istKonfigurierterUrsprung)
+        if ((!istLoopbackQuelle && !istKonfigurierterUrsprung) ||
+            (!string.IsNullOrWhiteSpace(origin) && !istLoopbackUrsprung && !istKonfigurierterUrsprung))
         {
             context.Response.StatusCode = StatusCodes.Status403Forbidden;
             return;
@@ -89,12 +125,222 @@ app.MapGet("/api/status", () => Results.Ok(new
     hinweis = konfigurationsfehler
 }));
 
+app.MapGet("/api/happyhour/freigaben/{freigabeToken}", async (
+    string freigabeToken,
+    IHappyHourFreigabeQuelle quelle,
+    CancellationToken token) =>
+{
+    try
+    {
+        HappyHourProtokollKontext kontext = await quelle.LadeAsync(freigabeToken, token);
+        return Results.Ok(kontext);
+    }
+    catch (HappyHourNichtKonfiguriertException)
+    {
+        return Results.Problem(
+            title: "HappyHour-Verbindung nicht konfiguriert",
+            detail: "Die Testverbindung zu HappyHour ist serverseitig noch nicht eingerichtet.",
+            statusCode: StatusCodes.Status503ServiceUnavailable);
+    }
+    catch (HappyHourFreigabeUngueltigException)
+    {
+        return Results.Problem(
+            title: "Rundgangsfreigabe ungültig",
+            detail: "Die Rundgangsfreigabe ist ungültig, abgelaufen oder wurde widerrufen.",
+            statusCode: StatusCodes.Status410Gone);
+    }
+    catch (HappyHourAntwortUngueltigException)
+    {
+        return Results.Problem(title: "Ungültige HappyHour-Antwort", statusCode: StatusCodes.Status502BadGateway);
+    }
+    catch (HappyHourNichtErreichbarException)
+    {
+        return Results.Problem(title: "HappyHour nicht erreichbar", statusCode: StatusCodes.Status503ServiceUnavailable);
+    }
+});
+
+app.MapPost("/api/happyhour/protokollpunkte/uebergeben", async (
+    BegehungUebergabeAnforderung anforderung,
+    IHappyHourProtokollpunktZiel ziel,
+    CancellationToken token) =>
+{
+    BegehungUebergabePruefergebnis pruefung = BegehungUebergabePruefung.Pruefe(anforderung);
+    if (pruefung == BegehungUebergabePruefergebnis.FreigabeUngueltig)
+        return Results.Problem(title: "Rundgangsfreigabe ungültig", statusCode: StatusCodes.Status410Gone);
+    if (pruefung != BegehungUebergabePruefergebnis.Gueltig)
+        return Results.Problem(title: "Ungültige Übergabe", detail: "Die Protokollpunkte sind unvollständig oder widersprüchlich.", statusCode: StatusCodes.Status400BadRequest);
+    RundgangsfreigabeToken.TryCreate(anforderung.FreigabeToken, out RundgangsfreigabeToken? freigabe);
+
+    try
+    {
+        List<ProtokollpunktUebergabeErgebnis> ergebnisse = [];
+        foreach (ProtokollpunktUebergabeEintrag eintrag in anforderung.Eintraege)
+            ergebnisse.Add(await ziel.SchreibeAsync(freigabe!.Wert, eintrag, token));
+        return Results.Ok(new { ergebnisse });
+    }
+    catch (HappyHourFreigabeUngueltigException)
+    {
+        return Results.Problem(title: "Rundgangsfreigabe ungültig", detail: "Die Freigabe ist abgelaufen oder wurde widerrufen.", statusCode: StatusCodes.Status410Gone);
+    }
+    catch (HappyHourUebergabeUngueltigException)
+    {
+        return Results.Problem(title: "Protokollpunkt ungültig", detail: "HappyHour hat mindestens einen Protokollpunkt abgewiesen.", statusCode: StatusCodes.Status400BadRequest);
+    }
+    catch (HappyHourUebergabeKonfliktException)
+    {
+        return Results.Problem(title: "Übergabekonflikt", detail: "Das Protokoll oder ein vorbereiteter Punkt wurde zwischenzeitlich geändert.", statusCode: StatusCodes.Status409Conflict);
+    }
+    catch (HappyHourAntwortUngueltigException)
+    {
+        return Results.Problem(title: "Ungültige HappyHour-Antwort", statusCode: StatusCodes.Status502BadGateway);
+    }
+    catch (HappyHourNichtKonfiguriertException)
+    {
+        return Results.Problem(title: "HappyHour-Verbindung nicht konfiguriert", statusCode: StatusCodes.Status503ServiceUnavailable);
+    }
+    catch (HappyHourNichtErreichbarException)
+    {
+        return Results.Problem(title: "HappyHour nicht erreichbar", statusCode: StatusCodes.Status503ServiceUnavailable);
+    }
+}).DisableAntiforgery();
+
+app.MapPost("/api/happyhour/protokollpunkte/{protokollpunktId:int}/bilder/{bildId:guid}", async (
+    int protokollpunktId,
+    Guid bildId,
+    HttpRequest request,
+    IHappyHourFreigabeQuelle freigabeQuelle,
+    IHappyHourProtokollpunktBildZiel ziel,
+    IMemoryCache freigabeKontingente,
+    CancellationToken token) =>
+{
+    if (protokollpunktId <= 0 || bildId == Guid.Empty || !request.HasFormContentType)
+        return Results.Problem(title: "Ungültige Bildübergabe", statusCode: StatusCodes.Status400BadRequest);
+
+    string headerFreigabeToken = request.Headers["X-PlauderBox-Freigabe"].ToString();
+    if (!RundgangsfreigabeToken.TryCreate(headerFreigabeToken, out RundgangsfreigabeToken? headerFreigabe) || headerFreigabe is null)
+        return Results.Problem(title: "Rundgangsfreigabe ungültig", statusCode: StatusCodes.Status410Gone);
+    try
+    {
+        await freigabeQuelle.LadeAsync(headerFreigabe.Wert, token);
+    }
+    catch (HappyHourFreigabeUngueltigException)
+    {
+        return Results.Problem(title: "Rundgangsfreigabe ungültig", statusCode: StatusCodes.Status410Gone);
+    }
+    catch (HappyHourNichtKonfiguriertException)
+    {
+        return Results.Problem(title: "HappyHour-Verbindung nicht konfiguriert", statusCode: StatusCodes.Status503ServiceUnavailable);
+    }
+    catch (HappyHourNichtErreichbarException)
+    {
+        return Results.Problem(title: "HappyHour nicht erreichbar", statusCode: StatusCodes.Status503ServiceUnavailable);
+    }
+    catch (HappyHourAntwortUngueltigException)
+    {
+        return Results.Problem(title: "Ungültige HappyHour-Antwort", statusCode: StatusCodes.Status502BadGateway);
+    }
+    if (!ReserviereFreigabeKontingent(freigabeKontingente, freigabeKontingentSperre, "bilder", headerFreigabe.Wert, 500))
+        return Results.Problem(title: "Bildkontingent ausgeschöpft", statusCode: StatusCodes.Status429TooManyRequests);
+
+    IFormCollection formular;
+    try { formular = await request.ReadFormAsync(token); }
+    catch (InvalidDataException) { return Results.Problem(title: "Das Bild ist zu gross oder ungültig.", statusCode: StatusCodes.Status413PayloadTooLarge); }
+    string freigabeToken = formular["freigabeToken"].ToString();
+    if (!string.Equals(freigabeToken, headerFreigabeToken, StringComparison.Ordinal))
+        return Results.Problem(title: "Rundgangsfreigabe ungültig", statusCode: StatusCodes.Status410Gone);
+    if (!RundgangsfreigabeToken.TryCreate(freigabeToken, out RundgangsfreigabeToken? freigabe) || freigabe is null)
+        return Results.Problem(title: "Rundgangsfreigabe ungültig", statusCode: StatusCodes.Status410Gone);
+    IFormFile? datei = formular.Files.GetFile("bild");
+    if (formular.Files.Count != 1 || datei is null || datei.Length <= 0 || datei.Length > 15L * 1024 * 1024)
+        return Results.Problem(title: "Das Bild ist leer oder grösser als 15 MB.", statusCode: StatusCodes.Status400BadRequest);
+    if (!DateTimeOffset.TryParse(
+            formular["aufnahmezeitpunkt"].ToString(),
+            System.Globalization.CultureInfo.InvariantCulture,
+            System.Globalization.DateTimeStyles.AssumeUniversal | System.Globalization.DateTimeStyles.AdjustToUniversal,
+            out DateTimeOffset aufnahmezeitpunkt))
+        return Results.Problem(title: "Der Aufnahmezeitpunkt ist ungültig.", statusCode: StatusCodes.Status400BadRequest);
+
+    try
+    {
+        await using MemoryStream inhalt = new((int)datei.Length);
+        await datei.CopyToAsync(inhalt, token);
+        ProtokollpunktBildUebergabeErgebnis ergebnis = await ziel.SchreibeBildAsync(
+            freigabe.Wert,
+            new ProtokollpunktBildUebergabe(
+                bildId,
+                protokollpunktId,
+                Path.GetFileName(datei.FileName),
+                datei.ContentType,
+                aufnahmezeitpunkt,
+                inhalt.ToArray()),
+            token);
+        return Results.Ok(ergebnis);
+    }
+    catch (HappyHourFreigabeUngueltigException)
+    {
+        return Results.Problem(title: "Rundgangsfreigabe ungültig", statusCode: StatusCodes.Status410Gone);
+    }
+    catch (HappyHourUebergabeUngueltigException)
+    {
+        return Results.Problem(title: "Bild ungültig", statusCode: StatusCodes.Status400BadRequest);
+    }
+    catch (HappyHourUebergabeKonfliktException)
+    {
+        return Results.Problem(title: "Übergabekonflikt", statusCode: StatusCodes.Status409Conflict);
+    }
+    catch (HappyHourBildkontingentException)
+    {
+        return Results.Problem(title: "Bildkontingent ausgeschöpft", statusCode: StatusCodes.Status429TooManyRequests);
+    }
+    catch (HappyHourAntwortUngueltigException)
+    {
+        return Results.Problem(title: "Ungültige HappyHour-Antwort", statusCode: StatusCodes.Status502BadGateway);
+    }
+    catch (HappyHourNichtKonfiguriertException)
+    {
+        return Results.Problem(title: "HappyHour-Verbindung nicht konfiguriert", statusCode: StatusCodes.Status503ServiceUnavailable);
+    }
+    catch (HappyHourNichtErreichbarException)
+    {
+        return Results.Problem(title: "HappyHour nicht erreichbar", statusCode: StatusCodes.Status503ServiceUnavailable);
+    }
+}).DisableAntiforgery().RequireRateLimiting("Bilduebergabe");
+
 app.MapPost("/api/transkribieren", async (
     HttpRequest request,
     IHttpClientFactory clientFactory,
+    IHappyHourFreigabeQuelle freigabeQuelle,
     IProtokollpunktStrukturierer strukturierer,
+    IMemoryCache freigabeKontingente,
     CancellationToken token) =>
 {
+    string freigabeToken = request.Headers["X-PlauderBox-Freigabe"].ToString();
+    if (!RundgangsfreigabeToken.TryCreate(freigabeToken, out RundgangsfreigabeToken? freigabe) || freigabe is null)
+        return Results.Problem(title: "Rundgangsfreigabe ungültig", statusCode: StatusCodes.Status401Unauthorized);
+
+    try
+    {
+        await freigabeQuelle.LadeAsync(freigabe.Wert, token);
+    }
+    catch (HappyHourFreigabeUngueltigException)
+    {
+        return Results.Problem(title: "Rundgangsfreigabe ungültig", statusCode: StatusCodes.Status410Gone);
+    }
+    catch (HappyHourNichtKonfiguriertException)
+    {
+        return Results.Problem(title: "HappyHour-Verbindung nicht konfiguriert", statusCode: StatusCodes.Status503ServiceUnavailable);
+    }
+    catch (HappyHourNichtErreichbarException)
+    {
+        return Results.Problem(title: "HappyHour nicht erreichbar", statusCode: StatusCodes.Status503ServiceUnavailable);
+    }
+    catch (HappyHourAntwortUngueltigException)
+    {
+        return Results.Problem(title: "Ungültige HappyHour-Antwort", statusCode: StatusCodes.Status502BadGateway);
+    }
+    if (!ReserviereFreigabeKontingent(freigabeKontingente, freigabeKontingentSperre, "transkription", freigabe.Wert, 20))
+        return Results.Problem(title: "Transkriptionskontingent ausgeschöpft", statusCode: StatusCodes.Status429TooManyRequests);
+
     if (string.IsNullOrWhiteSpace(apiKey))
         return Problem("Die KI-Anbindung ist lokal noch nicht konfiguriert.", StatusCodes.Status503ServiceUnavailable);
     if (!request.HasFormContentType)
@@ -105,6 +351,8 @@ app.MapPost("/api/transkribieren", async (
     catch (InvalidDataException) { return Problem("Die Aufnahme ist zu gross oder ungültig.", StatusCodes.Status413PayloadTooLarge); }
 
     IFormFile? audio = form.Files.GetFile("audio");
+    if (!ErfassungsId.IstGueltig(form["erfassungsId"].ToString()))
+        return Problem("Die stabile Erfassungskennung fehlt oder ist ungültig.", StatusCodes.Status400BadRequest);
     if (audio is null || audio.Length == 0)
         return Problem("Die Aufnahme ist leer.", StatusCodes.Status400BadRequest);
     if (audio.Length > maximaleDateigroesse)
@@ -190,6 +438,61 @@ static IResult Problem(string meldung, int status) => Results.Problem(
     title: "Transkription nicht möglich",
     detail: meldung,
     statusCode: status);
+
+static string LadeQuellPartition(HttpContext context, string? erlaubtesProxyNetz)
+{
+    IPAddress? remoteAdresse = context.Connection.RemoteIpAddress;
+    if (remoteAdresse is not null && IstAdresseInIpv4Netz(remoteAdresse, erlaubtesProxyNetz))
+    {
+        string weitergeleitet = context.Request.Headers["X-Forwarded-For"].ToString().Split(',', 2)[0].Trim();
+        if (IPAddress.TryParse(weitergeleitet, out IPAddress? clientAdresse)) return clientAdresse.ToString();
+        return "proxy_ohne_clientadresse";
+    }
+
+    return remoteAdresse?.ToString() ?? "unbekannte_quelle";
+}
+
+static bool ReserviereFreigabeKontingent(
+    IMemoryCache cache,
+    object sperre,
+    string art,
+    string freigabeToken,
+    int grenze)
+{
+    string schluessel = "PlauderBox.FreigabeKontingent:" + art + ":" + freigabeToken;
+    lock (sperre)
+    {
+        int anzahl = cache.TryGetValue(schluessel, out int vorhanden) ? vorhanden : 0;
+        if (anzahl >= grenze) return false;
+        cache.Set(schluessel, anzahl + 1, TimeSpan.FromHours(1));
+        return true;
+    }
+}
+
+static bool IstAdresseInIpv4Netz(IPAddress adresse, string? netzNotation)
+{
+    if (string.IsNullOrWhiteSpace(netzNotation)) return false;
+
+    string[] teile = netzNotation.Split('/', StringSplitOptions.TrimEntries);
+    if (teile.Length != 2 ||
+        !IPAddress.TryParse(teile[0], out IPAddress? netzAdresse) ||
+        !int.TryParse(teile[1], out int praefixLaenge) ||
+        praefixLaenge < 0 || praefixLaenge > 32)
+        return false;
+
+    byte[] adressBytes = adresse.GetAddressBytes();
+    byte[] netzBytes = netzAdresse.GetAddressBytes();
+    if (adressBytes.Length != 4 || netzBytes.Length != 4) return false;
+
+    int volleBytes = praefixLaenge / 8;
+    int restBits = praefixLaenge % 8;
+    for (int index = 0; index < volleBytes; index++)
+        if (adressBytes[index] != netzBytes[index]) return false;
+
+    if (restBits == 0) return true;
+    int maske = 0xFF << (8 - restBits);
+    return (adressBytes[volleBytes] & maske) == (netzBytes[volleBytes] & maske);
+}
 
 static (string? Schluessel, string? Fehler) LadeApiKey(IConfiguration konfiguration)
 {

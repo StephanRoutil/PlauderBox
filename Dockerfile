@@ -4,6 +4,7 @@ RUN corepack enable
 COPY src/PlauderBox.UI.Client/package.json src/PlauderBox.UI.Client/pnpm-lock.yaml src/PlauderBox.UI.Client/pnpm-workspace.yaml ./
 RUN pnpm install --frozen-lockfile
 COPY src/PlauderBox.UI.Client/ ./
+COPY src/PlauderBox.Logik/Client/ /quelle/src/PlauderBox.Logik/Client/
 RUN pnpm run build
 
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build

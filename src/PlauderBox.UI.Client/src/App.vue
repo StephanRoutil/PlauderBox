@@ -1,651 +1,270 @@
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
-import {
-  ladeInterneAufnahme,
-  ladeLokaleBilder,
-  loescheInterneAufnahme,
-  loescheLokalesBild,
-  speichereEinzelneAufnahme,
-  speichereLokalesBild,
-  speichereLokalenProtokollpunkt,
-  ladeLokalenProtokollpunkt,
-  uebernehmeStrukturvorschlaege,
-  type InterneAufnahme,
-  type LokalerProtokollpunkt,
-  type LokalesProtokollpunktbild,
-} from '@/services/internerAufnahmespeicher'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import AktiveBegehung from '@/components/AktiveBegehung.vue'
+import BegehungAbschluss from '@/components/BegehungAbschluss.vue'
+import BegehungKontrolle from '@/components/BegehungKontrolle.vue'
+import BegehungStart from '@/components/BegehungStart.vue'
+import EintragAuswertung from '@/components/EintragAuswertung.vue'
+import EintragErfassen from '@/components/EintragErfassen.vue'
+import OfflineHinweis from '@/components/OfflineHinweis.vue'
+import QrCodeStart from '@/components/QrCodeStart.vue'
+import { HappyHourProtokollKontextFehler, ladeHappyHourProtokollKontext, leseHappyHourBegehungsfreigabe, type HappyHourProtokollKontext } from '@/services/happyHourProtokollKontext'
+import { bereiteWiederanlaufVor, committeEintrag, committeFreigabeErneuerung, committeHappyHourUebergabe, erstelleBegehung, erstelleEintragFuerProtokoll, ladeBegehung, loescheBegehung, normalisiereEintragProjektAnsprechpartner, speichereBegehung, uebernehmeAuswertung, zaehleAusstehendeAudioaufnahmen, type BegehungEintrag, type LokaleBegehung } from '@/services/begehungsSpeicher'
+import { verarbeiteWarteschlange as verarbeiteFachWarteschlange } from '@logik/begehungsAblauf'
+import { sendeAudioZurAuswertung } from '@/services/auswertungsDienst'
+import { ladeLegacyEintrag } from '@/services/legacyWiederherstellung'
+import { HappyHourUebergabefehler, uebergebeProtokollpunkte } from '@/services/happyHourProtokollpunktUebergabe'
 
-interface ServerStatus {
-  kiBereit: boolean
-  modell: string
-  hinweis?: string | null
-}
+type AppAnsicht = 'scanner' | 'freigabe_erneuern' | 'laden' | 'start' | 'aktiv' | 'erfassen' | 'offline' | 'auswertung' | 'kontrolle' | 'abschluss'
 
-interface Transkriptionsantwort {
-  text?: string
-  gruppe?: string
-  thema?: string
-  inhalt?: string
-  rechtsverweis?: string
-  modell?: string
-  strukturmodell?: string
-  detail?: string
-}
-
-const visualizer = ref<HTMLCanvasElement | null>(null)
-const ausstehendeAufnahme = ref<InterneAufnahme | null>(null)
-const aufnahmeLaeuft = ref(false)
-const wirdVerarbeitet = ref(false)
+const ansicht = ref<AppAnsicht>('scanner')
+const scannerMeldung = ref('')
+const protokollKontext = ref<HappyHourProtokollKontext | null>(null)
+const begehung = ref<LokaleBegehung | null>(null)
 const online = ref(navigator.onLine)
-const statusText = ref('Bereit')
-const verstricheneSekunden = ref(0)
-const meldung = ref('')
-const transkript = ref('')
-const modell = ref('')
-const verbindungsstatus = ref('KI-Anbindung wird geprüft …')
-const kiBereit = ref(false)
-const formularGeladen = ref(false)
-const formularSpeicherstatus = ref('Nur lokal · noch nicht an HappyHour übertragen')
-const lokaleBilder = ref<LokalesProtokollpunktbild[]>([])
-const bildVorschauUrls = ref<Record<string, string>>({})
-const protokollpunkt = reactive<LokalerProtokollpunkt>(erstelleLeerenProtokollpunkt())
+const auswertungLaeuft = ref(false)
+const legacyEintrag = ref<BegehungEintrag | null>(null)
+const aktiveFreigabeToken = ref('')
+const uebergabeLaeuft = ref(false)
+const uebergabeMeldung = ref('')
+const startLaeuft = ref(false)
+const startMeldung = ref('')
 
-let mediaRecorder: MediaRecorder | null = null
-let mediaStream: MediaStream | null = null
-let audioContext: AudioContext | null = null
-let analyser: AnalyserNode | null = null
-let animationFrame = 0
-let timerIntervall = 0
-let aufgenommenSeit = 0
-let audioTeile: Blob[] = []
-let formularSpeicherTimer = 0
+const aktuellerEintrag = computed(() => begehung.value?.eintraege.find((eintrag) => eintrag.id === begehung.value?.aktuellerEintragId) ?? null)
+const anzahlAusstehend = computed(() => begehung.value ? zaehleAusstehendeAudioaufnahmen(begehung.value) : 0)
 
-function heutigesDatum(): string {
-  const heute = new Date()
-  const offset = heute.getTimezoneOffset() * 60_000
-  return new Date(heute.getTime() - offset).toISOString().slice(0, 10)
-}
-
-function erstelleLeerenProtokollpunkt(): LokalerProtokollpunkt {
-  return {
-    intProtokollpunktID: 0,
-    intProtokollFKID: 0,
-    intProtokollpunktArtFKID: 0,
-    datProtokollpunkt: heutigesDatum(),
-    blnNachverfolgen: false,
-    intProjektAnsprechpartnerFKID: null,
-    datFrist: null,
-    blnErledigt: true,
-    strRechtsverweis: '',
-    strGruppe: '',
-    intReihenfolge: 0,
-    strProtokollpunkt: '',
-    txtProtokollpunkt: '',
-    GUID: crypto.randomUUID(),
-    aktualisiertAm: new Date().toISOString(),
-  }
-}
-
-const aufnahmeKnopfText = computed(() => aufnahmeLaeuft.value ? 'Aufnahme stoppen' : 'Aufnahme starten')
-const zeitText = computed(() => formatiereDauer(verstricheneSekunden.value))
-const aufnahmeGesperrt = computed(() => wirdVerarbeitet.value || (!aufnahmeLaeuft.value && ausstehendeAufnahme.value !== null))
-
-function formatiereDauer(sekunden: number): string {
-  const minuten = Math.floor(sekunden / 60)
-  return `${String(minuten).padStart(2, '0')}:${String(sekunden % 60).padStart(2, '0')}`
-}
-
-function formatiereGroesse(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`
-  return `${(bytes / 1024).toFixed(1)} KB`
-}
-
-function formatiereZeitpunkt(isoZeit: string): string {
-  return new Intl.DateTimeFormat('de-CH', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(isoZeit))
-}
-
-function setzeAnsprechpartnerId(ereignis: Event): void {
-  const wert = (ereignis.target as HTMLInputElement).value
-  protokollpunkt.intProjektAnsprechpartnerFKID = wert ? Number.parseInt(wert, 10) : null
-}
-
-function setzeFrist(ereignis: Event): void {
-  protokollpunkt.datFrist = (ereignis.target as HTMLInputElement).value || null
-}
-
-function aktualisiereNachverfolgung(): void {
-  if (protokollpunkt.blnNachverfolgen) {
-    protokollpunkt.blnErledigt = false
-    if (!protokollpunkt.datFrist) {
-      const frist = new Date()
-      frist.setDate(frist.getDate() + 14)
-      protokollpunkt.datFrist = frist.toISOString().slice(0, 10)
-    }
-  } else {
-    protokollpunkt.blnErledigt = true
-    protokollpunkt.datFrist = null
-  }
-}
-
-async function speichereFormular(): Promise<void> {
-  formularSpeicherstatus.value = 'Wird intern gespeichert …'
-  const zuSpeichern: LokalerProtokollpunkt = {
-    ...protokollpunkt,
-    aktualisiertAm: new Date().toISOString(),
-  }
-  await speichereLokalenProtokollpunkt(zuSpeichern)
-  formularSpeicherstatus.value = 'Lokal gespeichert · nicht an HappyHour übertragen'
-}
-
-function planeFormularspeicherung(): void {
-  if (!formularGeladen.value) return
-  window.clearTimeout(formularSpeicherTimer)
-  formularSpeicherstatus.value = 'Lokale Änderung …'
-  formularSpeicherTimer = window.setTimeout(() => {
-    void speichereFormular().catch(() => {
-      formularSpeicherstatus.value = 'Lokale Speicherung fehlgeschlagen'
-    })
-  }, 250)
-}
-
-function erneuereBildVorschauen(bilder: LokalesProtokollpunktbild[]): void {
-  Object.values(bildVorschauUrls.value).forEach((url) => URL.revokeObjectURL(url))
-  bildVorschauUrls.value = Object.fromEntries(
-    bilder.map((bild) => [bild.id, URL.createObjectURL(bild.bild)]),
-  )
-}
-
-async function waehleBilder(ereignis: Event): Promise<void> {
-  const eingabe = ereignis.target as HTMLInputElement
-  const dateien = Array.from(eingabe.files ?? [])
-  eingabe.value = ''
-  if (!dateien.length) return
-
-  const fehler: string[] = []
-  for (const datei of dateien) {
-    if (!datei.type.startsWith('image/')) {
-      fehler.push(`${datei.name}: keine Bilddatei`)
-      continue
-    }
-    if (datei.size > 15 * 1024 * 1024) {
-      fehler.push(`${datei.name}: grösser als 15 MB`)
-      continue
-    }
-
-    const bild: LokalesProtokollpunktbild = {
-      id: crypto.randomUUID(),
-      dateiname: datei.name,
-      medientyp: datei.type,
-      groesse: datei.size,
-      erstelltAm: new Date().toISOString(),
-      bild: datei,
-    }
-    await speichereLokalesBild(bild)
-  }
-
-  lokaleBilder.value = await ladeLokaleBilder()
-  erneuereBildVorschauen(lokaleBilder.value)
-  meldung.value = fehler.length ? `Nicht gespeichert: ${fehler.join('; ')}` : ''
-}
-
-async function verwerfeBild(id: string): Promise<void> {
-  const bild = lokaleBilder.value.find((eintrag) => eintrag.id === id)
-  if (!bild || !window.confirm(`Bild „${bild.dateiname}“ wirklich aus dem internen App-Speicher löschen?`)) return
-  await loescheLokalesBild(id)
-  lokaleBilder.value = await ladeLokaleBilder()
-  erneuereBildVorschauen(lokaleBilder.value)
-}
-
-function unterstuetzterMedientyp(): string {
-  return [
-    'audio/webm;codecs=opus',
-    'audio/webm',
-    'audio/mp4',
-    'audio/ogg;codecs=opus',
-  ].find((typ) => MediaRecorder.isTypeSupported(typ)) ?? ''
-}
-
-function dateiendung(medientyp: string): string {
-  if (medientyp.includes('mp4')) return 'mp4'
-  if (medientyp.includes('ogg')) return 'ogg'
-  return 'webm'
-}
-
-function zeichneRuhezustand(): void {
-  const canvas = visualizer.value
-  const context = canvas?.getContext('2d')
-  if (!canvas || !context) return
-  context.clearRect(0, 0, canvas.width, canvas.height)
-  context.beginPath()
-  context.strokeStyle = '#ddd7cf'
-  context.lineWidth = 2
-  for (let x = 0; x < canvas.width; x += 9) {
-    const hoehe = 8 + Math.sin(x * 0.045) * 5
-    context.moveTo(x, canvas.height / 2 - hoehe / 2)
-    context.lineTo(x, canvas.height / 2 + hoehe / 2)
-  }
-  context.stroke()
-}
-
-function zeichneAudio(): void {
-  const canvas = visualizer.value
-  const context = canvas?.getContext('2d')
-  if (!canvas || !context || !analyser) return
-  const daten = new Uint8Array(analyser.frequencyBinCount)
-  analyser.getByteFrequencyData(daten)
-  context.clearRect(0, 0, canvas.width, canvas.height)
-  const anzahlBalken = 58
-  const abstand = 4
-  const balkenbreite = (canvas.width - abstand * (anzahlBalken - 1)) / anzahlBalken
-  for (let index = 0; index < anzahlBalken; index += 1) {
-    const wert = daten[Math.floor(index / anzahlBalken * daten.length)] / 255
-    const balkenhoehe = Math.max(5, wert * canvas.height * 0.78)
-    const x = index * (balkenbreite + abstand)
-    const verlauf = context.createLinearGradient(0, canvas.height / 2 - balkenhoehe / 2, 0, canvas.height / 2 + balkenhoehe / 2)
-    verlauf.addColorStop(0, '#e44a32')
-    verlauf.addColorStop(1, '#f3a48f')
-    context.fillStyle = verlauf
-    context.fillRect(x, canvas.height / 2 - balkenhoehe / 2, balkenbreite, balkenhoehe)
-  }
-  animationFrame = requestAnimationFrame(zeichneAudio)
-}
-
-function schliesseMedien(): void {
-  window.clearInterval(timerIntervall)
-  cancelAnimationFrame(animationFrame)
-  mediaStream?.getTracks().forEach((spur) => spur.stop())
-  void audioContext?.close()
-  mediaStream = null
-  audioContext = null
-  analyser = null
-  zeichneRuhezustand()
-}
-
-async function starteAufnahme(): Promise<void> {
-  meldung.value = ''
-  transkript.value = ''
-  if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) {
-    meldung.value = 'Dieser Browser unterstützt die benötigte Mikrofonaufnahme nicht.'
-    return
-  }
-
+async function verarbeiteQrCode(inhalt: string): Promise<void> {
+  scannerMeldung.value = ''
+  const freigabe = leseHappyHourBegehungsfreigabe(inhalt)
+  if (!freigabe) { scannerMeldung.value = 'Dieser QR-Code gehört nicht zu einer freigegebenen HappyHour-Begehung.'; return }
+  ansicht.value = 'laden'
   try {
-    mediaStream = await navigator.mediaDevices.getUserMedia({
-      audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
-    })
-    const medientyp = unterstuetzterMedientyp()
-    mediaRecorder = medientyp
-      ? new MediaRecorder(mediaStream, { mimeType: medientyp })
-      : new MediaRecorder(mediaStream)
-    audioTeile = []
-    mediaRecorder.addEventListener('dataavailable', (ereignis) => {
-      if (ereignis.data.size > 0) audioTeile.push(ereignis.data)
-    })
-    mediaRecorder.addEventListener('stop', () => {
-      void speichereAufnahme(mediaRecorder?.mimeType || medientyp || 'audio/webm')
-    }, { once: true })
-
-    audioContext = new AudioContext()
-    const quelle = audioContext.createMediaStreamSource(mediaStream)
-    analyser = audioContext.createAnalyser()
-    analyser.fftSize = 256
-    quelle.connect(analyser)
-
-    mediaRecorder.start(500)
-    aufnahmeLaeuft.value = true
-    aufgenommenSeit = Date.now()
-    verstricheneSekunden.value = 0
-    timerIntervall = window.setInterval(() => {
-      verstricheneSekunden.value = Math.floor((Date.now() - aufgenommenSeit) / 1000)
-    }, 250)
-    statusText.value = 'Aufnahme läuft'
-    zeichneAudio()
+    protokollKontext.value = await ladeHappyHourProtokollKontext(freigabe)
+    aktiveFreigabeToken.value = freigabe.token
+    ansicht.value = 'start'
   } catch (fehler: unknown) {
-    schliesseMedien()
-    if (fehler instanceof DOMException && fehler.name === 'NotAllowedError') {
-      meldung.value = 'Der Mikrofonzugriff wurde nicht erlaubt. Bitte in den Browser-Einstellungen freigeben.'
-    } else if (fehler instanceof DOMException && fehler.name === 'NotFoundError') {
-      meldung.value = 'Es wurde kein Mikrofon gefunden.'
-    } else {
-      meldung.value = 'Die Mikrofonaufnahme konnte nicht gestartet werden.'
-    }
+    ansicht.value = 'scanner'
+    const art = fehler instanceof HappyHourProtokollKontextFehler ? fehler.art : 'netzwerk'
+    scannerMeldung.value = {
+      freigabe_ungueltig: 'Diese Rundgangsfreigabe ist ungültig, abgelaufen oder wurde widerrufen.',
+      ungueltige_antwort: 'HappyHour hat keine gültigen Protokolldaten geliefert.',
+      netzwerk: 'HappyHour ist momentan nicht erreichbar. Bitte Verbindung prüfen und erneut scannen.',
+    }[art]
   }
 }
 
-function stoppeAufnahme(): void {
-  if (!aufnahmeLaeuft.value || !mediaRecorder) return
-  aufnahmeLaeuft.value = false
-  statusText.value = 'Aufnahme wird intern gespeichert'
-  mediaRecorder.stop()
-  schliesseMedien()
+function beginneFreigabeErneuerung(): void {
+  scannerMeldung.value = ''
+  ansicht.value = 'freigabe_erneuern'
 }
 
-async function speichereAufnahme(medientyp: string): Promise<void> {
-  const audio = new Blob(audioTeile, { type: medientyp })
-  audioTeile = []
-  if (!audio.size) {
-    statusText.value = 'Bereit'
-    meldung.value = 'Die Aufnahme war leer. Bitte nochmals versuchen.'
-    return
-  }
-
-  const id = crypto.randomUUID()
-  const aufnahme: InterneAufnahme = {
-    id,
-    erstelltAm: new Date().toISOString(),
-    dateiname: `aufnahme-${id}.${dateiendung(medientyp)}`,
-    medientyp,
-    groesse: audio.size,
-    dauerSekunden: Math.max(1, verstricheneSekunden.value),
-    status: 'noch_nicht_uebertragen',
-    audio,
-  }
-
+async function verarbeiteErneuerteFreigabe(inhalt: string): Promise<void> {
+  if (!begehung.value) return
+  scannerMeldung.value = ''
+  const freigabe = leseHappyHourBegehungsfreigabe(inhalt)
+  if (!freigabe) { scannerMeldung.value = 'Dieser QR-Code gehört nicht zu einer freigegebenen HappyHour-Begehung.'; return }
+  ansicht.value = 'laden'
   try {
-    await speichereEinzelneAufnahme(aufnahme)
-    ausstehendeAufnahme.value = aufnahme
-    statusText.value = 'Noch nicht übertragen'
-    if (navigator.storage?.persist) void navigator.storage.persist().catch(() => false)
+    const neuerKontext = await ladeHappyHourProtokollKontext(freigabe)
+    if (neuerKontext.protokollId !== begehung.value.protokoll.protokollId) {
+      ansicht.value = 'freigabe_erneuern'
+      scannerMeldung.value = 'Die neue Freigabe gehört zu einem anderen Protokoll. Die lokale Begehung wurde nicht verändert.'
+      return
+    }
+    begehung.value = await committeFreigabeErneuerung(begehung.value, freigabe.token, neuerKontext.protokollId)
+    uebergabeMeldung.value = 'Freigabe erneuert. Alle lokalen Einträge und Bilder sind erhalten und können jetzt erneut an HappyHour übergeben werden.'
+    ansicht.value = 'abschluss'
+  } catch (fehler: unknown) {
+    ansicht.value = 'freigabe_erneuern'
+    const art = fehler instanceof HappyHourProtokollKontextFehler ? fehler.art : 'speicher'
+    scannerMeldung.value = {
+      freigabe_ungueltig: 'Diese Rundgangsfreigabe ist ungültig, abgelaufen oder wurde widerrufen.',
+      ungueltige_antwort: 'HappyHour hat keine gültigen Protokolldaten geliefert.',
+      netzwerk: 'HappyHour ist momentan nicht erreichbar. Bitte Verbindung prüfen und erneut scannen.',
+      speicher: 'Die neue Freigabe konnte nicht im internen App-Speicher gesichert werden. Die bisherige Freigabe bleibt erhalten.',
+    }[art]
+  }
+}
+
+async function starteBegehung(): Promise<void> {
+  if (!protokollKontext.value || startLaeuft.value) return
+  startLaeuft.value = true
+  startMeldung.value = ''
+  try {
+    const neueBegehung = erstelleBegehung(protokollKontext.value, undefined, aktiveFreigabeToken.value)
+    let legacyImportId: string | undefined
+    if (legacyEintrag.value && window.confirm('Es wurden ältere lokal gespeicherte Daten gefunden. Als neuen Eintrag in diese Begehung übernehmen?')) {
+      normalisiereEintragProjektAnsprechpartner(legacyEintrag.value, neueBegehung.protokoll)
+      neueBegehung.eintraege.push(legacyEintrag.value)
+      neueBegehung.aktuellerEintragId = legacyEintrag.value.id
+      legacyImportId = legacyEintrag.value.legacyImportId
+    }
+    await speichereBegehung(neueBegehung, undefined, legacyImportId)
+    begehung.value = neueBegehung
+    if (legacyImportId) legacyEintrag.value = null
+    navigator.storage?.persist?.().catch(() => false)
+    ansicht.value = 'aktiv'
   } catch {
-    statusText.value = 'Bereit'
-    meldung.value = 'Die Aufnahme konnte nicht im internen App-Speicher gesichert werden.'
-  }
-}
-
-async function uebertrageAufnahme(): Promise<void> {
-  const aufnahme = ausstehendeAufnahme.value
-  if (!aufnahme) return
-  if (!navigator.onLine) {
-    meldung.value = 'Keine Verbindung. Die Aufnahme bleibt sicher im internen App-Speicher.'
-    return
-  }
-
-  wirdVerarbeitet.value = true
-  meldung.value = ''
-  try {
-    const formular = new FormData()
-    formular.append('audio', aufnahme.audio, aufnahme.dateiname)
-    const antwort = await fetch('/api/transkribieren', { method: 'POST', body: formular })
-    const inhalt = await antwort.json().catch(() => ({})) as Transkriptionsantwort
-    if (!antwort.ok) throw new Error(inhalt.detail || 'Die Transkription ist fehlgeschlagen.')
-
-    transkript.value = inhalt.text ?? ''
-    modell.value = [inhalt.modell, inhalt.strukturmodell].filter(Boolean).join(' + ')
-    const formularGeaendert = uebernehmeStrukturvorschlaege(protokollpunkt, {
-      gruppe: inhalt.gruppe,
-      thema: inhalt.thema,
-      inhalt: inhalt.inhalt,
-      rechtsverweis: inhalt.rechtsverweis,
-    })
-    if (formularGeaendert) {
-      await speichereFormular()
-    }
-    await loescheInterneAufnahme(aufnahme.id)
-    ausstehendeAufnahme.value = null
-    statusText.value = 'Text erkannt'
-    await nextTick()
-    document.querySelector('#ergebnis')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
-  } catch (fehler: unknown) {
-    statusText.value = 'Noch nicht übertragen'
-    meldung.value = fehler instanceof Error ? fehler.message : 'Die Transkription ist fehlgeschlagen.'
+    startMeldung.value = 'Die Begehung konnte nicht im internen App-Speicher gestartet werden. Bitte erneut versuchen.'
   } finally {
-    wirdVerarbeitet.value = false
+    startLaeuft.value = false
   }
 }
 
-async function verwerfeAufnahme(): Promise<void> {
-  const aufnahme = ausstehendeAufnahme.value
-  if (!aufnahme || !window.confirm('Aufnahme wirklich aus dem internen App-Speicher löschen?')) return
-  await loescheInterneAufnahme(aufnahme.id)
-  ausstehendeAufnahme.value = null
-  statusText.value = 'Bereit'
-  verstricheneSekunden.value = 0
+async function neuerEintrag(): Promise<void> {
+  if (!begehung.value) return
+  const eintrag = erstelleEintragFuerProtokoll(begehung.value.protokoll)
+  begehung.value.eintraege.push(eintrag)
+  begehung.value.aktuellerEintragId = eintrag.id
+  begehung.value.status = 'aktiv'
+  await speichereBegehung(begehung.value)
+  ansicht.value = 'erfassen'
 }
 
-async function schalteAufnahme(): Promise<void> {
-  if (aufnahmeLaeuft.value) stoppeAufnahme()
-  else await starteAufnahme()
+function oeffneEintrag(id: string): void {
+  if (!begehung.value) return
+  begehung.value.aktuellerEintragId = id
+  ansicht.value = 'erfassen'
 }
 
-function aktualisiereOnlinezustand(): void {
-  online.value = navigator.onLine
+async function speichereEintrag(eintrag: BegehungEintrag, ziel: 'aktiv' | 'neu' | 'kontrolle' = 'aktiv'): Promise<void> {
+  if (!begehung.value) return
+  begehung.value = await committeEintrag(begehung.value, eintrag)
+  if (ziel === 'neu') await neuerEintrag()
+  else if (ziel === 'kontrolle') await geheZurKontrolle()
+  else ansicht.value = 'aktiv'
 }
 
-async function ladeServerstatus(): Promise<void> {
+async function speichereErfassung(eintrag: BegehungEintrag): Promise<void> {
+  await speichereEintrag(eintrag)
+  if (!eintrag.audio) { ansicht.value = 'aktiv'; return }
+  if (!online.value) { ansicht.value = 'offline'; return }
+  await werteEintragAus(eintrag.id, true)
+}
+
+async function speichereZwischenstand(eintrag: BegehungEintrag): Promise<void> {
+  if (!begehung.value) return
+  begehung.value = await committeEintrag(begehung.value, eintrag)
+}
+
+async function loescheEintrag(id: string): Promise<void> {
+  if (!begehung.value || !window.confirm('Diesen Eintrag mit Aufnahme und Bildern wirklich löschen?')) return
+  begehung.value.eintraege = begehung.value.eintraege.filter((eintrag) => eintrag.id !== id)
+  begehung.value.aktuellerEintragId = begehung.value.eintraege.at(-1)?.id ?? null
+  await speichereBegehung(begehung.value)
+}
+
+async function werteEintragAus(id: string, ergebnisAnzeigen: boolean): Promise<void> {
+  if (!begehung.value || !online.value) return
+  const eintrag = begehung.value.eintraege.find((wert) => wert.id === id)
+  if (!eintrag?.audio || auswertungLaeuft.value) return
+  auswertungLaeuft.value = true
+  eintrag.status = 'wird_ausgewertet'
+  eintrag.fehler = ''
+  await speichereBegehung(begehung.value)
   try {
-    const antwort = await fetch('/api/status')
-    const inhalt = await antwort.json() as ServerStatus
-    kiBereit.value = inhalt.kiBereit
-    verbindungsstatus.value = inhalt.kiBereit ? `KI bereit · ${inhalt.modell}` : 'KI noch nicht konfiguriert'
-  } catch {
-    verbindungsstatus.value = online.value ? 'Serverstatus nicht verfügbar' : 'Offline'
+    const ergebnis = await sendeAudioZurAuswertung(eintrag, begehung.value.freigabeToken ?? '')
+    uebernehmeAuswertung(eintrag, { text: ergebnis.text, gruppe: ergebnis.gruppe, thema: ergebnis.thema, inhalt: ergebnis.inhalt, rechtsverweis: ergebnis.rechtsverweis })
+    await speichereBegehung(begehung.value)
+    if (ergebnisAnzeigen) ansicht.value = 'auswertung'
+  } catch (fehler: unknown) {
+    eintrag.status = navigator.onLine ? 'fehler' : 'wartet_auf_auswertung'
+    eintrag.fehler = fehler instanceof Error ? fehler.message : 'Die Auswertung ist fehlgeschlagen.'
+    await speichereBegehung(begehung.value)
+    if (ergebnisAnzeigen) ansicht.value = navigator.onLine ? 'auswertung' : 'offline'
+  } finally { auswertungLaeuft.value = false }
+}
+
+async function verarbeiteWarteschlange(): Promise<void> {
+  if (!begehung.value || !online.value || auswertungLaeuft.value) return
+  await verarbeiteFachWarteschlange(begehung.value, () => online.value, async (eintrag) => {
+    await werteEintragAus(eintrag.id, false)
+    return eintrag.status === 'ausgewertet'
+  })
+}
+
+async function geheZurKontrolle(): Promise<void> {
+  if (!begehung.value) return
+  begehung.value.status = 'kontrolle'
+  await speichereBegehung(begehung.value)
+  ansicht.value = 'kontrolle'
+}
+
+async function schliesseBegehungAb(): Promise<void> {
+  if (!begehung.value || !window.confirm('Begehung nach der Kontrolle lokal abschliessen?')) return
+  begehung.value.status = 'lokal_abgeschlossen'
+  await speichereBegehung(begehung.value)
+  ansicht.value = 'abschluss'
+}
+
+async function uebergibAnHappyHour(): Promise<void> {
+  if (!begehung.value || uebergabeLaeuft.value) return
+  uebergabeLaeuft.value = true
+  uebergabeMeldung.value = ''
+  try {
+    await uebergebeProtokollpunkte(begehung.value)
+    begehung.value = await committeHappyHourUebergabe(begehung.value)
+    uebergabeMeldung.value = 'Alle kontrollierten Protokollpunkte und Bilder sind in HappyHour angekommen. Die lokale Begehung bleibt bis zum bewussten Verwerfen erhalten.'
+  } catch (fehler: unknown) {
+    const art = fehler instanceof HappyHourUebergabefehler ? fehler.art : 'netzwerk'
+    uebergabeMeldung.value = {
+      offline: 'Aktuell keine Verbindung. Die lokalen Daten bleiben erhalten.',
+      freigabe_ungueltig: 'Die Rundgangsfreigabe ist abgelaufen oder wurde widerrufen. Die lokalen Daten bleiben erhalten.',
+      konflikt: 'HappyHour wurde zwischenzeitlich geändert oder ein vorbereiteter Punkt ist doppelt zugeordnet. Bitte in HappyHour kontrollieren.',
+      ungueltig: 'Mindestens ein Eintrag ist für die Übergabe unvollständig. Bitte zur Kontrolle zurückkehren.',
+      bild_ungueltig: 'Mindestens ein Bild ist leer, zu gross oder hat ein nicht unterstütztes Format. Unterstützt sind JPEG, PNG, GIF und TIFF. Die lokalen Daten bleiben erhalten.',
+      bildkontingent: 'Das Bildkontingent dieser Rundgangsfreigabe ist ausgeschöpft. Die lokalen Daten bleiben erhalten; bitte in HappyHour eine neue Freigabe erstellen.',
+      ungueltige_antwort: 'HappyHour hat die Übergabe nicht eindeutig bestätigt. Die lokalen Daten bleiben erhalten.',
+      netzwerk: 'HappyHour ist momentan nicht erreichbar. Die lokalen Daten bleiben erhalten und können erneut übergeben werden.',
+    }[art]
+  } finally { uebergabeLaeuft.value = false }
+}
+
+async function verwirfBegehungUndScanneNeu(): Promise<void> {
+  if (!window.confirm('Die lokale Begehung mit allen Bildern und Aufnahmen endgültig verwerfen und einen neuen Code scannen?')) return
+  await loescheBegehung()
+  begehung.value = null
+  protokollKontext.value = null
+  aktiveFreigabeToken.value = ''
+  uebergabeMeldung.value = ''
+  ansicht.value = 'scanner'
+  scannerMeldung.value = ''
+}
+
+async function verbindungAktualisiert(): Promise<void> {
+  online.value = navigator.onLine
+  if (online.value) {
+    await verarbeiteWarteschlange()
+    if (ansicht.value === 'offline') ansicht.value = 'aktiv'
   }
 }
 
 onMounted(async () => {
-  window.addEventListener('online', aktualisiereOnlinezustand)
-  window.addEventListener('offline', aktualisiereOnlinezustand)
+  window.addEventListener('online', verbindungAktualisiert)
+  window.addEventListener('offline', verbindungAktualisiert)
   try {
-    const gespeicherterProtokollpunkt = await ladeLokalenProtokollpunkt()
-    if (gespeicherterProtokollpunkt) {
-      const bereinigterProtokollpunkt = { ...gespeicherterProtokollpunkt } as LokalerProtokollpunkt & { strOrt?: unknown }
-      const hatteVeraltetesOrtsfeld = 'strOrt' in bereinigterProtokollpunkt
-      delete bereinigterProtokollpunkt.strOrt
-      Object.assign(protokollpunkt, bereinigterProtokollpunkt)
-      if (hatteVeraltetesOrtsfeld) await speichereFormular()
-    } else await speichereFormular()
-    lokaleBilder.value = await ladeLokaleBilder()
-    erneuereBildVorschauen(lokaleBilder.value)
-    ausstehendeAufnahme.value = await ladeInterneAufnahme()
-    if (ausstehendeAufnahme.value) {
-      statusText.value = 'Noch nicht übertragen'
-      verstricheneSekunden.value = ausstehendeAufnahme.value.dauerSekunden
-    }
-  } catch {
-    meldung.value = 'Der interne App-Speicher ist in diesem Browser nicht verfügbar.'
-  }
-  formularGeladen.value = true
-  await ladeServerstatus()
-  zeichneRuhezustand()
+    legacyEintrag.value = await ladeLegacyEintrag()
+    begehung.value = await ladeBegehung()
+    if (begehung.value) {
+      bereiteWiederanlaufVor(begehung.value)
+      ansicht.value = begehung.value.status === 'kontrolle' ? 'kontrolle' : ['lokal_abgeschlossen', 'an_happyhour_uebertragen'].includes(begehung.value.status) ? 'abschluss' : 'aktiv'
+      await speichereBegehung(begehung.value)
+      if (online.value) void verarbeiteWarteschlange()
+    } else if (legacyEintrag.value) scannerMeldung.value = 'Ältere lokale Daten wurden gefunden. Scanne eine Begehung, um sie sicher zu übernehmen.'
+  } catch { scannerMeldung.value = 'Der interne App-Speicher ist nicht verfügbar.' }
 })
-
-onBeforeUnmount(() => {
-  window.removeEventListener('online', aktualisiereOnlinezustand)
-  window.removeEventListener('offline', aktualisiereOnlinezustand)
-  schliesseMedien()
-  window.clearTimeout(formularSpeicherTimer)
-  Object.values(bildVorschauUrls.value).forEach((url) => URL.revokeObjectURL(url))
-})
-
-watch(protokollpunkt, planeFormularspeicherung, { deep: true })
+onBeforeUnmount(() => { window.removeEventListener('online', verbindungAktualisiert); window.removeEventListener('offline', verbindungAktualisiert) })
 </script>
 
 <template>
-  <main class="shell">
-    <header class="topbar">
-      <a class="brand" href="/" aria-label="PlauderBox Startseite">
-        <span class="brand__mark" aria-hidden="true"><i></i><i></i><i></i></span>
-        <span>PlauderBox</span>
-      </a>
-      <span class="prototype-badge">Lokaler Protokollpunkt</span>
-    </header>
-
-    <section class="recorder" aria-labelledby="titel">
-      <p class="eyebrow">Sprache zu Text</p>
-      <h1 id="titel">Sag es einfach.</h1>
-      <p class="intro">Felder, Bild und Aufnahme bleiben im internen App-Speicher. An HappyHour wird nichts übertragen.</p>
-
-      <section class="local-image local-image--capture" aria-labelledby="image-title">
-        <div class="local-image__head">
-          <div>
-            <p class="eyebrow">Erfassung</p>
-            <h2 id="image-title">Bild zum neuen Punkt</h2>
-            <p>Mehrere Bilder, nur im internen App-Speicher.</p>
-          </div>
-          <label class="image-action">
-            {{ lokaleBilder.length ? 'Weiteres Bild aufnehmen oder wählen' : 'Bild aufnehmen oder wählen' }}
-            <input type="file" accept="image/*" capture="environment" multiple @change="waehleBilder">
-          </label>
-        </div>
-        <div v-if="lokaleBilder.length" class="local-image__previews">
-          <div v-for="bild in lokaleBilder" :key="bild.id" class="local-image__preview">
-            <img :src="bildVorschauUrls[bild.id]" :alt="`Lokal gespeichertes Bild ${bild.dateiname}`">
-            <div>
-              <strong>{{ bild.dateiname }}</strong>
-              <span>{{ formatiereGroesse(bild.groesse) }} · lokal gespeichert</span>
-              <button class="text-action" type="button" @click="verwerfeBild(bild.id)">Bild löschen</button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <div class="capture-audio-head">
-        <p class="eyebrow">Erfassung</p>
-        <h2>Situation diktieren</h2>
-        <p>Sprich möglichst in der Reihenfolge: Gruppe, Thema, Inhalt und allenfalls Rechtsverweis.</p>
-      </div>
-
-      <div class="recording-stage" :class="{ 'is-recording': aufnahmeLaeuft }">
-        <canvas ref="visualizer" width="520" height="180" aria-hidden="true"></canvas>
-        <button
-          class="record-button"
-          type="button"
-          :disabled="aufnahmeGesperrt"
-          :aria-label="aufnahmeLaeuft ? 'Aufnahme stoppen' : 'Aufnahme starten'"
-          @click="schalteAufnahme"
-        >
-          <span class="record-button__icon" aria-hidden="true"></span>
-          <span>{{ aufnahmeKnopfText }}</span>
-        </button>
-        <div class="recording-meta" aria-live="polite">
-          <span class="status-dot"></span>
-          <span>{{ statusText }}</span>
-          <time>{{ zeitText }}</time>
-        </div>
-      </div>
-
-      <section v-if="ausstehendeAufnahme" class="pending" aria-labelledby="pending-title">
-        <div class="pending__head">
-          <div>
-            <p class="eyebrow">Interner App-Speicher</p>
-            <h2 id="pending-title">Noch nicht übertragen</h2>
-          </div>
-          <span class="pending__status">Lokal gesichert</span>
-        </div>
-        <dl>
-          <div><dt>Aufgenommen</dt><dd>{{ formatiereZeitpunkt(ausstehendeAufnahme.erstelltAm) }}</dd></div>
-          <div><dt>Dauer</dt><dd>{{ formatiereDauer(ausstehendeAufnahme.dauerSekunden) }}</dd></div>
-          <div><dt>Grösse</dt><dd>{{ formatiereGroesse(ausstehendeAufnahme.groesse) }}</dd></div>
-        </dl>
-        <p>Die Audiodatei liegt nicht in Downloads, Galerie, SD-Karte oder Cloud.</p>
-        <div class="pending__actions">
-          <button class="primary-action" type="button" :disabled="wirdVerarbeitet || !online" @click="uebertrageAufnahme">
-            {{ online ? 'Diktat jetzt auswerten' : 'Warte auf Verbindung' }}
-          </button>
-          <button class="secondary-action" type="button" :disabled="wirdVerarbeitet" @click="verwerfeAufnahme">Aufnahme löschen</button>
-        </div>
-      </section>
-
-      <div v-if="wirdVerarbeitet" class="processing" role="status">
-        <span class="spinner" aria-hidden="true"></span>
-        <div><strong>Gesprochenes wird erkannt und geordnet</strong><small>Gruppe, Thema, Inhalt und ein genannter Rechtsverweis werden nur in noch leere Felder übernommen.</small></div>
-      </div>
-
-      <section v-if="transkript" id="ergebnis" class="result" aria-labelledby="result-title">
-        <div class="result__head">
-          <p class="eyebrow">Erkannter Text</p>
-          <span>{{ modell }}</span>
-        </div>
-        <h2 id="result-title" class="sr-only">Erkannter Text</h2>
-        <p>{{ transkript }}</p>
-      </section>
-
-      <section class="protocol-form" aria-labelledby="protocol-title">
-        <div class="protocol-form__head">
-          <div>
-            <p class="eyebrow">Lokal erkannter Entwurf</p>
-            <h2 id="protocol-title">Protokollpunkt kontrollieren</h2>
-          </div>
-          <span class="local-only">Keine HappyHour-Übertragung</span>
-        </div>
-
-        <p class="structure-hint">Sprechschema: Gruppe → Thema → Inhalt → allenfalls Rechtsverweis. Nicht genannte Angaben bleiben leer.</p>
-
-        <div class="form-grid">
-          <label>
-            <span>Gruppe <small>strGruppe</small></span>
-            <input v-model.trim="protokollpunkt.strGruppe" type="text" maxlength="250" placeholder="z. B. Brandschutz">
-          </label>
-          <label>
-            <span>Thema <small>strProtokollpunkt</small></span>
-            <input v-model.trim="protokollpunkt.strProtokollpunkt" type="text" maxlength="250" placeholder="Kurzer Titel des Punkts">
-          </label>
-          <label class="form-grid__wide">
-            <span>Inhalt <small>txtProtokollpunkt</small></span>
-            <textarea v-model="protokollpunkt.txtProtokollpunkt" rows="6" placeholder="Der erkannte Inhalt wird hier lokal eingesetzt, solange das Feld leer ist."></textarea>
-          </label>
-          <label class="form-grid__wide">
-            <span>Rechtsverweis <small>strRechtsverweis</small></span>
-            <input v-model.trim="protokollpunkt.strRechtsverweis" type="text" maxlength="250" placeholder="optional, nur wenn im Diktat genannt">
-          </label>
-          <label>
-            <span>Protokoll-ID <small>intProtokollFKID</small></span>
-            <input v-model.number="protokollpunkt.intProtokollFKID" type="number" min="0">
-          </label>
-          <label>
-            <span>Protokollpunktart-ID <small>intProtokollpunktArtFKID</small></span>
-            <input v-model.number="protokollpunkt.intProtokollpunktArtFKID" type="number" min="0">
-          </label>
-          <label>
-            <span>Datum <small>datProtokollpunkt</small></span>
-            <input v-model="protokollpunkt.datProtokollpunkt" type="date">
-          </label>
-          <label>
-            <span>Verantwortlicher <small>intProjektAnsprechpartnerFKID</small></span>
-            <input
-              :value="protokollpunkt.intProjektAnsprechpartnerFKID ?? ''"
-              type="number"
-              min="0"
-              placeholder="lokale ID"
-              @input="setzeAnsprechpartnerId"
-            >
-          </label>
-          <label class="checkbox-field">
-            <input v-model="protokollpunkt.blnNachverfolgen" type="checkbox" @change="aktualisiereNachverfolgung">
-            <span>Nachverfolgen <small>blnNachverfolgen</small></span>
-          </label>
-          <label v-if="protokollpunkt.blnNachverfolgen">
-            <span>Frist <small>datFrist</small></span>
-            <input :value="protokollpunkt.datFrist ?? ''" type="date" @input="setzeFrist">
-          </label>
-          <label v-if="protokollpunkt.blnNachverfolgen" class="checkbox-field">
-            <input v-model="protokollpunkt.blnErledigt" type="checkbox">
-            <span>Erledigt <small>blnErledigt</small></span>
-          </label>
-        </div>
-
-        <details class="technical-fields">
-          <summary>Technische lokale Felder</summary>
-          <dl>
-            <div><dt>intProtokollpunktID</dt><dd>{{ protokollpunkt.intProtokollpunktID }}</dd></div>
-            <div><dt>intReihenfolge</dt><dd>{{ protokollpunkt.intReihenfolge }}</dd></div>
-            <div><dt>GUID</dt><dd>{{ protokollpunkt.GUID }}</dd></div>
-          </dl>
-        </details>
-        <p class="save-state" aria-live="polite">{{ formularSpeicherstatus }}</p>
-      </section>
-
-      <div v-if="meldung" class="message" role="alert">{{ meldung }}</div>
-
-      <p class="privacy-note">
-        <span aria-hidden="true">◈</span>
-        Genau eine Aufnahme wird intern gespeichert. Sie wird erst nach deiner bewussten Aktion zur Transkription und Strukturierung übertragen und erst nach erfolgreicher Auswertung lokal gelöscht.
-      </p>
-    </section>
-
-    <footer>
-      <span>Ein Knopf. Eine Aufnahme. Sicher vorgemerkt.</span>
-      <span :class="kiBereit && online ? 'is-ready' : 'is-error'">{{ online ? verbindungsstatus : 'Offline · Aufnahme bleibt lokal' }}</span>
-    </footer>
-  </main>
+  <QrCodeStart v-if="ansicht === 'scanner'" :externe-meldung="scannerMeldung" @erkannt="verarbeiteQrCode" />
+  <QrCodeStart v-else-if="ansicht === 'freigabe_erneuern'" erneuerung :externe-meldung="scannerMeldung" @erkannt="verarbeiteErneuerteFreigabe" @zurueck="ansicht = 'abschluss'" />
+  <main v-else-if="ansicht === 'laden'" class="begehung-shell"><section class="loading-card" aria-live="polite"><span class="spinner"></span><h1>Begehung wird geladen</h1><p>Die freigegebenen Daten werden aus HappyHour gelesen.</p></section></main>
+  <BegehungStart v-else-if="ansicht === 'start' && protokollKontext" :kontext="protokollKontext" :start-laeuft="startLaeuft" :start-meldung="startMeldung" @zurueck="ansicht = 'scanner'" @starten="starteBegehung" />
+  <AktiveBegehung v-else-if="ansicht === 'aktiv' && begehung" :begehung="begehung" :online="online" @neu="neuerEintrag" @bearbeiten="oeffneEintrag" @loeschen="loescheEintrag" @kontrolle="geheZurKontrolle" />
+  <EintragErfassen v-else-if="ansicht === 'erfassen' && aktuellerEintrag && begehung" :eintrag="aktuellerEintrag" :protokoll="begehung.protokoll" :online="online" :speichern="speichereZwischenstand" @gespeichert="speichereErfassung" @abbrechen="ansicht = 'aktiv'" />
+  <OfflineHinweis v-else-if="ansicht === 'offline'" :anzahl-ausstehend="anzahlAusstehend" @neu="neuerEintrag" @kontrolle="geheZurKontrolle" />
+  <EintragAuswertung v-else-if="ansicht === 'auswertung' && aktuellerEintrag" :eintrag="aktuellerEintrag" :online="online" @speichern="speichereEintrag" @neu="(eintrag) => speichereEintrag(eintrag, 'neu')" @kontrolle="(eintrag) => speichereEintrag(eintrag, 'kontrolle')" @wiederholen="werteEintragAus(aktuellerEintrag.id, true)" @zurueck="ansicht = 'aktiv'" />
+  <BegehungKontrolle v-else-if="ansicht === 'kontrolle' && begehung" :begehung="begehung" @zurueck="ansicht = 'aktiv'" @bearbeiten="oeffneEintrag" @abschliessen="schliesseBegehungAb" />
+  <BegehungAbschluss v-else-if="ansicht === 'abschluss' && begehung" :begehung="begehung" :online="online" :uebergabe-laeuft="uebergabeLaeuft" :meldung="uebergabeMeldung" @zurueck="geheZurKontrolle" @uebergeben="uebergibAnHappyHour" @freigabe-erneuern="beginneFreigabeErneuerung" @neu-starten="verwirfBegehungUndScanneNeu" />
 </template>
