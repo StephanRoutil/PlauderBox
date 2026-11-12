@@ -8,7 +8,7 @@ services:
     tmpfs:
       - /tmp:size=128m,mode=1777
     environment:
-      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_ENVIRONMENT: Production
       PlauderBox__Url: http://127.0.0.1:5187
       PlauderBox__ErlaubterUrsprung: https://192.168.68.8
       PlauderBox__HappyHour__Basisadresse: http://localhost:8081
