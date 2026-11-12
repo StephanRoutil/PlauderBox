@@ -8,4 +8,6 @@ src/PlauderBox.UI.Client/node_modules/
 *.suo
 **/.vs/
 *.tsbuildinfo
+*.tar.gz
+tests/.temp/
 
