@@ -1,5 +1,6 @@
 import type { HappyHourProtokollKontext } from '@logik/begehungsAblauf'
 import { istFreigabeToken } from '@logik/clientPruefungen'
+import { istObjekt, istText, istZahl } from '@logik/typWaechter'
 export type {
   HappyHourMitarbeiterKontext,
   HappyHourObjektKontext,
@@ -65,16 +66,6 @@ export async function ladeHappyHourProtokollKontext(
     throw new HappyHourProtokollKontextFehler('ungueltige_antwort')
   }
   return kontext
-}
-
-function istObjekt(wert: unknown): wert is Record<string, unknown> {
-  return typeof wert === 'object' && wert !== null
-}
-function istText(wert: unknown): wert is string {
-  return typeof wert === 'string'
-}
-function istZahl(wert: unknown): wert is number {
-  return typeof wert === 'number' && Number.isFinite(wert)
 }
 
 function istProtokollKontext(wert: unknown): wert is HappyHourProtokollKontext {
