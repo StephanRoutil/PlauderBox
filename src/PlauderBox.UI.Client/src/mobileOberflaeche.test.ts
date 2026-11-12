@@ -11,7 +11,8 @@ describe('mobile Komponenten- und Navigationsverträge', () => {
     }
     expect(app).toContain('@neu-starten="verwirfBegehungUndScanneNeu"')
     expect(app).toContain('@freigabe-erneuern="beginneFreigabeErneuerung"')
-    expect(app).toContain("neuerKontext.protokollId !== begehung.value.protokoll.protokollId")
+    const uebergabe = lese('./composables/verwendeHappyHourUebergabe.ts')
+    expect(uebergabe).toContain("neuerKontext.protokollId !== begehung.protokoll.protokollId")
     const abschluss = lese('./components/BegehungAbschluss.vue')
     expect(abschluss).toContain('Lokale Begehung verwerfen und neuen Code scannen')
     expect(abschluss).toContain('Punkte und Bilder an HappyHour übergeben')
@@ -48,7 +49,7 @@ describe('mobile Komponenten- und Navigationsverträge', () => {
   })
 
   it('öffnet auch ausgewertete Punkte in der vollständigen Mutation', () => {
-    const app = lese('./App.vue')
+    const app = lese('./composables/verwendeBegehung.ts')
     const erfassung = lese('./components/EintragErfassen.vue')
     expect(app).toContain("ansicht.value = 'erfassen'")
     for (const inhalt of ['Vorbereiteter Protokollpunkt', 'Traktandum', 'Art des Protokollpunkts', '<span>Wer</span>', 'Foto aufnehmen', 'Aus Galerie wählen', 'Aufnahme verwerfen', 'Gruppe', 'Thema', 'Inhalt (Um was geht es?)', 'Rechtsverweis']) {
@@ -57,7 +58,7 @@ describe('mobile Komponenten- und Navigationsverträge', () => {
   })
 
   it('erzeugt neue Punkte protokollbezogen und zeigt deduplizierte Wer-Optionen', () => {
-    const app = lese('./App.vue')
+    const app = lese('./composables/verwendeBegehung.ts')
     const erfassung = lese('./components/EintragErfassen.vue')
     expect(app).toContain('erstelleEintragFuerProtokoll(begehung.value.protokoll)')
     expect(app).toContain('normalisiereEintragProjektAnsprechpartner(legacyEintrag.value, neueBegehung.protokoll)')
@@ -66,17 +67,17 @@ describe('mobile Komponenten- und Navigationsverträge', () => {
   })
 
   it('führt eine Offline-Mutation ohne Audio nicht in eine behauptete Aufnahme-Warteschlange', () => {
-    const app = lese('./App.vue')
+    const app = lese('./composables/verwendeBegehung.ts')
     const offline = lese('./components/OfflineHinweis.vue')
-    expect(app).toContain("if (!eintrag.audio) { ansicht.value = 'aktiv'; return }")
+    expect(app).toMatch(/if \(!eintrag\.audio\) \{\s+ansicht\.value = 'aktiv'\s+return\s+\}/)
     expect(offline).toContain('Es wartet keine Audioaufnahme auf eine Auswertung.')
     expect(offline).toContain("anzahlAusstehend === 1 ? 'Eintrag wurde' : 'Einträge wurden'")
   })
 
   it('zeigt beim Begehungsstart einen laufenden Zustand und einen lokalen Speicherfehler', () => {
-    const app = lese('./App.vue')
+    const app = lese('./composables/verwendeBegehung.ts')
     const start = lese('./components/BegehungStart.vue')
-    expect(app).toContain("startMeldung.value = 'Die Begehung konnte nicht im internen App-Speicher gestartet werden. Bitte erneut versuchen.'")
+    expect(app).toContain("startzustand.value = { art: 'fehler', meldung: 'Die Begehung konnte nicht im internen App-Speicher gestartet werden. Bitte erneut versuchen.' }")
     expect(start).toContain("startLaeuft ? 'Begehung wird gestartet …' : 'Begehung starten'")
     expect(start).toContain('role="alert"')
   })
