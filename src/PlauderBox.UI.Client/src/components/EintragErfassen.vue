@@ -4,8 +4,11 @@ import MobileKopf from './MobileKopf.vue'
 import { eindeutigeVerteileroptionen, type BegehungEintrag, type HappyHourProtokollKontext, type LokaleAudioaufnahme } from '@/services/begehungsSpeicher'
 import { kopiereEintrag, setzeAudioaufnahme, speichereEntwurf, verwerfeAudioaufnahme } from '@/services/eintragErfassungsAblauf'
 import { pruefeBildauswahl } from '@/services/bildSicherung'
+import { BrowserAudioRekorder, type AudioRekorder } from '@/services/audioRekorder'
 
-const props = defineProps<{ eintrag: BegehungEintrag; protokoll: HappyHourProtokollKontext; online: boolean; speichern: (eintrag: BegehungEintrag) => Promise<void> }>()
+const props = withDefaults(defineProps<{ eintrag: BegehungEintrag; protokoll: HappyHourProtokollKontext; online: boolean; speichern: (eintrag: BegehungEintrag) => Promise<void>; audioRekorder?: AudioRekorder }>(), {
+  audioRekorder: () => new BrowserAudioRekorder(),
+})
 const emit = defineEmits<{ zwischenspeichern: [eintrag: BegehungEintrag]; gespeichert: [eintrag: BegehungEintrag]; abbrechen: [] }>()
 
 const entwurf = ref<BegehungEintrag>(kopiereEintrag(props.eintrag))
@@ -14,15 +17,12 @@ const dauerSekunden = ref(0)
 const meldung = ref('')
 const speicherstatus = ref<'bereit' | 'speichert' | 'gespeichert' | 'fehler'>(props.eintrag.audio || props.eintrag.status === 'ausgewertet' ? 'gespeichert' : 'bereit')
 const bildUrls = ref<Record<string, string>>({})
-let recorder: MediaRecorder | null = null
-let stream: MediaStream | null = null
-let teile: Blob[] = []
 let timer = 0
 let gestartetAm = 0
 
 watch(() => props.eintrag.id, () => { entwurf.value = kopiereEintrag(props.eintrag); speicherstatus.value = props.eintrag.audio || props.eintrag.status === 'ausgewertet' ? 'gespeichert' : 'bereit'; aktualisiereBildUrls() })
 watch(() => entwurf.value.bilder, aktualisiereBildUrls, { immediate: true, deep: true })
-onBeforeUnmount(() => { stoppeStream(); Object.values(bildUrls.value).forEach(URL.revokeObjectURL) })
+onBeforeUnmount(() => { props.audioRekorder.abbrechen(); window.clearInterval(timer); Object.values(bildUrls.value).forEach(URL.revokeObjectURL) })
 
 const zeit = computed(() => `${String(Math.floor(dauerSekunden.value / 60)).padStart(2, '0')}:${String(dauerSekunden.value % 60).padStart(2, '0')}`)
 const verteileroptionen = computed(() => eindeutigeVerteileroptionen(props.protokoll))
@@ -53,59 +53,42 @@ async function loescheBild(id: string): Promise<void> {
   }
 }
 
-function medientyp(): string {
-  return ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg;codecs=opus'].find((typ) => MediaRecorder.isTypeSupported(typ)) ?? ''
-}
-
 async function starteAufnahme(): Promise<void> {
   meldung.value = ''
-  if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) { meldung.value = 'Dieser Browser unterstützt die Mikrofonaufnahme nicht.'; return }
   try {
-    stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-    const typ = medientyp()
-    recorder = typ ? new MediaRecorder(stream, { mimeType: typ }) : new MediaRecorder(stream)
-    teile = []
-    recorder.addEventListener('dataavailable', (event) => { if (event.data.size) teile.push(event.data) })
-    recorder.addEventListener('stop', () => speichereAufnahme(recorder?.mimeType || typ || 'audio/webm'), { once: true })
-    recorder.start(500)
+    await props.audioRekorder.starten()
     aufnahmeLaeuft.value = true
     gestartetAm = Date.now()
     dauerSekunden.value = 0
     timer = window.setInterval(() => { dauerSekunden.value = Math.floor((Date.now() - gestartetAm) / 1000) }, 250)
   } catch (fehler: unknown) {
-    meldung.value = fehler instanceof DOMException && fehler.name === 'NotAllowedError'
-      ? 'Der Mikrofonzugriff wurde nicht erlaubt.' : 'Die Mikrofonaufnahme konnte nicht gestartet werden.'
-    stoppeStream()
+    const art = fehler instanceof Error ? fehler.message : 'aufnahme_fehler'
+    meldung.value = art === 'nicht_unterstuetzt'
+      ? 'Dieser Browser unterstützt die Mikrofonaufnahme nicht.'
+      : art === 'nicht_erlaubt' ? 'Der Mikrofonzugriff wurde nicht erlaubt.' : 'Die Mikrofonaufnahme konnte nicht gestartet werden.'
   }
 }
 
-function stoppeAufnahme(): void {
-  if (!recorder || !aufnahmeLaeuft.value) return
+async function stoppeAufnahme(): Promise<void> {
+  if (!aufnahmeLaeuft.value) return
   aufnahmeLaeuft.value = false
-  recorder.stop()
-  stoppeStream()
-}
-
-function stoppeStream(): void {
   window.clearInterval(timer)
-  stream?.getTracks().forEach((spur) => spur.stop())
-  stream = null
-}
-
-async function speichereAufnahme(typ: string): Promise<void> {
-  const audio = new Blob(teile, { type: typ })
-  teile = []
-  if (!audio.size) { meldung.value = 'Die Aufnahme war leer.'; return }
-  const endung = typ.includes('mp4') ? 'mp4' : typ.includes('ogg') ? 'ogg' : 'webm'
-  const aufnahme: LokaleAudioaufnahme = {
-    dateiname: `aufnahme-${entwurf.value.id}.${endung}`,
-    medientyp: typ,
-    groesse: audio.size,
-    dauerSekunden: Math.max(1, dauerSekunden.value),
-    audio,
+  try {
+    const ergebnis = await props.audioRekorder.stoppen()
+    const endung = ergebnis.medientyp.includes('mp4') ? 'mp4' : ergebnis.medientyp.includes('ogg') ? 'ogg' : 'webm'
+    const aufnahme: LokaleAudioaufnahme = {
+      dateiname: `aufnahme-${entwurf.value.id}.${endung}`,
+      medientyp: ergebnis.medientyp,
+      groesse: ergebnis.audio.size,
+      dauerSekunden: ergebnis.dauerSekunden,
+      audio: ergebnis.audio,
+    }
+    setzeAudioaufnahme(entwurf.value, aufnahme)
+    await zwischenspeichern()
+  } catch (fehler: unknown) {
+    meldung.value = fehler instanceof Error && fehler.message === 'leere_aufnahme'
+      ? 'Die Aufnahme war leer.' : 'Die Mikrofonaufnahme konnte nicht gespeichert werden.'
   }
-  setzeAudioaufnahme(entwurf.value, aufnahme)
-  await zwischenspeichern()
 }
 
 async function verwerfeAufnahme(): Promise<void> {
