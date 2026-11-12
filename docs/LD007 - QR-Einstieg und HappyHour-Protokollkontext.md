@@ -11,7 +11,7 @@ datum: 2026-11-10
 
 PlauderBox startet mit Ansicht 1 `Code scannen`. `BrowserQrCodeScanner` kapselt `BarcodeDetector` und `getUserMedia`, bevorzugt die rückseitige Kamera und beendet den Medienstream nach Erkennung, Abbruch oder Verlassen der Ansicht.
 
-Der Browser prüft den QR-Inhalt mit `leseHappyHourBegehungsfreigabe`. Er übernimmt nur einen 32 bis 128 Zeichen langen URL-sicheren Token aus `plauderbox://begehung?freigabe={Token}`. Der Datenabruf erfolgt ausschliesslich über `GET /api/happyhour/freigaben/{Token}` derselben PlauderBox-Instanz. Der QR-Code enthält keine Serveradresse und keine Protokoll-ID.
+Der Browser prüft den QR-Inhalt mit `leseHappyHourBegehungsfreigabe`. Er übernimmt nur einen 32 bis 128 Zeichen langen URL-sicheren Token aus `plauderbox://begehung?freigabe={Token}`. Der Datenabruf erfolgt ausschliesslich über `GET /api/v1/happyhour/freigaben/{Token}` derselben PlauderBox-Instanz. Der QR-Code enthält keine Serveradresse und keine Protokoll-ID. Der bisherige Pfad bleibt gemäss [[E013 - HTTP-API versionieren und Uebergangsaliase beibehalten]] nur als Übergangsalias bestehen.
 
 Die serverseitige Klasse `HappyHourFreigabeQuelle` verwendet nur die konfigurierte Einstellung `PlauderBox:HappyHour:Basisadresse` und ruft ausschliesslich `api.svc/PlauderBox/Freigabe/{escaped Token}` auf. Automatische HTTP-Weiterleitungen sind deaktiviert. Ungültige, abgelaufene oder widerrufene Freigaben werden gemeinsam als nicht mehr verwendbar behandelt. Provider-DTOs werden im Datenmanagement in den bestehenden Kontextvertrag der Logik übersetzt. Ansicht 2 zeigt den gelesenen Kontext und startet nach bewusster Aktion die lokal gespeicherte Begehung gemäss [[LD008 - Mobile Begehungsführung mit Offline-Warteschlange]].
 

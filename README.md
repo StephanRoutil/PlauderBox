@@ -37,6 +37,8 @@ Der Docker-Frontendstage übernimmt neben dem Vue-Projekt ausdrücklich `src/Pla
 
 Die PWA cached den gehashten Produktions-App-Shell. API-Anfragen werden nie durch den Service Worker gecacht. Audio wird erst nach erfolgreicher Auswertung entfernt. Eine fehlgeschlagene IndexedDB-Sicherung wird sichtbar gemeldet und nicht als gespeichert dargestellt; Retry verwendet denselben Blob und dieselbe Erfassungs-ID. Legacy-Daten werden mit einem atomar gespeicherten Importmarker höchstens einmal übernommen, aber nicht ungefragt gelöscht.
 
+Der aktuelle Redesign-Stand ist in [LD012](<docs/LD012 - Strukturelles Redesign der PlauderBox.md>) dokumentiert. Die kanonische HTTP-API verwendet `/api/v1`; die bisherigen `/api`-Pfade bleiben gemäss [E013](<docs/E013 - HTTP-API versionieren und Uebergangsaliase beibehalten.md>) befristete Übergangsaliase.
+
 ## Sicherheitsgrenzen
 
 - QR-Freigabe-Tokens erscheinen nicht in PlauderBox-Hosting- oder HttpClient-Logs.
@@ -53,8 +55,12 @@ Die PWA cached den gehashten Produktions-App-Shell. API-Anfragen werden nie durc
 
 ## Zentrale Dokumente
 
+- `docs/D014 - Befunde aus dem Code-Review beheben.md`
+- `docs/E005 - PlauderBox in Datenmanagement Logik und UI gliedern.md`
+- `docs/E013 - HTTP-API versionieren und Uebergangsaliase beibehalten.md`
 - `docs/D011 - Mobile Begehung vollständig lokal durchführen.md`
 - `docs/E007 - Mobile Begehungsführung gemäss freigegebenem Designplan umsetzen.md`
 - `docs/LD007 - QR-Einstieg und HappyHour-Protokollkontext.md`
 - `docs/LD008 - Mobile Begehungsführung mit Offline-Warteschlange.md`
+- `docs/LD012 - Strukturelles Redesign der PlauderBox.md`
 - `docs/T007 - Vollständigen mobilen Begehungsablauf prüfen.md`

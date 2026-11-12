@@ -30,6 +30,17 @@ PlauderBox verwendet drei getrennte Schichten:
 
 Die Logik kennt weder UI noch Datenmanagement. Das Datenmanagement implementiert Verträge der Logik. Die UI darf beide Projekte ausschliesslich zur Nutzung und Verdrahtung referenzieren. Die Solution `src/PlauderBox.sln` und das Hauptprojekt `src/PlauderBox.UI.csproj` liegen in derselben Ablage.
 
+`src/Program.cs` bleibt der Composition Root. HTTP-Endpunkte liegen unter `src/Endpunkte`, Sicherheitsgrenzen unter `src/Sicherheit`, externe Provider im Datenmanagement und Client-Fachprüfungen unter `src/PlauderBox.Logik/Client`. Die kanonischen HTTP-Pfade beginnen mit `/api/v1`; Übergangsaliase unter `/api` richten sich nach E013.
+
+## Verbindliche Redesign-Dokumente
+
+- `docs/D014 - Befunde aus dem Code-Review beheben.md`
+- `docs/E005 - PlauderBox in Datenmanagement Logik und UI gliedern.md`
+- `docs/E013 - HTTP-API versionieren und Uebergangsaliase beibehalten.md`
+- `docs/LD012 - Strukturelles Redesign der PlauderBox.md`
+
+Bei Strukturänderungen ist LD012 auf den tatsächlich umgesetzten Stand nachzuführen. D014 bleibt als nachvollziehbarer Review- und Umsetzungsauftrag erhalten und wird nicht still in eine Lösungsdokumentation umgedeutet.
+
 ## Qualitätsrolle
 
 Der projektbezogene Qualitätsagent liegt unter `.codex/agents/quality.toml`. Er prüft unabhängig gegen Anforderungen, Entscheide und Coding Guidelines, erstellt eine priorisierte Befundliste und ändert keinen Anwendungscode ohne ausdrückliche Freigabe.
