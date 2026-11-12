@@ -11,7 +11,7 @@ import {
   type HappyHourBegehungsfreigabe,
 } from '@/services/happyHourProtokollKontext'
 import { HappyHourUebergabefehler } from '@/services/happyHourProtokollpunktUebergabe'
-import type { AppAnsicht } from './verwendeBegehung'
+import type { AppAnsicht } from './verwendeAppZustand'
 
 export type HappyHourUebergabezustand = { art: 'bereit' } | { art: 'laeuft'; vorgang: 'freigabe' | 'uebergabe' }
 

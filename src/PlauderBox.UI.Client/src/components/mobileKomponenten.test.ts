@@ -172,6 +172,28 @@ describe('mobile Komponenten', () => {
     expect(wrapper.findAll('select')[2]!.findAll('option')).toHaveLength(2)
   })
 
+  it('verwendet für das Löschen eines Bildes den übergebenen Bestätigungsdialog', async () => {
+    const eintrag = erstelleEintrag()
+    eintrag.bilder.push({
+      id: 'bild-1',
+      dateiname: 'synthetisch.jpg',
+      medientyp: 'image/jpeg',
+      groesse: 1,
+      erstelltAm: eintrag.erstelltAm,
+      bild: new Blob(['x'], { type: 'image/jpeg' }),
+    })
+    const bestaetigen = vi.fn(() => false)
+    const speichern = vi.fn(async () => undefined)
+    const wrapper = mount(EintragErfassen, {
+      props: { eintrag, protokoll, online: true, speichern, audioRekorder, bestaetigen },
+    })
+
+    await wrapper.get('button[aria-label="Bild löschen"]').trigger('click')
+
+    expect(bestaetigen).toHaveBeenCalledWith('Dieses Bild wirklich aus dem internen App-Speicher entfernen?')
+    expect(speichern).not.toHaveBeenCalled()
+  })
+
   it('zeigt einen Speicherfehler und bietet die Wiederholung an', async () => {
     const wrapper = mount(EintragErfassen, {
       props: {

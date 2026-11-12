@@ -15,18 +15,9 @@ import {
   leseHappyHourBegehungsfreigabe,
   type HappyHourBegehungsfreigabe,
 } from '@/services/happyHourProtokollKontext'
+import { verwendeAppZustand, type AppZustand } from './verwendeAppZustand'
 
-export type AppAnsicht =
-  | 'scanner'
-  | 'freigabe_erneuern'
-  | 'laden'
-  | 'start'
-  | 'aktiv'
-  | 'erfassen'
-  | 'offline'
-  | 'auswertung'
-  | 'kontrolle'
-  | 'abschluss'
+export type { AppAnsicht } from './verwendeAppZustand'
 export type Begehungsstartzustand = { art: 'bereit' } | { art: 'laeuft' } | { art: 'fehler'; meldung: string }
 
 export interface BegehungsAbhaengigkeiten {
@@ -49,12 +40,13 @@ export interface BegehungsAbhaengigkeiten {
   unlesbareDatenVerwerfen: () => Promise<void>
 }
 
-export function verwendeBegehung(abhaengigkeiten: BegehungsAbhaengigkeiten) {
-  const ansicht = ref<AppAnsicht>('scanner')
+export function verwendeBegehung(
+  abhaengigkeiten: BegehungsAbhaengigkeiten,
+  appZustand: AppZustand = verwendeAppZustand(abhaengigkeiten.verbindungsstatus),
+) {
+  const { ansicht, begehung, online } = appZustand
   const scannerMeldung = ref('')
   const protokollKontext = ref<HappyHourProtokollKontext | null>(null)
-  const begehung = ref<LokaleBegehung | null>(null)
-  const online = ref(abhaengigkeiten.verbindungsstatus())
   const legacyEintrag = ref<BegehungEintrag | null>(null)
   const aktiveFreigabeToken = ref('')
   const startzustand = ref<Begehungsstartzustand>({ art: 'bereit' })

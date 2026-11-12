@@ -11,8 +11,19 @@ import { HappyHourUebergabefehler } from '@/services/happyHourProtokollpunktUebe
 import { verwendeBegehung } from './verwendeBegehung'
 import { verwendeAuswertungsWarteschlange } from './verwendeAuswertungsWarteschlange'
 import { verwendeHappyHourUebergabe } from './verwendeHappyHourUebergabe'
+import { verwendeAppZustand } from './verwendeAppZustand'
+import type { AppAnsicht } from './verwendeAppZustand'
 
 const token = 'A'.repeat(32)
+
+describe('Gemeinsamer App-Zustand', () => {
+  it('initialisiert Ansicht, Begehung und Verbindungsstatus typisiert an einer Stelle', () => {
+    const zustand = verwendeAppZustand(() => false)
+    expect(zustand.ansicht.value).toBe('scanner')
+    expect(zustand.begehung.value).toBeNull()
+    expect(zustand.online.value).toBe(false)
+  })
+})
 
 function kontext(protokollId = 17): HappyHourProtokollKontext {
   return {
@@ -147,7 +158,7 @@ describe('Auswertungswarteschlange', () => {
     const auswerten = vi.fn(async () => {
       throw new Error('darf nicht aufgerufen werden')
     })
-    const ansicht = ref('aktiv')
+    const ansicht = ref<AppAnsicht>('aktiv')
     const ablauf = verwendeAuswertungsWarteschlange({
       begehung: ref(gespeichert),
       ansicht,
@@ -182,7 +193,7 @@ describe('Auswertungswarteschlange', () => {
       .fn()
       .mockResolvedValueOnce(undefined)
       .mockRejectedValueOnce(new Error('synthetischer Speicherfehler'))
-    const ansicht = ref('aktiv')
+    const ansicht = ref<AppAnsicht>('aktiv')
     const ablauf = verwendeAuswertungsWarteschlange({
       begehung: ref(gespeichert),
       ansicht,

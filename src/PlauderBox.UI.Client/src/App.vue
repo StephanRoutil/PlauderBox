@@ -11,6 +11,7 @@ import QrCodeStart from '@/components/QrCodeStart.vue'
 import { verwendeBegehung } from '@/composables/verwendeBegehung'
 import { verwendeAuswertungsWarteschlange } from '@/composables/verwendeAuswertungsWarteschlange'
 import { verwendeHappyHourUebergabe } from '@/composables/verwendeHappyHourUebergabe'
+import { verwendeAppZustand } from '@/composables/verwendeAppZustand'
 import { ladeHappyHourProtokollKontext } from '@/services/happyHourProtokollKontext'
 import {
   ladeBegehung,
@@ -23,39 +24,43 @@ import { sendeAudioZurAuswertung } from '@/services/auswertungsDienst'
 import { ladeLegacyEintrag } from '@/services/legacyWiederherstellung'
 import { uebergebeProtokollpunkte } from '@/services/happyHourProtokollpunktUebergabe'
 
-let auswertungsAblauf: ReturnType<typeof verwendeAuswertungsWarteschlange> | null = null
-let uebergabeMeldungLeeren = (): void => undefined
+const appZustand = verwendeAppZustand(() => navigator.onLine)
 
-const begehungsAblauf = verwendeBegehung({
-  kontextLaden: ladeHappyHourProtokollKontext,
-  begehungLaden: ladeBegehung,
-  legacyEintragLaden: ladeLegacyEintrag,
-  speichern: speichereBegehung,
-  loeschen: loescheBegehung,
-  bestaetigen: (meldung) => window.confirm(meldung),
-  verbindungsstatus: () => navigator.onLine,
-  speicherBeibehalten: () => {
-    void navigator.storage?.persist?.().catch(() => false)
-  },
-  auswerten: async (id, ergebnisAnzeigen) => {
-    await auswertungsAblauf?.werteEintragAus(id, ergebnisAnzeigen)
-  },
-  warteschlangeVerarbeiten: async () => {
-    await auswertungsAblauf?.verarbeiteWarteschlange()
-  },
-  nachVerwerfen: () => uebergabeMeldungLeeren(),
-  unlesbareDatenSichern: sichereUnlesbareDaten,
-  unlesbareDatenVerwerfen: verwerfeUnlesbareDaten,
-})
-
-auswertungsAblauf = verwendeAuswertungsWarteschlange({
-  begehung: begehungsAblauf.begehung,
-  ansicht: begehungsAblauf.ansicht,
-  online: begehungsAblauf.online,
+const auswertungsAblauf = verwendeAuswertungsWarteschlange({
+  begehung: appZustand.begehung,
+  ansicht: appZustand.ansicht,
+  online: appZustand.online,
   speichern: speichereBegehung,
   auswerten: sendeAudioZurAuswertung,
   istVerbunden: () => navigator.onLine,
 })
+
+const begehungsAblauf = verwendeBegehung(
+  {
+    kontextLaden: ladeHappyHourProtokollKontext,
+    begehungLaden: ladeBegehung,
+    legacyEintragLaden: ladeLegacyEintrag,
+    speichern: speichereBegehung,
+    loeschen: loescheBegehung,
+    bestaetigen: (meldung) => window.confirm(meldung),
+    verbindungsstatus: () => navigator.onLine,
+    speicherBeibehalten: () => {
+      void navigator.storage?.persist?.().catch(() => false)
+    },
+    auswerten: async (id, ergebnisAnzeigen) => {
+      await auswertungsAblauf.werteEintragAus(id, ergebnisAnzeigen)
+    },
+    warteschlangeVerarbeiten: async () => {
+      await auswertungsAblauf.verarbeiteWarteschlange()
+    },
+    nachVerwerfen: () => {
+      happyHourAblauf.uebergabeMeldung.value = ''
+    },
+    unlesbareDatenSichern: sichereUnlesbareDaten,
+    unlesbareDatenVerwerfen: verwerfeUnlesbareDaten,
+  },
+  appZustand,
+)
 
 const happyHourAblauf = verwendeHappyHourUebergabe({
   begehung: begehungsAblauf.begehung,
@@ -65,9 +70,6 @@ const happyHourAblauf = verwendeHappyHourUebergabe({
   speichern: speichereBegehung,
   uebergeben: uebergebeProtokollpunkte,
 })
-uebergabeMeldungLeeren = () => {
-  happyHourAblauf.uebergabeMeldung.value = ''
-}
 
 const {
   aktuellerEintrag,

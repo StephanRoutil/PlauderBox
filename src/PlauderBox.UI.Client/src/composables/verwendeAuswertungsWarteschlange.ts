@@ -6,12 +6,13 @@ import {
   type LokaleBegehung,
 } from '@/services/begehungsSpeicher'
 import type { Transkriptionsantwort } from '@/services/auswertungsDienst'
+import type { AppAnsicht } from './verwendeAppZustand'
 
 export type Auswertungszustand = { art: 'bereit' } | { art: 'laeuft'; eintragId: string }
 
 export interface AuswertungsWarteschlangeAbhaengigkeiten {
   begehung: Ref<LokaleBegehung | null>
-  ansicht: Ref<string>
+  ansicht: Ref<AppAnsicht>
   online: Ref<boolean>
   speichern: (begehung: LokaleBegehung) => Promise<void>
   auswerten: (eintrag: LokaleBegehung['eintraege'][number], freigabeToken: string) => Promise<Transkriptionsantwort>

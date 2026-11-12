@@ -23,9 +23,11 @@ const props = withDefaults(
     online: boolean
     speichern: (eintrag: BegehungEintrag) => Promise<void>
     audioRekorder?: AudioRekorder
+    bestaetigen?: (meldung: string) => boolean
   }>(),
   {
     audioRekorder: () => new BrowserAudioRekorder(),
+    bestaetigen: (meldung: string) => window.confirm(meldung),
   },
 )
 const emit = defineEmits<{
@@ -85,7 +87,7 @@ async function uebernehmeBilder(ereignis: Event): Promise<void> {
 }
 
 async function loescheBild(id: string): Promise<void> {
-  if (window.confirm('Dieses Bild wirklich aus dem internen App-Speicher entfernen?')) {
+  if (props.bestaetigen('Dieses Bild wirklich aus dem internen App-Speicher entfernen?')) {
     const vorher = [...entwurf.value.bilder]
     entwurf.value.bilder = entwurf.value.bilder.filter((bild) => bild.id !== id)
     if (!(await zwischenspeichern())) entwurf.value.bilder = vorher
@@ -138,7 +140,7 @@ async function stoppeAufnahme(): Promise<void> {
 }
 
 async function verwerfeAufnahme(): Promise<void> {
-  if (window.confirm('Diese Aufnahme wirklich verwerfen? Bilder bleiben erhalten.')) {
+  if (props.bestaetigen('Diese Aufnahme wirklich verwerfen? Bilder bleiben erhalten.')) {
     const vorherigeDauer = dauerSekunden.value
     speicherstatus.value = 'speichert'
     try {
