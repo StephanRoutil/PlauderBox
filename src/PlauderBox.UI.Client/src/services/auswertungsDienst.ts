@@ -1,4 +1,5 @@
 import type { BegehungEintrag } from '@logik/begehungsAblauf'
+import { istFreigabeToken } from '@logik/clientPruefungen'
 
 export interface Transkriptionsantwort {
   text: string
@@ -14,7 +15,7 @@ export async function sendeAudioZurAuswertung(
   fetchFunktion: typeof fetch = fetch,
 ): Promise<Transkriptionsantwort> {
   if (!eintrag.audio) throw new Error('Für diesen Eintrag ist keine Audioaufnahme vorhanden.')
-  if (!/^[A-Za-z0-9_-]{32,128}$/.test(freigabeToken)) throw new Error('Die Rundgangsfreigabe ist ungültig oder abgelaufen.')
+  if (!istFreigabeToken(freigabeToken)) throw new Error('Die Rundgangsfreigabe ist ungültig oder abgelaufen.')
   const formular = new FormData()
   formular.append('audio', eintrag.audio.audio, eintrag.audio.dateiname)
   formular.append('erfassungsId', eintrag.id)

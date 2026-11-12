@@ -1,4 +1,5 @@
 import type { LokaleBegehung, LokalesBild } from './begehungsSpeicher'
+import { istUnterstuetzterBildtyp, maximaleBildgroesse } from '@logik/clientPruefungen'
 
 export type BildSicherungsart = 'geteilt' | 'heruntergeladen' | 'keine_bilder'
 export interface BildSicherungsErgebnis { art: BildSicherungsart; anzahl: number }
@@ -10,7 +11,6 @@ export interface BildTeiler {
 type BildDownloader = (datei: File) => void
 
 export interface BildAuswahlErgebnis { bilder: LokalesBild[]; fehler: string[] }
-const unterstuetzteBildtypen = new Set(['image/jpeg', 'image/png', 'image/gif', 'image/tiff', 'image/tif'])
 
 export function pruefeBildauswahl(
   dateien: File[],
@@ -24,11 +24,11 @@ export function pruefeBildauswahl(
       fehler.push(`${datei.name} ist keine Bilddatei.`)
       continue
     }
-    if (!unterstuetzteBildtypen.has(datei.type.toLocaleLowerCase('en-US'))) {
+    if (!istUnterstuetzterBildtyp(datei.type)) {
       fehler.push(`${datei.name} hat ein nicht unterstütztes Bildformat. Bitte JPEG, PNG, GIF oder TIFF wählen.`)
       continue
     }
-    if (datei.size > 15 * 1024 * 1024) {
+    if (datei.size > maximaleBildgroesse) {
       fehler.push(`${datei.name} ist grösser als 15 MB.`)
       continue
     }

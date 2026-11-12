@@ -1,4 +1,5 @@
 import { normalisiereEintragProjektAnsprechpartner, type LokaleBegehung } from '@logik/begehungsAblauf'
+import { istFreigabeToken } from '@logik/clientPruefungen'
 
 export type { BegehungEintrag, EintragStatus, BegehungStatus, HappyHourProtokollKontext, LokaleAudioaufnahme, LokaleBegehung, LokalesBild } from '@logik/begehungsAblauf'
 export { bereiteWiederanlaufVor, eindeutigeVerteileroptionen, ermittleStandardProjektAnsprechpartnerId, erstelleBegehung, erstelleEintrag, erstelleEintragFuerProtokoll, gruppiereEintraege, istEintragUnvollstaendig, naechsterAusstehenderEintrag, normalisiereEintragProjektAnsprechpartner, normalisiereProjektAnsprechpartnerId, uebernehmeAuswertung, zaehleAusstehendeAudioaufnahmen } from '@logik/begehungsAblauf'
@@ -111,7 +112,7 @@ export async function committeFreigabeErneuerung(
   protokollId: number,
   speichern: (kandidat: LokaleBegehung) => Promise<void> = speichereBegehung,
 ): Promise<LokaleBegehung> {
-  if (!/^[A-Za-z0-9_-]{32,128}$/.test(freigabeToken)) throw new Error('ungueltige_freigabe')
+  if (!istFreigabeToken(freigabeToken)) throw new Error('ungueltige_freigabe')
   if (protokollId !== begehung.protokoll.protokollId) throw new Error('falsches_protokoll')
   const kandidat: LokaleBegehung = { ...begehung, freigabeToken }
   await speichern(kandidat)

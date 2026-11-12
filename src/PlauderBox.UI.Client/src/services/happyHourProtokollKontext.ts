@@ -1,4 +1,5 @@
 import type { HappyHourProtokollKontext } from '@logik/begehungsAblauf'
+import { istFreigabeToken } from '@logik/clientPruefungen'
 export type { HappyHourMitarbeiterKontext, HappyHourObjektKontext, HappyHourProjektKontext, HappyHourProtokollKontext, HappyHourProtokollpunktArtKontext, HappyHourProtokollpunktKontext, HappyHourVerteilerEintrag } from '@logik/begehungsAblauf'
 
 export type HappyHourBegehungsfreigabe = Readonly<{ token: string }>
@@ -16,7 +17,7 @@ export function leseHappyHourBegehungsfreigabe(inhalt: string): HappyHourBegehun
     || url.username || url.password || (url.pathname && url.pathname !== '/') || url.hash
     || url.searchParams.size !== 1 || !url.searchParams.has('freigabe')) return null
   const token = url.searchParams.get('freigabe') ?? ''
-  return /^[A-Za-z0-9_-]{32,128}$/.test(token) ? { token } : null
+  return istFreigabeToken(token) ? { token } : null
 }
 
 export async function ladeHappyHourProtokollKontext(

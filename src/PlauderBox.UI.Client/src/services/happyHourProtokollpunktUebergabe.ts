@@ -1,4 +1,5 @@
 import { normalisiereProjektAnsprechpartnerId, type LokaleBegehung } from './begehungsSpeicher'
+import { istErfassungsId, istFreigabeToken, istUnterstuetzterBildtyp, maximaleBildgroesse } from '@logik/clientPruefungen'
 
 export type HappyHourUebergabefehlerArt = 'offline' | 'freigabe_ungueltig' | 'konflikt' | 'ungueltig' | 'bild_ungueltig' | 'bildkontingent' | 'netzwerk' | 'ungueltige_antwort'
 
@@ -16,7 +17,7 @@ export async function uebergebeProtokollpunkte(
   if (typeof navigator !== 'undefined' && !navigator.onLine) throw new HappyHourUebergabefehler('offline')
   if (!['lokal_abgeschlossen', 'an_happyhour_uebertragen'].includes(begehung.status) || begehung.bilderUebertragenAm)
     throw new HappyHourUebergabefehler('ungueltig')
-  if (!begehung.freigabeToken || !/^[A-Za-z0-9_-]{32,128}$/.test(begehung.freigabeToken))
+  if (!begehung.freigabeToken || !istFreigabeToken(begehung.freigabeToken))
     throw new HappyHourUebergabefehler('freigabe_ungueltig')
   if (!begehung.eintraege.length) throw new HappyHourUebergabefehler('ungueltig')
 
@@ -28,7 +29,7 @@ export async function uebergebeProtokollpunkte(
 
   const eintraege = begehung.eintraege.map((eintrag) => {
     const projektAnsprechpartnerId = normalisiereProjektAnsprechpartnerId(begehung.protokoll, eintrag.projektAnsprechpartnerId)
-    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(eintrag.id)
+    if (!istErfassungsId(eintrag.id)
       || !eintrag.protokollpunktArtId || !projektAnsprechpartnerId || !eintrag.gruppe.trim() || !eintrag.thema.trim() || !eintrag.inhalt.trim())
       throw new HappyHourUebergabefehler('ungueltig')
     return {
@@ -77,9 +78,9 @@ async function uebergebeBilder(
     const punkt = punktNachErfassungsId.get(eintrag.id)
     if (!punkt) throw new HappyHourUebergabefehler('ungueltige_antwort')
     for (const bild of eintrag.bilder) {
-      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(bild.id)
-        || bild.groesse <= 0 || bild.groesse > 15 * 1024 * 1024
-        || !['image/jpeg', 'image/png', 'image/gif', 'image/tiff', 'image/tif'].includes(bild.medientyp.toLocaleLowerCase('en-US')))
+      if (!istErfassungsId(bild.id)
+        || bild.groesse <= 0 || bild.groesse > maximaleBildgroesse
+        || !istUnterstuetzterBildtyp(bild.medientyp))
         throw new HappyHourUebergabefehler('bild_ungueltig')
       const formular = new FormData()
       formular.append('freigabeToken', freigabeToken)
