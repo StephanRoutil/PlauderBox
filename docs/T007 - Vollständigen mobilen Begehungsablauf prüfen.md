@@ -1,0 +1,52 @@
+---
+typ: test
+id: T007
+status: automatisiert-bestanden-mobiltest-offen
+datum: 2026-11-10
+anforderung: D011
+---
+
+# T007 – Vollständigen mobilen Begehungsablauf prüfen
+
+> **Gültigkeitsvermerk vom 11.11.2026:** Dieser Test bleibt für den lokalen Begehungs- und Offlineablauf gültig. Der schreibende Protokollpunktvertrag wird separat in [[T008 - Idempotente HappyHour-Protokollpunktübergabe prüfen]] nachgewiesen; dessen End-to-End-Hauptfall einschliesslich `Wer` für INSERT und UPDATE ist bestanden. Die neue Bildübergabe wird separat in [[T009 - Idempotente HappyHour-Bildübergabe prüfen]] nachgewiesen.
+
+## Automatisierte Prüfungen
+
+- TypeScript-Typecheck für produktive Vue-Dateien.
+- Vitest: 59 Tests in 9 Dateien bestanden. Geprüft werden zusätzlich die normalisierte Zuständigkeit `Wer`, Verteilergrenzfälle, Legacy-Import, IndexedDB-Roundtrip, getrennte Kamera-/Galerieauswahl, Bildablehnungen und die einmalige Einzelbildsicherung.
+- Die Bildsicherung prüft Dateinamen und Einzeldateien, genau einen Share-Aufruf für alle Bilder sowie den Fallback auf alle Einzel-Downloads ohne ZIP. Der mobile UI-Vertrag prüft getrennte Kamera- und Galerie-Eingaben.
+- Bestehende Tests für QR-Freigabe, HappyHour-Grenze und früheren lokalen Speicher bleiben Bestandteil des Laufs.
+- Vue-Produktionsbuild mit 39 transformierten Modulen einschliesslich Manifest, Service Worker und App-Icon: bestanden.
+- Docker-Buildkontextprüfung: Der Frontend-Stage kopiert `src/PlauderBox.Logik/Client` vor `pnpm run build` an den vom TypeScript-/Vite-Alias `@logik` erwarteten Pfad; `.dockerignore` schliesst ihn nicht aus: bestanden.
+- .NET-Release-Build der Dreischichten-Solution einschliesslich Vertragstestprojekt: bestanden, 0 Warnungen und 0 Fehler.
+- .NET-Vertragstests: tatsächlich serverrelevante Erfassungs-ID, redigiertes Token-Wertobjekt, fester HappyHour-Providerpfad und striktes KI-Schema ohne `Ort`: bestanden. Die mobilen Fachregeln werden nicht parallel in C# kopiert, sondern über den produktiven TypeScript-Pfad getestet.
+- Endpoint-/Logtest: ungültige Freigabe, nicht konfigurierte HappyHour-Verbindung und fehlende Erfassungs-ID liefern die erwarteten Fehlerzustände; ein markierter Freigabe-Token erscheint weder in Standard- noch Fehlerausgabe: bestanden.
+- Offline-App-Shell-Test: das gebaute gehashte JavaScript und CSS werden vorab gecacht; Navigation liefert bei abgewiesenem Netzwerk den gecachten App-Shell: bestanden.
+- Isolierter Loopback-Lauf des Release-Builds: App-Start, Manifest und Service Worker liefern Status 200; das Manifest wird als `application/manifest+json` ausgeliefert.
+
+## Delphi01-Bereitstellungsnachweis
+
+- Vollständiger Linux-Dockerbuild auf Delphi01 einschliesslich `src/PlauderBox.Logik/Client`: bestanden. Die Fotoerweiterung läuft als Image `sha256:f7f1d60381dd…`; der unmittelbar vorherige Stand ist als `plauderbox:delphi01-test-before-fotosicherung` markiert.
+- Anwendungs- und HTTPS-Container aus `/home/zeus/plauderbox-test-vorbereitung` gestartet: bestanden.
+- Root, Manifest, Service Worker und die gehashten JavaScript-/CSS-Assets liefern über internes HTTPS Status 200; Manifest-MIME-Typ korrekt: bestanden.
+- KI-Status meldet bereit: bestanden.
+- Ungültiger HappyHour-Freigabe-Token wird über den internen SSH-Reverse-Tunnel mit Status 410 beantwortet: bestanden.
+- Markierter Dummy-Token erscheint nicht im Containerlog: bestanden.
+- FileBox und der zentrale PostgreSQL-Dienst blieben unverändert.
+- Das ausgelieferte Produktionsasset enthält `Foto aufnehmen`, `Aus Galerie wählen` und die einmalige Sicherung aller Einzelbilder ohne ZIP: bestanden.
+
+Dieser Bereitstellungsnachweis bestätigt den Serverbetrieb, nicht die vollständige Mobilgeräteabnahme und nicht eine schreibende HappyHour-Übergabe. Die spätere Verschiebung der laufenden Ablage nach `/srv/docker/plauderbox-test` bleibt offen.
+
+## Manuell offen
+
+1. Navigation durch alle acht Ansichten auf Android prüfen.
+2. Mehrere Fotos und Audio erfassen, Browser vollständig schliessen und Daten nach Neustart prüfen.
+3. Verbindung während mehrerer Aufnahmen trennen und die automatische FIFO-Auswertung nach Wiederkehr beobachten.
+4. Serverfehler und manuelle Wiederholung prüfen.
+5. PWA installieren und App-Hülle ohne Netz neu öffnen.
+6. Fokus, Touchziele und schmale Ansichten auf repräsentativen Geräten prüfen.
+7. Kamera und Galerie getrennt prüfen; danach einen Rundgang mit vielen Bildern über genau eine Sicherungsaktion an Android übergeben und die einzelnen Dateien im gewählten Ziel kontrollieren.
+
+## Bewertung
+
+Der dokumentierte Gesamtlauf ist lokal vollständig grün. Dies ist ausdrücklich keine reale Geräteabnahme. Q2 bleibt für den Absturzfall zwischen erfolgreicher externer KI-Antwort und lokalem Commit sowie bis zum realen Offline-Wiederanlauftest offen. Es besteht noch keine serverpersistente Idempotenz beziehungsweise kein serverpersistenter Duplikatschutz für Transkriptionsaufträge: Die stabile `erfassungsId` wird validiert, aber nicht serverseitig persistent gespeichert. Q4 bleibt bis zur repräsentativen Mobilgeräteabnahme von Kamera, Galerie, Web Share und Mehrfachdownloads offen. Die Protokollpunktübergabe ist in T008 nachgewiesen; die lokal umgesetzte Bildübergabe wird bis zur realen Abnahme in T009 als teilweise bestanden geführt.

@@ -1,0 +1,23 @@
+plauderbox.routil.ch {
+	tls {
+		issuer acme {
+			disable_http_challenge
+		}
+	}
+
+	header {
+		-Server
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "SAMEORIGIN"
+		Referrer-Policy "strict-origin-when-cross-origin"
+	}
+
+	request_body {
+		max_size 24MB
+	}
+
+	reverse_proxy plauderbox:5187 {
+		header_up X-Forwarded-For {remote_host}
+	}
+}

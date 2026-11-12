@@ -2,7 +2,7 @@
 typ: anforderung
 id: D006
 status: teilweise-abgeloest
-datum: 2026-11-09
+datum: 2026-11-11
 ---
 
 # D006 – Lokalen Protokollpunkt mit Bild erfassen
@@ -20,7 +20,7 @@ PlauderBox bildet genau einen lokalen Protokollpunkt mit den Feldern von `tblPro
 | `intProtokollpunktArtFKID` | Zahlenfeld; Auswahlliste folgt erst mit Referenzdaten |
 | `datProtokollpunkt` | Datumsfeld |
 | `blnNachverfolgen` | Kontrollfeld |
-| `intProjektAnsprechpartnerFKID` | optionales Zahlenfeld; Auswahlliste folgt erst mit Referenzdaten |
+| `intProjektAnsprechpartnerFKID` | Pflichtfeld `Wer`; Auswahl aus dem aktuellen, nach Projektansprechpartner-ID deduplizierten HappyHour-Verteiler und Normalisierung gemäss [[D012 - Kontrollierte Protokollpunkte an HappyHour übergeben]] |
 | `datFrist` | optionales Datumsfeld bei Nachverfolgung |
 | `blnErledigt` | Kontrollfeld bei Nachverfolgung |
 | `strRechtsverweis` | Textfeld |
@@ -56,7 +56,9 @@ PlauderBox bildet genau einen lokalen Protokollpunkt mit den Feldern von `tblPro
 - [[E002 - Aufnahmen offline sichern und später transkribieren]]
 - [[T003 - Protokollpunktfelder und Bild lokal speichern]]
 - [[LD004 - Lokaler Protokollpunktentwurf mit Bild]]
+- [[D012 - Kontrollierte Protokollpunkte an HappyHour übergeben]]
+- [[E008 - Protokollpunkte idempotent über den PlauderBox-Server schreiben]]
 
 ## Ablösung
 
-Die ursprüngliche Begrenzung auf genau ein Bild wurde am 10.11.2026 durch [[D008 - Aufnahme verwerfen und mehrere Bilder lokal erfassen]] abgelöst. Die übrigen Anforderungen dieses Dokuments bleiben gültig.
+Die ursprüngliche Begrenzung auf genau ein Bild wurde am 10.11.2026 durch [[D008 - Aufnahme verwerfen und mehrere Bilder lokal erfassen]] abgelöst. Die frühere Annahme einer optionalen, noch nicht referenzbasierten Zuständigkeit wurde durch D012 und E008 abgelöst: `Wer` ist heute Pflichtfeld und `intProjektAnsprechpartnerFKID` Bestandteil der kontrollierten Übergabe-Allowlist. Die übrigen Anforderungen dieses Dokuments bleiben gültig.

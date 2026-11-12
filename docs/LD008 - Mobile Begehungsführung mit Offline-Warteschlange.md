@@ -1,0 +1,75 @@
+---
+typ: loesungsdokumentation
+id: LD008
+status: intern-bereitgestellt-nicht-mobil-abgenommen
+datum: 2026-11-11
+---
+
+# LD008 – Mobile Begehungsführung mit Offline-Warteschlange
+
+> **Gültigkeitsvermerk vom 11.11.2026:** Der lokale Begehungs- und Offlineablauf bleibt gültig. Die hier noch deaktivierte Protokollpunktübergabe wurde durch [[LD009 - Kontrollierte Protokollpunkte an HappyHour übergeben]] abgelöst; der nachgelagerte Bildvertrag ist in [[LD010 - Begehungsbilder kontrolliert an HappyHour übertragen]] dokumentiert.
+
+## Gültiger lokaler Stand
+
+`App.vue` orchestriert die acht in D009 freigegebenen Ansichten. Die Vue-Komponenten unter `src/PlauderBox.UI.Client/src/components` bilden Scanner, Start, aktive Begehung, Erfassung, Offline-Hinweis, Auswertung, Kontrolle und Abschluss ab.
+
+Die produktiven mobilen Fachtypen und Ablaufregeln liegen ausschliesslich in `src/PlauderBox.Logik/Client/begehungsAblauf.ts`: Erzeugung, Vollständigkeit, Zuordnung, Wiederanlauf sowie FIFO-/Fehlerstopp werden direkt im Offline-Client ausgeführt und getestet. C# dupliziert diese Regeln nicht. `ErfassungsId.cs` validiert nur die tatsächlich serverrelevante Kennung am Transkriptionsendpunkt. Vue koordiniert den Ablauf.
+
+`begehungsSpeicher.ts` kapselt IndexedDB für `PlauderBoxBegehungsspeicher`. Eine lokale Begehung enthält den gelesenen Protokollkontext, stabile Eintragskennungen, explizite Verweise auf Traktandum beziehungsweise vorbereiteten Protokollpunkt, Audio-Blobs, mehrere Bild-Blobs und Zustände. `committeEintrag` erzeugt zuerst einen Kandidaten, wartet dessen Commit ab und gibt ihn erst danach als neuen kanonischen Zustand zurück. Bei einem Fehler bleibt der Parentzustand unverändert; der Erfassungsentwurf behält exakt denselben Audio-Blob und dieselbe Erfassungs-ID für den sichtbaren Retry. Das Verwerfen rollt bei Commitfehler Audio und vorherigen Status zurück.
+
+`legacyWiederherstellung.ts` bildet aus den vorhandenen Legacy-Metadaten einen stabilen Importbezeichner. Bei bewusster Übernahme werden neue Begehung und Migrationsmarker in derselben IndexedDB-Transaktion bestätigt. Spätere Starts unterdrücken genau diesen Altbestand. Die ursprünglichen Legacy-Daten bleiben unangetastet und können nicht durch einen halbfertigen Import verloren gehen.
+
+Online wird eine neue Aufnahme durch `auswertungsDienst.ts` bewusst über `/api/transkribieren` ausgewertet. Offline bleibt sie als `wartet_auf_auswertung` erhalten. Das `online`-Ereignis und der App-Start bearbeiten die Warteschlange in Erfassungsreihenfolge. Nach bestätigter strukturierter Antwort werden Transkript und Vorschläge übernommen und nur der Audio-Blob entfernt; Bilder und kontrollierbare Felder bleiben lokal. Bei Fehler bleibt Audio erhalten und die UI bietet eine manuelle Wiederholung. Aus der Kontrolle öffnet `EintragErfassen.vue` auch ausgewertete Punkte mit vollständiger Mutation von Bildern, Audio, Zuordnung und Textfeldern; vorhandene Auswertungstexte bleiben dabei erhalten.
+
+`EintragErfassen.vue` trennt die Bildquellen: `Foto aufnehmen` verwendet einen Datei-Input mit `capture="environment"`; `Aus Galerie wählen` verwendet einen eigenen Mehrfach-Datei-Input ohne `capture`. Beide Wege übernehmen Bilder über dieselbe Validierung und dieselbe atomare IndexedDB-Speicherung.
+
+`bildSicherung.ts` erzeugt beim Abschluss aus allen Begehungseinträgen einzelne `File`-Objekte mit lesbaren Namen. `BegehungAbschluss.vue` löst mit einer Benutzeraktion entweder genau einen Web-Share-Aufruf für alle Bilder oder, falls `navigator.canShare` die konkrete Dateimenge ablehnt, die einzelnen Browserdownloads aus. Es wird kein ZIP erstellt. Die Sicherungsaktion verändert weder interne Bild-Blobs noch Begehungsstatus oder HappyHour-Daten.
+
+Die PWA-Dateien `manifest.webmanifest`, `icon.svg` und `service-worker.js` stellen die App-Hülle für Offline-Neustarts bereit. Der Vite-Build schreibt die tatsächlich erzeugten gehashten JS-/CSS-Dateien in den Precache. Ein automatisierter Offline-Test führt den gebauten Service Worker mit abgewiesenem Netzwerk aus und verlangt die gecachte Navigation. Die tatsächliche Installierbarkeit bleibt auf den Zielgeräten zu prüfen.
+
+Die Abschlussansicht übergibt kontrollierte Protokollpunkte bewusst gemäss [[LD009 - Kontrollierte Protokollpunkte an HappyHour übergeben]] und danach ihre Bilder gemäss [[LD010 - Begehungsbilder kontrolliert an HappyHour übertragen]]. Erst die vollständige Bestätigung markiert die lokale Begehung als übertragen. Protokollabschluss und Versand bleiben ausgeschlossen. Der Mitarbeiter kann zur Kontrolle zurück oder die lokale Begehung nach Bestätigung vollständig verwerfen und einen neuen Code scannen.
+
+Da die Rundgangsfreigabe zeitlich begrenzt und im internen Testbetrieb cachebasiert ist, bietet `BegehungAbschluss.vue` zusätzlich `Freigabe erneuern`. `App.vue` liest den neuen QR-Code über denselben begrenzten HappyHour-Vertrag und akzeptiert ihn nur, wenn dessen geladene Protokoll-ID exakt der lokal gespeicherten Protokoll-ID entspricht. `committeFreigabeErneuerung` in `begehungsSpeicher.ts` ersetzt ausschliesslich den Token und erst nach bestätigtem IndexedDB-Commit. Einträge, Bilder, Protokollkontext und Abschlussstatus bleiben unverändert; ein fremdes Protokoll oder ein Speicherfehler verändert den bisherigen Stand nicht.
+
+Freigabe-Tokens stehen technisch im Pfad des lesenden Vertrags. ASP.NET-Hosting-Requestlogs werden für die betroffenen Kategorien auf `Warning` begrenzt und die HappyHour-HttpClient-Logger vollständig entfernt. Ein Laufzeittest sendet einen markierten Token und schlägt fehl, sobald dieser in Standard- oder Fehlerausgabe erscheint.
+
+## Relevante Dateien
+
+- `src/PlauderBox.UI.Client/src/App.vue`
+- `src/PlauderBox.UI.Client/src/components/AktiveBegehung.vue`
+- `src/PlauderBox.UI.Client/src/components/EintragErfassen.vue`
+- `src/PlauderBox.UI.Client/src/components/OfflineHinweis.vue`
+- `src/PlauderBox.UI.Client/src/components/EintragAuswertung.vue`
+- `src/PlauderBox.UI.Client/src/components/BegehungKontrolle.vue`
+- `src/PlauderBox.UI.Client/src/components/BegehungAbschluss.vue`
+- `src/PlauderBox.UI.Client/src/services/begehungsSpeicher.ts`
+- `src/PlauderBox.UI.Client/src/services/eintragErfassungsAblauf.ts`
+- `src/PlauderBox.UI.Client/src/services/auswertungsDienst.ts`
+- `src/PlauderBox.UI.Client/src/services/legacyWiederherstellung.ts`
+- `src/PlauderBox.UI.Client/src/services/bildSicherung.ts`
+- `src/PlauderBox.Logik/Client/begehungsAblauf.ts`
+- `src/PlauderBox.Logik/ErfassungsId.cs`
+- `src/PlauderBox.Logik/RundgangsfreigabeToken.cs`
+- `src/PlauderBox.UI.Client/public/service-worker.js`
+
+## Bekannte Grenzen
+
+- Die aktuelle Auswertung besitzt noch keinen serverseitig persistenten Idempotenzspeicher. Die stabile `erfassungsId` wird serverseitig validiert; der Client entfernt Audio erst nach bestätigter Antwort und wiederholt erfolgreiche Zustände nicht. Ein Absturz zwischen externer Antwort und lokalem Commit kann dennoch eine erneute KI-Auswertung verursachen. Ohne entschiedene Serverpersistenz bleibt Q2 hierfür offen.
+- Der Service Worker kann im automatisierten Test nicht die Bedingungen realer Android-/iOS-Browser und Speicherräumung belegen.
+- Die Protokollpunktübergabe ist gemäss LD009 umgesetzt. Die Bildzuordnung nach `tblDokument` ist gemäss LD010 lokal umgesetzt; die reale mobile Abnahme bleibt offen. Der Abschluss ist weiterhin kein fachlicher HappyHour-Abschluss oder Versand.
+- Share-Ziele und Browserdownloads können die endgültige Ablage in einer Android-Galerie nicht garantieren. Die Oberfläche bezeichnet die Aktion deshalb als externe Sicherung und nicht als bestätigte Galerieablage.
+
+## Nachweis
+
+Die automatisierten Nachweise stehen in [[T007 - Vollständigen mobilen Begehungsablauf prüfen]].
+
+Der Entscheid zur externen Einzelbildsicherung steht in [[E009 - Begehungsbilder einzeln mit einer Aktion extern sichern]].
+
+Der Entscheid zur protokollgebundenen Freigabeerneuerung steht in [[E011 - Rundgangsfreigabe für eine lokale Begehung sicher erneuern]].
+
+Das qualitätsgeprüfte Image `sha256:f7f1d60381dd…` läuft intern auf Delphi01. HTTPS und KI-Status liefern HTTP 200; das ausgelieferte Asset enthält die getrennten Kamera-/Galerieaktionen und die einmalige Bildsicherung. Der vorherige Stand ist als `plauderbox:delphi01-test-before-fotosicherung` verfügbar.
+
+## Fachliche Herkunft
+
+- [HappyHour US011 – Protokollpunkte während eines Gebäuderundgangs mobil erfassen können](../../../HappyHour/docs/20_Support%20und%20Services/S04_KI-Helfer/F002_Sprachgestützte%20Protokollerfassung/02_User%20Storys/US011%20%E2%80%93%20Protokollpunkte%20w%C3%A4hrend%20eines%20Geb%C3%A4uderundgangs%20mobil%20erfassen%20k%C3%B6nnen.md)
+- [HappyHour UC004 – Vorbereiteten Gebäuderundgang mobil erfassen und an HappyHour übergeben](../../../HappyHour/docs/20_Support%20und%20Services/S04_KI-Helfer/F002_Sprachgestützte%20Protokollerfassung/02_User%20Storys/01_Anwendungsf%C3%A4lle/UC004%20%E2%80%93%20Vorbereiteten%20Geb%C3%A4uderundgang%20mobil%20erfassen%20und%20an%20HappyHour%20%C3%BCbergeben.md)

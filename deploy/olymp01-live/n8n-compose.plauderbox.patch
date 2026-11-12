@@ -1,0 +1,17 @@
+--- compose.yaml
++++ compose.yaml
+@@ -64,6 +64,7 @@
+     networks:
+       - proxy
+       - access
++      - plauderbox_proxy
+     read_only: true
+     tmpfs:
+       - /tmp:rw,noexec,nosuid,nodev,mode=1777
+@@ -95,3 +96,6 @@
+   access:
+     driver: bridge
++  plauderbox_proxy:
++    external: true
++    name: plauderbox_proxy
+ 

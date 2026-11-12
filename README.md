@@ -1,72 +1,60 @@
 # PlauderBox
 
-Browserprototyp für einen kontrollierten Ablauf: zuerst mehrere Bilder und ein Diktat erfassen, die Aufnahme intern als `Noch nicht übertragen` speichern, bewusst auswerten und Gruppe, Thema, Inhalt sowie einen allenfalls genannten Rechtsverweis lokal kontrollieren.
+PlauderBox ist die mobile, offlinefähige Rundgangsanwendung für sprachgestützte Projektdokumentation. Eine zeitlich begrenzte HappyHour-Freigabe liefert den vorbereiteten Protokollkontext. Feststellungen, Bilder und Audio bleiben bis zur Auswertung im internen App-Speicher des Geräts.
 
-## Start
+Die fachliche Grundlage liegt in [HappyHour US011](../../HappyHour/docs/20_Support%20und%20Services/S04_KI-Helfer/F002_Sprachgestützte%20Protokollerfassung/02_User%20Storys/US011%20%E2%80%93%20Protokollpunkte%20w%C3%A4hrend%20eines%20Geb%C3%A4uderundgangs%20mobil%20erfassen%20k%C3%B6nnen.md) und [HappyHour UC004](../../HappyHour/docs/20_Support%20und%20Services/S04_KI-Helfer/F002_Sprachgestützte%20Protokollerfassung/02_User%20Storys/01_Anwendungsf%C3%A4lle/UC004%20%E2%80%93%20Vorbereiteten%20Geb%C3%A4uderundgang%20mobil%20erfassen%20und%20an%20HappyHour%20%C3%BCbergeben.md).
 
-`Start-PlauderBox.cmd` doppelklicken oder in PowerShell ausführen:
+## Aktueller Umfang
+
+- QR-Freigabe und vorbereiteten HappyHour-Kontext lesen,
+- Begehung lokal starten und nach App-Neustart fortsetzen,
+- neue Feststellung einem Traktandum und optional einem vorbereiteten Protokollpunkt zuordnen,
+- mehrere Bilder und eine verwerfbare Audioaufnahme intern speichern,
+- Audio bewusst über den PlauderBox-Server an OpenAI übertragen und nach Gruppe, Thema, Inhalt und optionalem Rechtsverweis strukturieren,
+- Offline-Warteschlange in Erfassungsreihenfolge verarbeiten,
+- Einträge mutieren, löschen und nach Gruppe kontrollieren,
+- Begehung lokal abschliessen oder bewusst lokal verwerfen,
+- Protokollpunkte und zugehörige Bilder idempotent an HappyHour übergeben sowie eine abgelaufene Freigabe für dasselbe Protokoll erneuern.
+
+PlauderBox erstellt beziehungsweise aktualisiert ausschliesslich die freigegebenen Protokollpunkte und Bilder. Korrekturlesen und Protokollversand bleiben bewusste Schritte in HappyHour; PlauderBox versendet kein Protokoll.
+
+## Start und Prüfung
 
 ```powershell
 .\Start-PlauderBox.ps1
+.\tests\Pruefe-Prototyp.ps1
 ```
 
-Danach `http://127.0.0.1:5187` öffnen. Der Browser fragt beim ersten Start der Aufnahme nach dem Mikrofonzugriff.
+Danach ist der lokale Entwicklungsstart unter `http://127.0.0.1:5187` erreichbar. Für Visual Studio wird `src/PlauderBox.sln` geöffnet.
 
-Für Visual Studio die Solution `src/PlauderBox.sln` öffnen. `PlauderBox.sln` und das Hauptprojekt `PlauderBox.UI.csproj` liegen gemeinsam direkt unter `src`.
+Der Docker-Frontendstage übernimmt neben dem Vue-Projekt ausdrücklich `src/PlauderBox.Logik/Client`, weil der Alias `@logik` diese externe TypeScript-Logikschicht beim Produktionsbuild benötigt. `tests/Pruefe-Prototyp.ps1` prüft diesen Buildkontext vor Typecheck und Build.
 
 ## Architektur
 
-- `PlauderBox.UI`: mobile Vue-/TypeScript-Oberfläche und ASP.NET-Core-Host,
-- `PlauderBox.Logik`: Fachregeln, Anwendungsabläufe und providerunabhängige Verträge,
-- `PlauderBox.Datenmanagement`: PostgreSQL, Dateispeicher und externe Schnittstellen.
+- `PlauderBox.UI`: Vue-PWA, ASP.NET-Core-Host und HTTP-Eingangsgrenzen,
+- `PlauderBox.Logik`: fachliche Zustände, Vollständigkeit, Zuordnung, Wiederanlauf, FIFO-/Fehlerstoppregeln und providerunabhängige Verträge; der Offline-Clientanteil liegt unter `src/PlauderBox.Logik/Client`,
+- `PlauderBox.Datenmanagement`: OpenAI- und HappyHour-Provider; IndexedDB wird im Browser durch den UI-nahen Speicheradapter gekapselt.
 
-Der lokale Starter verwendet den bereits vorhandenen PaperTrap-Schlüsseldateipfad, sofern weder `PlauderBox__KI__ApiKey` noch `PlauderBox__KI__Schluesseldatei` gesetzt sind. Der Schlüssel wird nicht kopiert und nicht an den Browser ausgegeben.
+Die PWA cached den gehashten Produktions-App-Shell. API-Anfragen werden nie durch den Service Worker gecacht. Audio wird erst nach erfolgreicher Auswertung entfernt. Eine fehlgeschlagene IndexedDB-Sicherung wird sichtbar gemeldet und nicht als gespeichert dargestellt; Retry verwendet denselben Blob und dieselbe Erfassungs-ID. Legacy-Daten werden mit einem atomar gespeicherten Importmarker höchstens einmal übernommen, aber nicht ungefragt gelöscht.
 
-## Datenfluss
+## Sicherheitsgrenzen
 
-1. Der Browser speichert genau einen Protokollpunkt und mehrere Bilder in getrennten app-eigenen IndexedDB-Speichern.
-2. Nach dem Stoppen speichert er zusätzlich genau eine Aufnahme mit dem Status `Noch nicht übertragen`.
-3. Formular, Bild und Aufnahme bleiben beim Neuladen erhalten.
-4. Erst nach `Diktat jetzt auswerten` sendet der Browser ausschliesslich die Audiodatei an den PlauderBox-Server.
-5. Der Server transkribiert sie über OpenAI `/v1/audio/transcriptions` und strukturiert das Transkript anschliessend über die Responses API.
-6. Gruppe, Thema, Inhalt und ein allenfalls genannter Rechtsverweis werden nur in noch leere lokale Felder eingesetzt.
-7. Nach bestätigter Gesamtauswertung löscht der Browser nur die lokale Aufnahme.
+- QR-Freigabe-Tokens erscheinen nicht in PlauderBox-Hosting- oder HttpClient-Logs.
+- API-Schlüssel bleiben serverseitig.
+- Produktivbetrieb verlangt HTTPS.
+- Audio, Bilder, Token und vollständige Transkripte werden nicht protokolliert.
+- Olymp01 ist das Live-System unter `https://plauderbox.routil.ch`; Delphi01 bleibt das getrennte Testsystem.
 
-PlauderBox speichert Protokollpunkt, Bild und die noch nicht übertragene Aufnahme intern im Browser. Diese Daten erscheinen nicht in Downloads, Galerie, SD-Karte oder Cloud. Formular und Bild werden weder an HappyHour noch an den PlauderBox-Server übertragen. Für die Verarbeitung der bewusst übertragenen Audioaufnahme durch OpenAI gelten die Bedingungen und Datenschutzregeln des konfigurierten API-Kontos.
+## Bewusst offene Punkte
 
-## Grenzen
+- separate Veröffentlichung und End-to-End-Abnahme der bereits getesteten PlauderBox-API im produktiven HappyHour,
+- serverseitig persistenter Duplikatschutz für Transkriptionsaufträge; ohne entschiedene Persistenzinfrastruktur bleibt Q2 hierfür offen,
+- reale Android-/iOS-Abnahme von Offline-Neustart, Kamera, Mikrofon, Speichergrenzen und Installation.
 
-- Nur lokaler Loopback-Betrieb, keine Benutzeranmeldung.
-- Maximal 20 MB Audio je Aufnahme.
-- Genau ein lokaler Protokollpunkt, mehrere Bilder und eine ausstehende Audioaufnahme.
-- Keine HappyHour-Anbindung und keine Referenzdaten-Auswahllisten.
-- Keine produktive oder öffentliche Bereitstellung.
+## Zentrale Dokumente
 
-## Dokumentation
-
-- `docs/E001 - PlauderBox als eigenständiges InHouseServer-Teilprojekt entwickeln.md`
-- `docs/E002 - Aufnahmen offline sichern und später transkribieren.md`
-- `docs/E003 - Offlinefähige PWA mit modularem Monolithen verwenden.md`
-- `docs/E004 - Vue und TypeScript für die mobile Oberfläche verwenden.md`
-- `docs/E005 - PlauderBox in Datenmanagement Logik und UI gliedern.md`
-- `docs/E006 - Diktate mit strukturiertem KI-Vertrag auswerten.md`
-- `docs/D001 - Anforderungen an den lokalen Aufnahmeprototyp.md`
-- `docs/D002 - Coding Guidelines für PlauderBox.md`
-- `docs/D003 - Qualitätsanforderungen und Prüfablauf für PlauderBox.md`
-- `docs/D004 - Testbereitstellung auf Delphi01 vorbereiten.md`
-- `docs/D005 - Anforderungen an die intern gespeicherte Einzelaufnahme.md`
-- `docs/D006 - Lokalen Protokollpunkt mit Bild erfassen.md`
-- `docs/D007 - Neuen Protokollpunkt zuerst mit Bild und Sprache erfassen.md`
-- `docs/D008 - Aufnahme verwerfen und mehrere Bilder lokal erfassen.md`
-- `docs/LD001 - Lokaler Aufnahmeprototyp mit OpenAI-Transkription.md`
-- `docs/LD002 - PlauderBox Testumgebung Delphi01.md`
-- `docs/LD003 - Vue Oberfläche mit intern gespeicherter Einzelaufnahme.md`
-- `docs/LD004 - Lokaler Protokollpunktentwurf mit Bild.md`
-- `docs/LD005 - Bild und Diktat vor dem strukturierten Entwurf erfassen.md`
-- `docs/LD006 - Mehrere lokale Bilder und verwerfbare Aufnahme.md`
-- `docs/T002 - Einzelne Aufnahme intern speichern und nach Bestätigung löschen.md`
-- `docs/T001 - Mikrofonaufnahme im Browser transkribieren.md`
-- `docs/T003 - Protokollpunktfelder und Bild lokal speichern.md`
-- `docs/T004 - Erkennungsfelder aus dem Diktat lokal übernehmen.md`
-- `docs/T005 - Aufnahme verwerfen und mehrere Bilder getrennt verwalten.md`
-
+- `docs/D011 - Mobile Begehung vollständig lokal durchführen.md`
+- `docs/E007 - Mobile Begehungsführung gemäss freigegebenem Designplan umsetzen.md`
+- `docs/LD007 - QR-Einstieg und HappyHour-Protokollkontext.md`
+- `docs/LD008 - Mobile Begehungsführung mit Offline-Warteschlange.md`
+- `docs/T007 - Vollständigen mobilen Begehungsablauf prüfen.md`

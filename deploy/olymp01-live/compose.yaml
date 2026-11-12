@@ -1,0 +1,50 @@
+name: plauderbox
+
+services:
+  app:
+    image: plauderbox:olymp01-live-20261111-r4
+    user: "1000:1000"
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev,mode=1777,size=128m
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      PlauderBox__Url: http://0.0.0.0:5187
+      PlauderBox__ErlaubterUrsprung: https://plauderbox.routil.ch
+      PlauderBox__ErlaubtesProxyNetz: 172.22.0.0/24
+      PlauderBox__HappyHour__Basisadresse: https://test.siwako.ch
+      PlauderBox__KI__Schluesseldatei: /run/secrets/openai.json
+    volumes:
+      - ./secrets/openai.json:/run/secrets/openai.json:ro
+    expose:
+      - "5187"
+    networks:
+      proxy:
+        aliases:
+          - plauderbox
+      egress:
+        gw_priority: 1
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 256
+    mem_limit: 512m
+    cpus: 1.0
+    logging:
+      driver: local
+      options:
+        max-size: 10m
+        max-file: "3"
+
+networks:
+  proxy:
+    name: plauderbox_proxy
+    driver: bridge
+    internal: true
+    ipam:
+      config:
+        - subnet: 172.22.0.0/24
+  egress:
+    driver: bridge
