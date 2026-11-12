@@ -1,6 +1,6 @@
 import { ref, toRaw } from 'vue'
 import { describe, expect, it, vi } from 'vitest'
-import { erstelleBegehung, erstelleEintrag, type HappyHourProtokollKontext, type LokaleBegehung } from '@/services/begehungsSpeicher'
+import { BegehungSpeicherfehler, erstelleBegehung, erstelleEintrag, type HappyHourProtokollKontext, type LokaleBegehung } from '@/services/begehungsSpeicher'
 import { HappyHourUebergabefehler } from '@/services/happyHourProtokollpunktUebergabe'
 import { verwendeBegehung } from './verwendeBegehung'
 import { verwendeAuswertungsWarteschlange } from './verwendeAuswertungsWarteschlange'
@@ -75,6 +75,19 @@ describe('Begehungsablauf', () => {
 
     expect(eintrag.status).toBe('wartet_auf_auswertung')
     expect(ablauf.ansicht.value).toBe('aktiv')
+  })
+
+  it('zeigt unlesbare lokale Daten an, ohne eine Löschung anzufordern', async () => {
+    const loeschen = vi.fn(async () => undefined)
+    const ablauf = verwendeBegehung(begehungsAbhaengigkeiten({
+      begehungLaden: vi.fn(async () => { throw new BegehungSpeicherfehler('unlesbare_daten') }),
+      loeschen,
+    }))
+
+    await ablauf.initialisiere()
+
+    expect(ablauf.scannerMeldung.value).toBe('Die lokal gespeicherte Begehung ist unlesbar. Die Daten wurden nicht gelöscht.')
+    expect(loeschen).not.toHaveBeenCalled()
   })
 })
 

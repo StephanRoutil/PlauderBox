@@ -1,6 +1,7 @@
 import { computed, ref } from 'vue'
 import {
   bereiteWiederanlaufVor,
+  BegehungSpeicherfehler,
   committeEintrag,
   erstelleBegehung,
   erstelleEintragFuerProtokoll,
@@ -182,8 +183,10 @@ export function verwendeBegehung(abhaengigkeiten: BegehungsAbhaengigkeiten) {
       } else if (legacyEintrag.value) {
         scannerMeldung.value = 'Ältere lokale Daten wurden gefunden. Scanne eine Begehung, um sie sicher zu übernehmen.'
       }
-    } catch {
-      scannerMeldung.value = 'Der interne App-Speicher ist nicht verfügbar.'
+    } catch (fehler: unknown) {
+      scannerMeldung.value = fehler instanceof BegehungSpeicherfehler
+        ? 'Die lokal gespeicherte Begehung ist unlesbar. Die Daten wurden nicht gelöscht.'
+        : 'Der interne App-Speicher ist nicht verfügbar.'
     }
   }
 

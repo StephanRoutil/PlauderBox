@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { reactive } from 'vue'
 import {
   bereiteWiederanlaufVor,
+  BegehungSpeicherfehler,
   committeEintrag,
   committeFreigabeErneuerung,
   committeHappyHourUebergabe,
@@ -44,6 +45,26 @@ async function speichereVersionEins(wert: unknown): Promise<void> {
   const datenbank = await new Promise<IDBDatabase>((resolve, reject) => {
     const anfrage = indexedDB.open('PlauderBoxBegehungsspeicher', 1)
     anfrage.addEventListener('upgradeneeded', () => anfrage.result.createObjectStore('begehungen'))
+    anfrage.addEventListener('success', () => resolve(anfrage.result))
+    anfrage.addEventListener('error', () => reject(anfrage.error))
+  })
+  const transaktion = datenbank.transaction('begehungen', 'readwrite')
+  transaktion.objectStore('begehungen').put(wert, 'aktive-begehung')
+  await new Promise<void>((resolve, reject) => {
+    transaktion.addEventListener('complete', () => resolve())
+    transaktion.addEventListener('error', () => reject(transaktion.error))
+  })
+  datenbank.close()
+}
+
+async function speichereVersionZwei(wert: unknown): Promise<void> {
+  const datenbank = await new Promise<IDBDatabase>((resolve, reject) => {
+    const anfrage = indexedDB.open('PlauderBoxBegehungsspeicher', 2)
+    anfrage.addEventListener('upgradeneeded', () => {
+      anfrage.result.createObjectStore('begehungen')
+      anfrage.result.createObjectStore('audio')
+      anfrage.result.createObjectStore('bilder')
+    })
     anfrage.addEventListener('success', () => resolve(anfrage.result))
     anfrage.addEventListener('error', () => reject(anfrage.error))
   })
@@ -125,6 +146,22 @@ describe('Begehungsspeicher und Fachzustände', () => {
     expect(datenbankstand.version).toBe(1)
     expect(datenbankstand.stores).toEqual(['begehungen'])
     expect(datenbankstand.wert).toEqual(unlesbar)
+  })
+
+  it('meldet einen unvollständigen Version-2-Datensatz und löscht ihn nicht', async () => {
+    const unvollstaendig = { schemaVersion: 2, id: 'unvollstaendig', eintraege: [] }
+    await speichereVersionZwei(unvollstaendig)
+
+    await expect(ladeBegehung()).rejects.toEqual(new BegehungSpeicherfehler('unlesbare_daten'))
+    expect((await leseDatenbankstand(2)).wert).toEqual(unvollstaendig)
+  })
+
+  it('meldet einen Datensatz ohne Schemaversion und löscht ihn nicht', async () => {
+    const ohneVersion = { id: 'ohne-version', eintraege: [] }
+    await speichereVersionZwei(ohneVersion)
+
+    await expect(ladeBegehung()).rejects.toEqual(new BegehungSpeicherfehler('unlesbare_daten'))
+    expect((await leseDatenbankstand(2)).wert).toEqual(ohneVersion)
   })
 
   it('entfernt Vue-Proxys an der IndexedDB-Grenze und startet die mobile Begehung dauerhaft', async () => {
