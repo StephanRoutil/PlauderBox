@@ -36,4 +36,3 @@ export async function sendeAudioZurAuswertung(
     rechtsverweis: typeof ergebnis.rechtsverweis === 'string' ? ergebnis.rechtsverweis : undefined,
   }
 }
-
