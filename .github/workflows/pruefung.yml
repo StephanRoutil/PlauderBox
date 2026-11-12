@@ -1,0 +1,47 @@
+name: PlauderBox-Prüfung
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  pruefung:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - name: Repository auschecken
+        uses: actions/checkout@v4
+
+      - name: .NET 10 einrichten
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      - name: pnpm einrichten
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.25.0
+          run_install: false
+
+      - name: Node.js einrichten
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: src/PlauderBox.UI.Client/pnpm-lock.yaml
+
+      - name: Frontendabhängigkeiten installieren
+        shell: pwsh
+        run: pnpm --dir src/PlauderBox.UI.Client install --frozen-lockfile
+
+      - name: Chromium für Browsertest installieren
+        shell: pwsh
+        run: pnpm --dir src/PlauderBox.UI.Client exec playwright install chromium
+
+      - name: Vollständigen Prüflauf ausführen
+        shell: pwsh
+        run: ./tests/Pruefe-Prototyp.ps1
