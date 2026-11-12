@@ -12,7 +12,13 @@ import { verwendeBegehung } from '@/composables/verwendeBegehung'
 import { verwendeAuswertungsWarteschlange } from '@/composables/verwendeAuswertungsWarteschlange'
 import { verwendeHappyHourUebergabe } from '@/composables/verwendeHappyHourUebergabe'
 import { ladeHappyHourProtokollKontext } from '@/services/happyHourProtokollKontext'
-import { ladeBegehung, loescheBegehung, speichereBegehung } from '@/services/begehungsSpeicher'
+import {
+  ladeBegehung,
+  loescheBegehung,
+  sichereUnlesbareDaten,
+  speichereBegehung,
+  verwerfeUnlesbareDaten,
+} from '@/services/begehungsSpeicher'
 import { sendeAudioZurAuswertung } from '@/services/auswertungsDienst'
 import { ladeLegacyEintrag } from '@/services/legacyWiederherstellung'
 import { uebergebeProtokollpunkte } from '@/services/happyHourProtokollpunktUebergabe'
@@ -38,6 +44,8 @@ const begehungsAblauf = verwendeBegehung({
     await auswertungsAblauf?.verarbeiteWarteschlange()
   },
   nachVerwerfen: () => uebergabeMeldungLeeren(),
+  unlesbareDatenSichern: sichereUnlesbareDaten,
+  unlesbareDatenVerwerfen: verwerfeUnlesbareDaten,
 })
 
 auswertungsAblauf = verwendeAuswertungsWarteschlange({
@@ -73,6 +81,7 @@ const {
   online,
   protokollKontext,
   scannerMeldung,
+  sichereBlockierteDaten,
   schliesseBegehungAb,
   speichereEintrag,
   speichereErfassung,
@@ -80,8 +89,10 @@ const {
   starteBegehung,
   startLaeuft,
   startMeldung,
+  speicherblockiert,
   verbindungAktualisiert,
   verarbeiteQrCode,
+  verwerfeBlockierteDaten,
   verwirfBegehungUndScanneNeu,
 } = begehungsAblauf
 const { anzahlAusstehend, werteEintragAus } = auswertungsAblauf
@@ -105,7 +116,14 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <QrCodeStart v-if="ansicht === 'scanner'" :externe-meldung="scannerMeldung" @erkannt="verarbeiteQrCode" />
+  <QrCodeStart
+    v-if="ansicht === 'scanner'"
+    :externe-meldung="scannerMeldung"
+    :speicherblockiert="speicherblockiert"
+    @erkannt="verarbeiteQrCode"
+    @daten-sichern="sichereBlockierteDaten"
+    @daten-verwerfen="verwerfeBlockierteDaten"
+  />
   <QrCodeStart
     v-else-if="ansicht === 'freigabe_erneuern'"
     erneuerung

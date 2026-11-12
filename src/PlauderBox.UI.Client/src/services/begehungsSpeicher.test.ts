@@ -19,7 +19,9 @@ import {
   normalisiereEintragProjektAnsprechpartner,
   normalisiereProjektAnsprechpartnerId,
   speichereBegehung,
+  sichereUnlesbareDaten,
   uebernehmeAuswertung,
+  verwerfeUnlesbareDaten,
   zaehleAusstehendeAudioaufnahmen,
 } from './begehungsSpeicher'
 import type { HappyHourProtokollKontext } from './happyHourProtokollKontext'
@@ -447,6 +449,22 @@ describe('Begehungsspeicher und Fachzustände', () => {
       }),
     ).rejects.toBe(quotaFehler)
     expect(begehung.aktualisiertAm).toBe(vorher)
+  })
+
+  it('sichert unlesbare Versions-1-Daten vor dem bewussten Verwerfen als Rohdaten', async () => {
+    await speichereVersionEins({ fremdesFormat: true, audio: new Blob(['synthetisch'], { type: 'audio/webm' }) })
+    await expect(ladeBegehung()).rejects.toBeDefined()
+    const heruntergeladen: File[] = []
+
+    const ergebnis = await sichereUnlesbareDaten(
+      { share: vi.fn(async () => undefined), canShare: vi.fn(() => false) },
+      (datei) => heruntergeladen.push(datei),
+    )
+
+    expect(ergebnis).toEqual({ dateien: 2, art: 'heruntergeladen' })
+    expect(heruntergeladen.map((datei) => datei.name)).toContainEqual(expect.stringMatching(/plauderbox-rohdaten-/))
+    await verwerfeUnlesbareDaten()
+    await expect(ladeBegehung()).resolves.toBeNull()
   })
 
   it('tauscht den kanonischen Eintrag bei Commitfehler nicht vorzeitig aus', async () => {

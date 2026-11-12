@@ -45,6 +45,8 @@ export interface BegehungsAbhaengigkeiten {
   auswerten: (id: string, ergebnisAnzeigen: boolean) => Promise<void>
   warteschlangeVerarbeiten: () => Promise<void>
   nachVerwerfen: () => void
+  unlesbareDatenSichern: () => Promise<{ dateien: number }>
+  unlesbareDatenVerwerfen: () => Promise<void>
 }
 
 export function verwendeBegehung(abhaengigkeiten: BegehungsAbhaengigkeiten) {
@@ -56,6 +58,7 @@ export function verwendeBegehung(abhaengigkeiten: BegehungsAbhaengigkeiten) {
   const legacyEintrag = ref<BegehungEintrag | null>(null)
   const aktiveFreigabeToken = ref('')
   const startzustand = ref<Begehungsstartzustand>({ art: 'bereit' })
+  const speicherblockiert = ref(false)
   const aktuellerEintrag = computed(
     () => begehung.value?.eintraege.find((eintrag) => eintrag.id === begehung.value?.aktuellerEintragId) ?? null,
   )
@@ -63,6 +66,11 @@ export function verwendeBegehung(abhaengigkeiten: BegehungsAbhaengigkeiten) {
   const startMeldung = computed(() => (startzustand.value.art === 'fehler' ? startzustand.value.meldung : ''))
 
   async function verarbeiteQrCode(inhalt: string): Promise<void> {
+    if (speicherblockiert.value) {
+      scannerMeldung.value =
+        'Vor einer neuen Begehung müssen die unlesbaren lokalen Daten gesichert oder verworfen werden.'
+      return
+    }
     scannerMeldung.value = ''
     const freigabe = leseHappyHourBegehungsfreigabe(inhalt)
     if (!freigabe) {
@@ -86,7 +94,7 @@ export function verwendeBegehung(abhaengigkeiten: BegehungsAbhaengigkeiten) {
   }
 
   async function starteBegehung(): Promise<void> {
-    if (!protokollKontext.value || startzustand.value.art === 'laeuft') return
+    if (speicherblockiert.value || !protokollKontext.value || startzustand.value.art === 'laeuft') return
     startzustand.value = { art: 'laeuft' }
     try {
       const neueBegehung = erstelleBegehung(protokollKontext.value, undefined, aktiveFreigabeToken.value)
@@ -224,11 +232,30 @@ export function verwendeBegehung(abhaengigkeiten: BegehungsAbhaengigkeiten) {
         scannerMeldung.value = 'Ältere lokale Daten wurden gefunden. Scanne eine Begehung, um sie sicher zu übernehmen.'
       }
     } catch (fehler: unknown) {
+      speicherblockiert.value = fehler instanceof BegehungSpeicherfehler
       scannerMeldung.value =
         fehler instanceof BegehungSpeicherfehler
           ? 'Die lokal gespeicherte Begehung ist unlesbar. Die Daten wurden nicht gelöscht.'
           : 'Der interne App-Speicher ist nicht verfügbar.'
     }
+  }
+
+  async function sichereBlockierteDaten(): Promise<void> {
+    const ergebnis = await abhaengigkeiten.unlesbareDatenSichern()
+    scannerMeldung.value = `${ergebnis.dateien} Rohdaten- und Mediendateien wurden zur externen Sicherung übergeben.`
+  }
+
+  async function verwerfeBlockierteDaten(): Promise<void> {
+    if (
+      !abhaengigkeiten.bestaetigen(
+        'Unlesbare lokale Daten endgültig verwerfen? Dieser Schritt kann nicht rückgängig gemacht werden.',
+      )
+    )
+      return
+    await abhaengigkeiten.unlesbareDatenVerwerfen()
+    speicherblockiert.value = false
+    scannerMeldung.value =
+      'Die unlesbaren lokalen Daten wurden bewusst verworfen. Eine neue Begehung kann gestartet werden.'
   }
 
   return {
@@ -244,6 +271,7 @@ export function verwendeBegehung(abhaengigkeiten: BegehungsAbhaengigkeiten) {
     online,
     protokollKontext,
     scannerMeldung,
+    sichereBlockierteDaten,
     schliesseBegehungAb,
     speichereEintrag,
     speichereErfassung,
@@ -251,8 +279,10 @@ export function verwendeBegehung(abhaengigkeiten: BegehungsAbhaengigkeiten) {
     starteBegehung,
     startLaeuft,
     startMeldung,
+    speicherblockiert,
     verbindungAktualisiert,
     verarbeiteQrCode,
+    verwerfeBlockierteDaten,
     verwirfBegehungUndScanneNeu,
   }
 }

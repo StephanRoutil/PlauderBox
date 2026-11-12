@@ -199,4 +199,20 @@ describe('mobile Komponenten', () => {
 
     expect(wrapper.emitted('erkannt')).toEqual([['plauderbox://begehung?freigabe=synthetisch']])
   })
+
+  it('blockiert den Start bei unlesbaren Daten und bietet Sicherung sowie bewusstes Verwerfen an', async () => {
+    const scanner: import('@/services/qrCodeScanner').QrCodeScanner = {
+      starten: vi.fn(async () => undefined),
+      stoppen: vi.fn(),
+    }
+    const wrapper = mount(QrCodeStart, { props: { scanner, speicherblockiert: true } })
+
+    expect(wrapper.get('#manueller-code').attributes('disabled')).toBeDefined()
+    const schaltflaechen = wrapper.findAll('button')
+    await schaltflaechen.find((knopf) => knopf.text().includes('Rohdaten und Medien sichern'))!.trigger('click')
+    await schaltflaechen.find((knopf) => knopf.text().includes('endgültig verwerfen'))!.trigger('click')
+
+    expect(wrapper.emitted('datenSichern')).toHaveLength(1)
+    expect(wrapper.emitted('datenVerwerfen')).toHaveLength(1)
+  })
 })

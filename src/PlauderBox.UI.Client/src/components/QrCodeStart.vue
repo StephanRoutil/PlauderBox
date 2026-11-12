@@ -8,17 +8,21 @@ const eigenschaften = withDefaults(
     scanner?: QrCodeScanner
     externeMeldung?: string
     erneuerung?: boolean
+    speicherblockiert?: boolean
   }>(),
   {
     scanner: () => new BrowserQrCodeScanner(),
     externeMeldung: '',
     erneuerung: false,
+    speicherblockiert: false,
   },
 )
 
 const emit = defineEmits<{
   erkannt: [inhalt: string]
   zurueck: []
+  datenSichern: []
+  datenVerwerfen: []
 }>()
 const manuellerCode = ref('')
 
@@ -77,15 +81,45 @@ function uebernehmeManuellenCode(): void {
         {{ sichtbareMeldung }}
       </p>
 
-      <button v-if="status !== 'scannt'" class="mobile-primary" type="button" @click="starteScanner">
+      <button
+        v-if="status !== 'scannt'"
+        class="mobile-primary"
+        type="button"
+        :disabled="eigenschaften.speicherblockiert"
+        @click="starteScanner"
+      >
         Kamera öffnen
       </button>
       <button v-else class="mobile-secondary" type="button" @click="stoppeScanner">Scannen abbrechen</button>
       <form class="manual-code" @submit.prevent="uebernehmeManuellenCode">
         <label for="manueller-code">Freigabecode oder vollständigen Link manuell einfügen</label>
-        <input id="manueller-code" v-model="manuellerCode" autocomplete="off" inputmode="text" />
-        <button class="mobile-secondary" type="submit" :disabled="!manuellerCode.trim()">Code übernehmen</button>
+        <input
+          id="manueller-code"
+          v-model="manuellerCode"
+          autocomplete="off"
+          inputmode="text"
+          :disabled="eigenschaften.speicherblockiert"
+        />
+        <button
+          class="mobile-secondary"
+          type="submit"
+          :disabled="eigenschaften.speicherblockiert || !manuellerCode.trim()"
+        >
+          Code übernehmen
+        </button>
       </form>
+      <section v-if="eigenschaften.speicherblockiert" class="warning-box" aria-label="Lokale Datenrettung">
+        <p>
+          Eine lokal gespeicherte Begehung ist unlesbar. Vor einem Neustart müssen die Rohdaten gesichert oder bewusst
+          verworfen werden.
+        </p>
+        <button class="mobile-secondary" type="button" @click="emit('datenSichern')">
+          Rohdaten und Medien sichern
+        </button>
+        <button class="danger-button" type="button" @click="emit('datenVerwerfen')">
+          Unlesbare Daten endgültig verwerfen
+        </button>
+      </section>
       <button v-if="eigenschaften.erneuerung" class="mobile-secondary" type="button" @click="geheZurueck">
         Zurück zum Abschluss
       </button>

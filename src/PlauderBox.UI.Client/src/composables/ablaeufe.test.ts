@@ -52,6 +52,8 @@ function begehungsAbhaengigkeiten(ueberschreiben: Record<string, unknown> = {}) 
     auswerten: vi.fn(async () => undefined),
     warteschlangeVerarbeiten: vi.fn(async () => undefined),
     nachVerwerfen: vi.fn(),
+    unlesbareDatenSichern: vi.fn(async () => ({ dateien: 1, art: 'heruntergeladen' as const })),
+    unlesbareDatenVerwerfen: vi.fn(async () => undefined),
     ...ueberschreiben,
   }
 }
@@ -106,6 +108,26 @@ describe('Begehungsablauf', () => {
       'Die lokal gespeicherte Begehung ist unlesbar. Die Daten wurden nicht gelöscht.',
     )
     expect(loeschen).not.toHaveBeenCalled()
+    expect(ablauf.speicherblockiert.value).toBe(true)
+  })
+
+  it('blockiert QR-Verarbeitung und Begehungsstart bis unlesbare Daten bewusst verworfen wurden', async () => {
+    const speichern = vi.fn(async () => undefined)
+    const abhaengigkeiten = begehungsAbhaengigkeiten({
+      begehungLaden: vi.fn(async () => {
+        throw new BegehungSpeicherfehler('unlesbare_daten')
+      }),
+      speichern,
+    })
+    const ablauf = verwendeBegehung(abhaengigkeiten)
+
+    await ablauf.initialisiere()
+    await ablauf.verarbeiteQrCode(`plauderbox://begehung?freigabe=${token}`)
+    await ablauf.starteBegehung()
+
+    expect(abhaengigkeiten.kontextLaden).not.toHaveBeenCalled()
+    expect(speichern).not.toHaveBeenCalled()
+    expect(ablauf.scannerMeldung.value).toContain('gesichert oder verworfen')
   })
 })
 

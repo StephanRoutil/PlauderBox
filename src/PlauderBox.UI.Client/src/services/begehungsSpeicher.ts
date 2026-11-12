@@ -62,6 +62,11 @@ export class BegehungSpeicherfehler extends Error {
   }
 }
 
+export interface RohdatensicherungErgebnis {
+  dateien: number
+  art: 'geteilt' | 'heruntergeladen'
+}
+
 function istObjekt(wert: unknown): wert is Record<string, unknown> {
   return typeof wert === 'object' && wert !== null
 }
@@ -482,4 +487,97 @@ export async function loescheBegehung(): Promise<void> {
   } finally {
     datenbank.close()
   }
+}
+
+export async function sichereUnlesbareDaten(
+  teiler: Pick<Navigator, 'share' | 'canShare'> = navigator,
+  downloader: (datei: File) => void = starteDateidownload,
+): Promise<RohdatensicherungErgebnis> {
+  const datenbank = await new Promise<IDBDatabase>((resolve, reject) => {
+    const anfrage = indexedDB.open(datenbankname)
+    anfrage.addEventListener('success', () => resolve(anfrage.result))
+    anfrage.addEventListener('error', () =>
+      reject(anfrage.error ?? new Error('Rohdaten konnten nicht geöffnet werden.')),
+    )
+  })
+  try {
+    const rohstand: Record<string, Array<{ schluessel: IDBValidKey; wert: unknown }>> = {}
+    for (const speicher of Array.from(datenbank.objectStoreNames)) {
+      rohstand[speicher] = await leseAlleRohwerte(datenbank, speicher)
+    }
+    const medien: File[] = []
+    const json = JSON.stringify(
+      {
+        datenbank: datenbankname,
+        version: datenbank.version,
+        gesichertAm: new Date().toISOString(),
+        speicher: rohstand,
+      },
+      (_schluessel, wert: unknown) => {
+        if (!(wert instanceof Blob)) return wert
+        const dateiname = `plauderbox-medium-${String(medien.length + 1).padStart(3, '0')}.bin`
+        medien.push(new File([wert], dateiname, { type: wert.type || 'application/octet-stream' }))
+        return { datei: dateiname, typ: wert.type, groesse: wert.size }
+      },
+      2,
+    )
+    const dateien = [
+      new File([json], `plauderbox-rohdaten-${new Date().toISOString().replaceAll(':', '-')}.json`, {
+        type: 'application/json',
+      }),
+      ...medien,
+    ]
+    if (teiler.share && teiler.canShare?.({ files: dateien })) {
+      await teiler.share({ files: dateien, title: 'PlauderBox-Rohdatensicherung' })
+      return { dateien: dateien.length, art: 'geteilt' }
+    }
+    dateien.forEach(downloader)
+    return { dateien: dateien.length, art: 'heruntergeladen' }
+  } finally {
+    datenbank.close()
+  }
+}
+
+export function verwerfeUnlesbareDaten(): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const anfrage = indexedDB.deleteDatabase(datenbankname)
+    anfrage.addEventListener('success', () => resolve())
+    anfrage.addEventListener('error', () =>
+      reject(anfrage.error ?? new Error('Rohdaten konnten nicht verworfen werden.')),
+    )
+    anfrage.addEventListener('blocked', () =>
+      reject(new Error('Rohdaten werden noch von einem anderen Fenster verwendet.')),
+    )
+  })
+}
+
+function leseAlleRohwerte(
+  datenbank: IDBDatabase,
+  speichernameWert: string,
+): Promise<Array<{ schluessel: IDBValidKey; wert: unknown }>> {
+  return new Promise((resolve, reject) => {
+    const werte: Array<{ schluessel: IDBValidKey; wert: unknown }> = []
+    const anfrage = datenbank.transaction(speichernameWert, 'readonly').objectStore(speichernameWert).openCursor()
+    anfrage.addEventListener('success', () => {
+      const cursor = anfrage.result
+      if (!cursor) {
+        resolve(werte)
+        return
+      }
+      werte.push({ schluessel: cursor.key, wert: cursor.value })
+      cursor.continue()
+    })
+    anfrage.addEventListener('error', () =>
+      reject(anfrage.error ?? new Error('Rohdaten konnten nicht gelesen werden.')),
+    )
+  })
+}
+
+function starteDateidownload(datei: File): void {
+  const url = URL.createObjectURL(datei)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = datei.name
+  link.click()
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000)
 }
