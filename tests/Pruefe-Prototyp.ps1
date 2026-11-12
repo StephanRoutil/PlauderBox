@@ -54,6 +54,7 @@ if ($programInhalt -match 'app\.Map(Get|Post)' -or $programInhalt -match 'catch 
 if ($optionenInhalt -notmatch 'MaximaleAudiodateigroesseBytes.+20L \* 1024 \* 1024' -or $optionenInhalt -notmatch 'MaximaleBilddateigroesseBytes.+15L \* 1024 \* 1024' -or $optionenInhalt -notmatch 'TranskriptionsanfragenProStunde.+60' -or $optionenInhalt -notmatch 'BildanfragenProStunde.+1000' -or $optionenInhalt -notmatch 'FreigabeabrufeProStunde.+60' -or $optionenInhalt -notmatch 'PunktuebergabenProStunde.+30' -or $optionenInhalt -notmatch 'TranskriptionenJeFreigabe.+20' -or $optionenInhalt -notmatch 'BilderJeFreigabe.+500' -or $optionenInhalt -notmatch 'MaximaleProtokollpunkteJeUebergabe.+200') { throw 'Benannte PlauderBox-Grenzwerte fehlen oder wurden verändert.' }
 
 $liveCompose = Get-Content -Raw -LiteralPath (Join-Path $projektordner 'deploy\olymp01-live\compose.yaml')
+if ($liveCompose -notmatch 'image: plauderbox:olymp01-live-20261112-images') { throw 'PlauderBox-Livecompose verweist nicht auf das dokumentierte aktive Image.' }
 $testCompose = Get-Content -Raw -LiteralPath (Join-Path $projektordner 'deploy\delphi01-test\compose.yaml')
 if ($testCompose -notmatch 'ASPNETCORE_ENVIRONMENT:\s*Production') { throw 'PlauderBox-Testcompose muss produktionsnah mit ASPNETCORE_ENVIRONMENT=Production laufen.' }
 if ($testCompose -match 'ASPNETCORE_ENVIRONMENT:\s*Development') { throw 'PlauderBox-Testcompose darf nicht im Development-Modus laufen.' }
