@@ -68,6 +68,22 @@ builder.Services.AddRateLimiter(ratenlimit =>
             Window = optionen.RatenlimitFenster,
             QueueLimit = 0
         }));
+    ratenlimit.AddPolicy("Freigabeabruf", context => RateLimitPartition.GetFixedWindowLimiter(
+        "freigabeabruf:" + QuellUndUrsprungsMiddleware.ErmittleQuellPartition(context, optionen.ErlaubtesProxyNetz),
+        _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = optionen.FreigabeabrufeProStunde,
+            Window = optionen.RatenlimitFenster,
+            QueueLimit = 0
+        }));
+    ratenlimit.AddPolicy("Punktuebergabe", context => RateLimitPartition.GetFixedWindowLimiter(
+        "punktuebergabe:" + QuellUndUrsprungsMiddleware.ErmittleQuellPartition(context, optionen.ErlaubtesProxyNetz),
+        _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = optionen.PunktuebergabenProStunde,
+            Window = optionen.RatenlimitFenster,
+            QueueLimit = 0
+        }));
 });
 
 WebApplication app = builder.Build();

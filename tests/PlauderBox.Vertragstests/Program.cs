@@ -188,6 +188,8 @@ static async Task PruefeServerstrukturAsync()
     Pruefe(optionen.MaximaleBilddateigroesseBytes == 15L * 1024 * 1024, "Bild-Grenzwert wurde verändert.");
     Pruefe(optionen.TranskriptionsanfragenProStunde == 60, "Transkriptionsratenlimit wurde verändert.");
     Pruefe(optionen.BildanfragenProStunde == 1000, "Bildratenlimit wurde verändert.");
+    Pruefe(optionen.FreigabeabrufeProStunde == 60, "Freigabeabruflimit wurde verändert.");
+    Pruefe(optionen.PunktuebergabenProStunde == 30, "Punktübergabelimit wurde verändert.");
     Pruefe(optionen.TranskriptionenJeFreigabe == 20, "Transkriptionskontingent wurde verändert.");
     Pruefe(optionen.BilderJeFreigabe == 500, "Bildkontingent wurde verändert.");
     Pruefe(optionen.MaximaleProtokollpunkteJeUebergabe == 200, "Punktgrenze wurde verändert.");

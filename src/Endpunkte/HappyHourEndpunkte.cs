@@ -7,9 +7,11 @@ public static class HappyHourEndpunkte
 {
     public static void MappeHappyHourEndpunkte(this WebApplication app)
     {
-        app.MapGet("/api/happyhour/freigaben/{freigabeToken}", LadeFreigabeAsync);
+        app.MapGet("/api/happyhour/freigaben/{freigabeToken}", LadeFreigabeAsync)
+            .RequireRateLimiting("Freigabeabruf");
         app.MapPost("/api/happyhour/protokollpunkte/uebergeben", UebergebeProtokollpunkteAsync)
-            .DisableAntiforgery();
+            .DisableAntiforgery()
+            .RequireRateLimiting("Punktuebergabe");
         app.MapPost(
                 "/api/happyhour/protokollpunkte/{protokollpunktId:int}/bilder/{bildId:guid}",
                 UebergebeBildAsync)

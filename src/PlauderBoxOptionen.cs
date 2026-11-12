@@ -8,6 +8,8 @@ public sealed class PlauderBoxOptionen
     public long MaximaleBilddateigroesseBytes { get; init; } = 15L * 1024 * 1024;
     public int TranskriptionsanfragenProStunde { get; init; } = 60;
     public int BildanfragenProStunde { get; init; } = 1000;
+    public int FreigabeabrufeProStunde { get; init; } = 60;
+    public int PunktuebergabenProStunde { get; init; } = 30;
     public int TranskriptionenJeFreigabe { get; init; } = 20;
     public int BilderJeFreigabe { get; init; } = 500;
     public int MaximaleProtokollpunkteJeUebergabe { get; init; } = 200;
