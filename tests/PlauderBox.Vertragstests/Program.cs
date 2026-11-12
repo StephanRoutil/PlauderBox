@@ -200,9 +200,14 @@ static async Task PruefeServerstrukturAsync()
     Pruefe(!Ipv4Netz.Enthaelt(IPAddress.Parse("172.22.0.7"), "172.22.0.0/33"), "Ungültiger Präfix wurde akzeptiert.");
 
     using MemoryCache cache = new(new MemoryCacheOptions());
-    Freigabekontingent kontingent = new(cache, optionen);
+    SteuerbareZeit zeit = new(TimeProvider.System.GetUtcNow());
+    Freigabekontingent kontingent = new(cache, optionen, zeit);
     Pruefe(kontingent.Reserviere("test", "synthetische-freigabe", 1), "Erste Kontingentreservierung wurde abgewiesen.");
     Pruefe(!kontingent.Reserviere("test", "synthetische-freigabe", 1), "Kontingentgrenze wurde überschritten.");
+    zeit.Fortschreiten(TimeSpan.FromMinutes(59));
+    Pruefe(!kontingent.Reserviere("test", "synthetische-freigabe", 1), "Festes Kontingentfenster endete zu früh.");
+    zeit.Fortschreiten(TimeSpan.FromMinutes(1));
+    Pruefe(kontingent.Reserviere("test", "synthetische-freigabe", 1), "Kontingent wurde nach dem festen Zeitfenster nicht freigegeben.");
 
     bool naechsterAufgerufen = false;
     QuellUndUrsprungsMiddleware middleware = new(
@@ -313,6 +318,15 @@ static async Task PruefeAusnahmeAsync<TAusnahme>(Func<Task> aktion)
 }
 
 static void Pruefe(bool bedingung, string meldung) { if (!bedingung) throw new InvalidOperationException(meldung); }
+
+sealed class SteuerbareZeit(DateTimeOffset jetzt) : TimeProvider
+{
+    private DateTimeOffset _jetzt = jetzt;
+
+    public override DateTimeOffset GetUtcNow() => _jetzt;
+
+    public void Fortschreiten(TimeSpan dauer) => _jetzt += dauer;
+}
 
 sealed class AufzeichnenderHandler(Func<HttpRequestMessage, HttpResponseMessage> antwort) : HttpMessageHandler
 {
