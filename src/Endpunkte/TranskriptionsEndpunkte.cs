@@ -9,10 +9,7 @@ public static class TranskriptionsEndpunkte
     {
         app.MapGet("/api/status", (PlauderBoxOptionen optionen) => Results.Ok(new
         {
-            kiBereit = !string.IsNullOrWhiteSpace(optionen.ApiKey),
-            modell = optionen.Modell,
-            strukturmodell = optionen.Strukturmodell,
-            hinweis = optionen.KiKonfigurationsfehler
+            kiBereit = !string.IsNullOrWhiteSpace(optionen.ApiKey)
         }));
 
         app.MapPost("/api/transkribieren", TranskribiereAsync)

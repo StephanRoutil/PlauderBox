@@ -64,6 +64,9 @@ if ($caddySnippet -notmatch 'disable_http_challenge') { throw 'Caddy-Site ist ni
 if ($caddySnippet -notmatch 'reverse_proxy plauderbox:5187') { throw 'Caddy-Site verwendet nicht den internen PlauderBox-Netzalias.' }
 if ($caddySnippet -notmatch 'max_size 24MB') { throw 'Caddy lässt nicht genügend Multipart-Overhead für 20-MiB-Audio zu.' }
 $endpunktInhalt = $happyHourEndpunkteInhalt + "`n" + $transkriptionsEndpunkteInhalt
+$statusEndpunkt = [regex]::Match($transkriptionsEndpunkteInhalt, 'app\.MapGet\("/api/status"[\s\S]+?\}\)\);')
+if (-not $statusEndpunkt.Success) { throw 'Der öffentliche Statusendpunkt fehlt.' }
+if ($statusEndpunkt.Value -match 'modell\s*=' -or $statusEndpunkt.Value -match 'strukturmodell\s*=' -or $statusEndpunkt.Value -match 'hinweis\s*=') { throw 'Die öffentliche Statusauskunft enthält interne KI-Konfigurationsdetails.' }
 if ($endpunktInhalt -notmatch 'X-PlauderBox-Freigabe') { throw 'Öffentliche KI- und Bildaufrufe sind nicht an den Freigabeheader gebunden.' }
 if ($transkriptionsEndpunkteInhalt -notmatch 'await freigabeQuelle\.LadeAsync\(freigabe\.Wert, token\)') { throw 'Die Transkription validiert die Rundgangsfreigabe nicht serverseitig gegen HappyHour.' }
 if ($middlewareInhalt -notmatch '!istLoopbackQuelle && !istKonfigurierterUrsprung') { throw 'Öffentliche POST-Aufrufe ohne passenden Origin werden nicht abgewiesen.' }
