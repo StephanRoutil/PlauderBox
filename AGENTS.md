@@ -26,7 +26,7 @@ PlauderBox verwendet drei getrennte Schichten:
 
 - `PlauderBox.UI`: Vue-/TypeScript-PWA, ASP.NET-Core-Host, HTTP-Endpunkte und Composition Root.
 - `PlauderBox.Logik`: Fachregeln, Anwendungsabläufe und providerunabhängige Verträge.
-- `PlauderBox.Datenmanagement`: PostgreSQL, Dateispeicher sowie Implementierungen der OpenAI- und HappyHour-Schnittstellen.
+- `PlauderBox.Datenmanagement`: Implementierungen der OpenAI- und HappyHour-Schnittstellen. PlauderBox besitzt derzeit keine eigene serverseitige Datenbank oder dauerhafte Dateiablage; lokale Begehungsdaten werden im Browser gespeichert.
 
 Die Logik kennt weder UI noch Datenmanagement. Das Datenmanagement implementiert Verträge der Logik. Die UI darf beide Projekte ausschliesslich zur Nutzung und Verdrahtung referenzieren. Die Solution `src/PlauderBox.sln` und das Hauptprojekt `src/PlauderBox.UI.csproj` liegen in derselben Ablage.
 

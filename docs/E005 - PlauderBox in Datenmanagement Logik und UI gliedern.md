@@ -17,11 +17,13 @@ PlauderBox verwendet verbindlich drei Anwendungsschichten:
 
 1. `PlauderBox.UI` für Vue-/TypeScript-PWA, ASP.NET-Core-Host und HTTP-Endpunkte,
 2. `PlauderBox.Logik` für Fachregeln, Anwendungsabläufe und providerunabhängige Verträge,
-3. `PlauderBox.Datenmanagement` für PostgreSQL, Dateispeicher sowie OpenAI- und HappyHour-Implementierungen.
+3. `PlauderBox.Datenmanagement` für OpenAI- und HappyHour-Implementierungen.
 
 Die Logik referenziert keine andere PlauderBox-Schicht. Das Datenmanagement referenziert die Logik und implementiert deren Verträge. Die UI darf beide Schichten nutzen; konkrete Implementierungen werden nur im Composition Root verdrahtet. Prüfprojekte liegen ausserhalb der drei Anwendungsschichten.
 
 Die Visual-Studio-Solution `src/PlauderBox.sln` und das Hauptprojekt `src/PlauderBox.UI.csproj` liegen direkt nebeneinander. Die beiden weiteren Projekte liegen in Unterordnern derselben Quellablage.
+
+PlauderBox besitzt im umgesetzten und derzeit entschiedenen Umfang keine eigene serverseitige Datenbank oder dauerhafte Dateiablage. Eine solche Persistenz wäre eine spätere Erweiterung und benötigt vor ihrer Einführung einen eigenen fachlichen und technischen Entscheid.
 
 ## Ablösung
 

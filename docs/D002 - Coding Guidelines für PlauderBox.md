@@ -33,7 +33,7 @@ Aufnahmezustände, Synchronisationsregeln, Wiederholungen, Freigaben und später
 **Stufe:** Verbindlich  
 **Prüfbarkeit:** Architekturtest / Review
 
-PostgreSQL, lokaler Dateispeicher sowie OpenAI- und HappyHour-Implementierungen gehören ins Datenmanagement. Provider-DTOs, SDK-Typen und Verbindungsdetails dürfen nicht in die Logik gelangen.
+OpenAI- und HappyHour-Implementierungen gehören ins Datenmanagement. Eine später ausdrücklich entschiedene serverseitige Persistenz würde ebenfalls dort gekapselt. Provider-DTOs, SDK-Typen und Verbindungsdetails dürfen nicht in die Logik gelangen.
 
 ### PB-ARC-004 – Abhängigkeiten von aussen bereitstellen
 
@@ -148,12 +148,12 @@ Primäre Aktionen sind per Touch und Tastatur bedienbar, Status ist nicht nur du
 
 ## Daten und Schnittstellen
 
-### PB-DAT-001 – PostgreSQL-Zugriff im Datenmanagement
+### PB-DAT-001 – Serverseitige Persistenz im Datenmanagement
 
 **Stufe:** Verbindlich  
 **Prüfbarkeit:** Architekturtest / Integrationstest
 
-Persistenzzugriffe liegen im Datenmanagement. Transaktionen sichern fachlich zusammengehörige Änderungen. Migrationen sind versioniert und werden gegen echtes PostgreSQL geprüft.
+Falls PlauderBox künftig eine eigene serverseitige Persistenz erhält, liegen deren Zugriffe im Datenmanagement. Transaktionen sichern fachlich zusammengehörige Änderungen. Migrationen sind versioniert und werden gegen das tatsächlich entschiedene Datenbanksystem geprüft. Diese Regel begründet selbst keine Einführung einer serverseitigen Datenbank.
 
 ### PB-API-001 – Versionierte und dokumentierte Verträge
 
