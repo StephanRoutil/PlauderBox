@@ -28,12 +28,13 @@ export function verwendeQrCodeStartAblauf(
     } catch (fehler: unknown) {
       status.value = 'fehler'
       const art = fehler instanceof Error ? fehler.message : 'kamera_fehler'
-      lokaleMeldung.value = {
-        nicht_unterstuetzt: 'Dieser Browser unterstützt das Scannen mit der Kamera nicht.',
-        nicht_erlaubt: 'Der Kamerazugriff wurde nicht erlaubt. Bitte in den Browser-Einstellungen freigeben.',
-        keine_kamera: 'Es wurde keine Kamera gefunden.',
-        kamera_fehler: 'Die Kamera konnte nicht gestartet werden.',
-      }[art] ?? 'Die Kamera konnte nicht gestartet werden.'
+      lokaleMeldung.value =
+        {
+          nicht_unterstuetzt: 'Dieser Browser unterstützt das Scannen mit der Kamera nicht.',
+          nicht_erlaubt: 'Der Kamerazugriff wurde nicht erlaubt. Bitte in den Browser-Einstellungen freigeben.',
+          keine_kamera: 'Es wurde keine Kamera gefunden.',
+          kamera_fehler: 'Die Kamera konnte nicht gestartet werden.',
+        }[art] ?? 'Die Kamera konnte nicht gestartet werden.'
     }
   }
 

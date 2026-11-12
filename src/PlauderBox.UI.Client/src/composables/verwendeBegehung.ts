@@ -10,16 +10,34 @@ import {
   type HappyHourProtokollKontext,
   type LokaleBegehung,
 } from '@/services/begehungsSpeicher'
-import { HappyHourProtokollKontextFehler, leseHappyHourBegehungsfreigabe, type HappyHourBegehungsfreigabe } from '@/services/happyHourProtokollKontext'
+import {
+  HappyHourProtokollKontextFehler,
+  leseHappyHourBegehungsfreigabe,
+  type HappyHourBegehungsfreigabe,
+} from '@/services/happyHourProtokollKontext'
 
-export type AppAnsicht = 'scanner' | 'freigabe_erneuern' | 'laden' | 'start' | 'aktiv' | 'erfassen' | 'offline' | 'auswertung' | 'kontrolle' | 'abschluss'
+export type AppAnsicht =
+  | 'scanner'
+  | 'freigabe_erneuern'
+  | 'laden'
+  | 'start'
+  | 'aktiv'
+  | 'erfassen'
+  | 'offline'
+  | 'auswertung'
+  | 'kontrolle'
+  | 'abschluss'
 export type Begehungsstartzustand = { art: 'bereit' } | { art: 'laeuft' } | { art: 'fehler'; meldung: string }
 
 export interface BegehungsAbhaengigkeiten {
   kontextLaden: (freigabe: HappyHourBegehungsfreigabe) => Promise<HappyHourProtokollKontext>
   begehungLaden: () => Promise<LokaleBegehung | null>
   legacyEintragLaden: () => Promise<BegehungEintrag | null>
-  speichern: (begehung: LokaleBegehung, datenbankOeffnen?: () => Promise<IDBDatabase>, legacyImportId?: string) => Promise<void>
+  speichern: (
+    begehung: LokaleBegehung,
+    datenbankOeffnen?: () => Promise<IDBDatabase>,
+    legacyImportId?: string,
+  ) => Promise<void>
   loeschen: () => Promise<void>
   bestaetigen: (meldung: string) => boolean
   verbindungsstatus: () => boolean
@@ -38,9 +56,11 @@ export function verwendeBegehung(abhaengigkeiten: BegehungsAbhaengigkeiten) {
   const legacyEintrag = ref<BegehungEintrag | null>(null)
   const aktiveFreigabeToken = ref('')
   const startzustand = ref<Begehungsstartzustand>({ art: 'bereit' })
-  const aktuellerEintrag = computed(() => begehung.value?.eintraege.find((eintrag) => eintrag.id === begehung.value?.aktuellerEintragId) ?? null)
+  const aktuellerEintrag = computed(
+    () => begehung.value?.eintraege.find((eintrag) => eintrag.id === begehung.value?.aktuellerEintragId) ?? null,
+  )
   const startLaeuft = computed(() => startzustand.value.art === 'laeuft')
-  const startMeldung = computed(() => startzustand.value.art === 'fehler' ? startzustand.value.meldung : '')
+  const startMeldung = computed(() => (startzustand.value.art === 'fehler' ? startzustand.value.meldung : ''))
 
   async function verarbeiteQrCode(inhalt: string): Promise<void> {
     scannerMeldung.value = ''
@@ -71,7 +91,12 @@ export function verwendeBegehung(abhaengigkeiten: BegehungsAbhaengigkeiten) {
     try {
       const neueBegehung = erstelleBegehung(protokollKontext.value, undefined, aktiveFreigabeToken.value)
       let legacyImportId: string | undefined
-      if (legacyEintrag.value && abhaengigkeiten.bestaetigen('Es wurden ältere lokal gespeicherte Daten gefunden. Als neuen Eintrag in diese Begehung übernehmen?')) {
+      if (
+        legacyEintrag.value &&
+        abhaengigkeiten.bestaetigen(
+          'Es wurden ältere lokal gespeicherte Daten gefunden. Als neuen Eintrag in diese Begehung übernehmen?',
+        )
+      ) {
         normalisiereEintragProjektAnsprechpartner(legacyEintrag.value, neueBegehung.protokoll)
         neueBegehung.eintraege.push(legacyEintrag.value)
         neueBegehung.aktuellerEintragId = legacyEintrag.value.id
@@ -84,7 +109,10 @@ export function verwendeBegehung(abhaengigkeiten: BegehungsAbhaengigkeiten) {
       ansicht.value = 'aktiv'
       startzustand.value = { art: 'bereit' }
     } catch {
-      startzustand.value = { art: 'fehler', meldung: 'Die Begehung konnte nicht im internen App-Speicher gestartet werden. Bitte erneut versuchen.' }
+      startzustand.value = {
+        art: 'fehler',
+        meldung: 'Die Begehung konnte nicht im internen App-Speicher gestartet werden. Bitte erneut versuchen.',
+      }
     }
   }
 
@@ -104,7 +132,10 @@ export function verwendeBegehung(abhaengigkeiten: BegehungsAbhaengigkeiten) {
     ansicht.value = 'erfassen'
   }
 
-  async function speichereEintrag(eintrag: BegehungEintrag, ziel: 'aktiv' | 'neu' | 'kontrolle' = 'aktiv'): Promise<void> {
+  async function speichereEintrag(
+    eintrag: BegehungEintrag,
+    ziel: 'aktiv' | 'neu' | 'kontrolle' = 'aktiv',
+  ): Promise<void> {
     if (!begehung.value) return
     begehung.value = await committeEintrag(begehung.value, eintrag, abhaengigkeiten.speichern)
     if (ziel === 'neu') await neuerEintrag()
@@ -130,7 +161,8 @@ export function verwendeBegehung(abhaengigkeiten: BegehungsAbhaengigkeiten) {
   }
 
   async function loescheEintrag(id: string): Promise<void> {
-    if (!begehung.value || !abhaengigkeiten.bestaetigen('Diesen Eintrag mit Aufnahme und Bildern wirklich löschen?')) return
+    if (!begehung.value || !abhaengigkeiten.bestaetigen('Diesen Eintrag mit Aufnahme und Bildern wirklich löschen?'))
+      return
     begehung.value.eintraege = begehung.value.eintraege.filter((eintrag) => eintrag.id !== id)
     begehung.value.aktuellerEintragId = begehung.value.eintraege.at(-1)?.id ?? null
     await abhaengigkeiten.speichern(begehung.value)
@@ -151,7 +183,12 @@ export function verwendeBegehung(abhaengigkeiten: BegehungsAbhaengigkeiten) {
   }
 
   async function verwirfBegehungUndScanneNeu(): Promise<void> {
-    if (!abhaengigkeiten.bestaetigen('Die lokale Begehung mit allen Bildern und Aufnahmen endgültig verwerfen und einen neuen Code scannen?')) return
+    if (
+      !abhaengigkeiten.bestaetigen(
+        'Die lokale Begehung mit allen Bildern und Aufnahmen endgültig verwerfen und einen neuen Code scannen?',
+      )
+    )
+      return
     await abhaengigkeiten.loeschen()
     begehung.value = null
     protokollKontext.value = null
@@ -175,18 +212,22 @@ export function verwendeBegehung(abhaengigkeiten: BegehungsAbhaengigkeiten) {
       begehung.value = await abhaengigkeiten.begehungLaden()
       if (begehung.value) {
         bereiteWiederanlaufVor(begehung.value)
-        ansicht.value = begehung.value.status === 'kontrolle'
-          ? 'kontrolle'
-          : ['lokal_abgeschlossen', 'an_happyhour_uebertragen'].includes(begehung.value.status) ? 'abschluss' : 'aktiv'
+        ansicht.value =
+          begehung.value.status === 'kontrolle'
+            ? 'kontrolle'
+            : ['lokal_abgeschlossen', 'an_happyhour_uebertragen'].includes(begehung.value.status)
+              ? 'abschluss'
+              : 'aktiv'
         await abhaengigkeiten.speichern(begehung.value)
         if (online.value) void abhaengigkeiten.warteschlangeVerarbeiten()
       } else if (legacyEintrag.value) {
         scannerMeldung.value = 'Ältere lokale Daten wurden gefunden. Scanne eine Begehung, um sie sicher zu übernehmen.'
       }
     } catch (fehler: unknown) {
-      scannerMeldung.value = fehler instanceof BegehungSpeicherfehler
-        ? 'Die lokal gespeicherte Begehung ist unlesbar. Die Daten wurden nicht gelöscht.'
-        : 'Der interne App-Speicher ist nicht verfügbar.'
+      scannerMeldung.value =
+        fehler instanceof BegehungSpeicherfehler
+          ? 'Die lokal gespeicherte Begehung ist unlesbar. Die Daten wurden nicht gelöscht.'
+          : 'Der interne App-Speicher ist nicht verfügbar.'
     }
   }
 

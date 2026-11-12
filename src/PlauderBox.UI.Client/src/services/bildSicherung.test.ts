@@ -9,14 +9,64 @@ function bild(id: string, dateiname: string, inhalt: string): LokalesBild {
 
 function begehung(): LokaleBegehung {
   return {
-    id: 'begehung-1', gestartetAm: '2026-11-11T08:00:00Z', aktualisiertAm: '2026-11-11T08:00:00Z', status: 'lokal_abgeschlossen', freigabeToken: 'redigiert', aktuellerEintragId: 'eintrag-1',
+    id: 'begehung-1',
+    gestartetAm: '2026-11-11T08:00:00Z',
+    aktualisiertAm: '2026-11-11T08:00:00Z',
+    status: 'lokal_abgeschlossen',
+    freigabeToken: 'redigiert',
+    aktuellerEintragId: 'eintrag-1',
     protokoll: {
-      protokollId: 378, protokollNummer: 3, thema: 'Test', typ: 'Protokoll', status: 'Entwurf', datum: '2026-11-11', ort: null,
-      projekt: { id: 450, nummer: 450, bezeichnung: 'Testprojekt' }, objekt: null, mitarbeiter: { id: 1, name: 'Testperson' }, traktanden: [], verteiler: [], protokollpunkte: [],
+      protokollId: 378,
+      protokollNummer: 3,
+      thema: 'Test',
+      typ: 'Protokoll',
+      status: 'Entwurf',
+      datum: '2026-11-11',
+      ort: null,
+      projekt: { id: 450, nummer: 450, bezeichnung: 'Testprojekt' },
+      objekt: null,
+      mitarbeiter: { id: 1, name: 'Testperson' },
+      traktanden: [],
+      verteiler: [],
+      protokollpunkte: [],
     },
     eintraege: [
-      { id: 'eintrag-1', erstelltAm: '2026-11-11T08:00:00Z', aktualisiertAm: '2026-11-11T08:00:00Z', status: 'ausgewertet', traktandum: '', vorbereiteterProtokollpunktId: null, protokollpunktArtId: 1, projektAnsprechpartnerId: 77, gruppe: 'Löschgeräte / UG', thema: 'Zugang', inhalt: 'Verstellt', rechtsverweis: '', transkript: '', fehler: '', audio: null, bilder: [bild('bild-1', 'kamera.jpg', 'eins'), bild('bild-2', 'galerie.jpeg', 'zwei')] },
-      { id: 'eintrag-2', erstelltAm: '2026-11-11T08:05:00Z', aktualisiertAm: '2026-11-11T08:05:00Z', status: 'ausgewertet', traktandum: '', vorbereiteterProtokollpunktId: null, protokollpunktArtId: 1, projektAnsprechpartnerId: 77, gruppe: '', thema: 'Ohne Gruppe', inhalt: 'Hinweis', rechtsverweis: '', transkript: '', fehler: '', audio: null, bilder: [bild('bild-3', 'aufnahme.jpg', 'drei')] },
+      {
+        id: 'eintrag-1',
+        erstelltAm: '2026-11-11T08:00:00Z',
+        aktualisiertAm: '2026-11-11T08:00:00Z',
+        status: 'ausgewertet',
+        traktandum: '',
+        vorbereiteterProtokollpunktId: null,
+        protokollpunktArtId: 1,
+        projektAnsprechpartnerId: 77,
+        gruppe: 'Löschgeräte / UG',
+        thema: 'Zugang',
+        inhalt: 'Verstellt',
+        rechtsverweis: '',
+        transkript: '',
+        fehler: '',
+        audio: null,
+        bilder: [bild('bild-1', 'kamera.jpg', 'eins'), bild('bild-2', 'galerie.jpeg', 'zwei')],
+      },
+      {
+        id: 'eintrag-2',
+        erstelltAm: '2026-11-11T08:05:00Z',
+        aktualisiertAm: '2026-11-11T08:05:00Z',
+        status: 'ausgewertet',
+        traktandum: '',
+        vorbereiteterProtokollpunktId: null,
+        protokollpunktArtId: 1,
+        projektAnsprechpartnerId: 77,
+        gruppe: '',
+        thema: 'Ohne Gruppe',
+        inhalt: 'Hinweis',
+        rechtsverweis: '',
+        transkript: '',
+        fehler: '',
+        audio: null,
+        bilder: [bild('bild-3', 'aufnahme.jpg', 'drei')],
+      },
     ],
   }
 }
@@ -25,7 +75,11 @@ describe('einmalige Sicherung aller Begehungsbilder', () => {
   it('lehnt Nichtbilder und über 15 MB grosse Bilder sichtbar ab', () => {
     const keinBild = new File(['text'], 'notiz.txt', { type: 'text/plain' })
     const zuGross = new File([new Uint8Array(15 * 1024 * 1024 + 1)], 'gross.jpg', { type: 'image/jpeg' })
-    const ergebnis = pruefeBildauswahl([keinBild, zuGross], () => 'nicht-verwendet', () => '2026-11-11T08:00:00Z')
+    const ergebnis = pruefeBildauswahl(
+      [keinBild, zuGross],
+      () => 'nicht-verwendet',
+      () => '2026-11-11T08:00:00Z',
+    )
 
     expect(ergebnis.bilder).toHaveLength(0)
     expect(ergebnis.fehler).toEqual(['notiz.txt ist keine Bilddatei.', 'gross.jpg ist grösser als 15 MB.'])
@@ -44,12 +98,23 @@ describe('einmalige Sicherung aller Begehungsbilder', () => {
   })
 
   it('übernimmt bei gemischter Auswahl gültige Bilder und behält die Ablehnung daneben', () => {
-    const gueltig = new File(['bild'], 'gueltig.jpg', { type: 'image/jpeg', lastModified: Date.parse('2026-11-10T07:30:15.123Z') })
+    const gueltig = new File(['bild'], 'gueltig.jpg', {
+      type: 'image/jpeg',
+      lastModified: Date.parse('2026-11-10T07:30:15.123Z'),
+    })
     const ungueltig = new File(['text'], 'notiz.txt', { type: 'text/plain' })
-    const ergebnis = pruefeBildauswahl([gueltig, ungueltig], () => 'bild-id', () => '2026-11-11T08:00:00Z')
+    const ergebnis = pruefeBildauswahl(
+      [gueltig, ungueltig],
+      () => 'bild-id',
+      () => '2026-11-11T08:00:00Z',
+    )
 
     expect(ergebnis.bilder).toHaveLength(1)
-    expect(ergebnis.bilder[0]).toMatchObject({ id: 'bild-id', dateiname: 'gueltig.jpg', erstelltAm: '2026-11-10T07:30:15.123Z' })
+    expect(ergebnis.bilder[0]).toMatchObject({
+      id: 'bild-id',
+      dateiname: 'gueltig.jpg',
+      erstelltAm: '2026-11-10T07:30:15.123Z',
+    })
     expect(ergebnis.fehler).toEqual(['notiz.txt ist keine Bilddatei.'])
   })
 
@@ -95,7 +160,9 @@ describe('einmalige Sicherung aller Begehungsbilder', () => {
 
   it('übergibt alle einzelnen Bilder mit genau einem Share-Aufruf', async () => {
     const geteilteDaten: ShareData[] = []
-    const share = vi.fn(async (daten?: ShareData) => { if (daten) geteilteDaten.push(daten) })
+    const share = vi.fn(async (daten?: ShareData) => {
+      if (daten) geteilteDaten.push(daten)
+    })
     const downloader = vi.fn()
     const ergebnis = await sichereBegehungsbilder(begehung(), { canShare: () => true, share }, downloader)
 
@@ -111,12 +178,18 @@ describe('einmalige Sicherung aller Begehungsbilder', () => {
 
     expect(ergebnis).toEqual({ art: 'heruntergeladen', anzahl: 3 })
     expect(downloader).toHaveBeenCalledTimes(3)
-    expect(downloader.mock.calls.map(([datei]) => datei.name).every((name) => !name.toLocaleLowerCase('de-CH').endsWith('.zip'))).toBe(true)
+    expect(
+      downloader.mock.calls
+        .map(([datei]) => datei.name)
+        .every((name) => !name.toLocaleLowerCase('de-CH').endsWith('.zip')),
+    ).toBe(true)
   })
 
   it('übergibt auch 82 Bilder mit genau einem Share-Aufruf', async () => {
     const grosserRundgang = begehung()
-    grosserRundgang.eintraege[0]!.bilder = Array.from({ length: 82 }, (_, index) => bild(`bild-${index + 1}`, `kamera-${index + 1}.jpg`, `bild-${index + 1}`))
+    grosserRundgang.eintraege[0]!.bilder = Array.from({ length: 82 }, (_, index) =>
+      bild(`bild-${index + 1}`, `kamera-${index + 1}.jpg`, `bild-${index + 1}`),
+    )
     grosserRundgang.eintraege[1]!.bilder = []
     const canShare = vi.fn(() => true)
     const share = vi.fn(async (_daten?: ShareData) => undefined)
@@ -130,7 +203,15 @@ describe('einmalige Sicherung aller Begehungsbilder', () => {
 
   it('verwendet bei einer fehlerhaften Share-Fähigkeitsprüfung den Einzeldatei-Fallback', async () => {
     const downloader = vi.fn()
-    const ergebnis = await sichereBegehungsbilder(begehung(), { canShare: () => { throw new Error('nicht unterstützt') } }, downloader)
+    const ergebnis = await sichereBegehungsbilder(
+      begehung(),
+      {
+        canShare: () => {
+          throw new Error('nicht unterstützt')
+        },
+      },
+      downloader,
+    )
     expect(ergebnis).toEqual({ art: 'heruntergeladen', anzahl: 3 })
     expect(downloader).toHaveBeenCalledTimes(3)
   })

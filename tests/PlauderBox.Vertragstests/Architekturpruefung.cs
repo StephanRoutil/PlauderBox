@@ -1,5 +1,7 @@
 using System.Reflection;
 
+namespace PlauderBox.Vertragstests;
+
 internal static class Architekturpruefung
 {
     public static IReadOnlyList<string> Pruefe(Assembly logik, Assembly datenmanagement)

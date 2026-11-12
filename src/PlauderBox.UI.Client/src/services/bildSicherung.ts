@@ -2,7 +2,10 @@ import type { LokaleBegehung, LokalesBild } from './begehungsSpeicher'
 import { istUnterstuetzterBildtyp, maximaleBildgroesse, unterstuetzteBildtypen } from '@logik/clientPruefungen'
 
 export type BildSicherungsart = 'geteilt' | 'heruntergeladen' | 'keine_bilder'
-export interface BildSicherungsErgebnis { art: BildSicherungsart; anzahl: number }
+export interface BildSicherungsErgebnis {
+  art: BildSicherungsart
+  anzahl: number
+}
 export interface BildTeiler {
   canShare?: (daten?: ShareData) => boolean
   share?: (daten?: ShareData) => Promise<void>
@@ -12,7 +15,10 @@ type BildDownloader = (datei: File) => void
 
 const bildendungen = new Map(unterstuetzteBildtypen.map((bildtyp) => [bildtyp, standardendung(bildtyp)]))
 
-export interface BildAuswahlErgebnis { bilder: LokalesBild[]; fehler: string[] }
+export interface BildAuswahlErgebnis {
+  bilder: LokalesBild[]
+  fehler: string[]
+}
 
 export function pruefeBildauswahl(
   dateien: File[],
@@ -35,7 +41,14 @@ export function pruefeBildauswahl(
       continue
     }
     const dateizeitpunkt = datei.lastModified > 0 ? new Date(datei.lastModified).toISOString() : jetzt()
-    bilder.push({ id: neueId(), dateiname: datei.name, medientyp: datei.type, groesse: datei.size, erstelltAm: dateizeitpunkt, bild: datei })
+    bilder.push({
+      id: neueId(),
+      dateiname: datei.name,
+      medientyp: datei.type,
+      groesse: datei.size,
+      erstelltAm: dateizeitpunkt,
+      bild: datei,
+    })
   }
   return { bilder, fehler }
 }
@@ -47,11 +60,14 @@ export function sammleBegehungsbilder(begehung: LokaleBegehung): File[] {
 
   return begehung.eintraege.flatMap((eintrag, eintragIndex) => {
     const gruppe = bereinigeDateiname(eintrag.gruppe) || 'Ohne-Gruppe'
-    return eintrag.bilder.map((bild, bildIndex) => new File(
-      [bild.bild],
-      `${projekt}_${protokoll}_${String(eintragIndex + 1).padStart(2, '0')}_${gruppe}_${String(bildIndex + 1).padStart(2, '0')}.${ermittleEndung(bild)}`,
-      { type: bild.medientyp || bild.bild.type || 'image/jpeg', lastModified: ermittleZeitpunkt(bild.erstelltAm) },
-    ))
+    return eintrag.bilder.map(
+      (bild, bildIndex) =>
+        new File(
+          [bild.bild],
+          `${projekt}_${protokoll}_${String(eintragIndex + 1).padStart(2, '0')}_${gruppe}_${String(bildIndex + 1).padStart(2, '0')}.${ermittleEndung(bild)}`,
+          { type: bild.medientyp || bild.bild.type || 'image/jpeg', lastModified: ermittleZeitpunkt(bild.erstelltAm) },
+        ),
+    )
   })
 }
 
@@ -113,6 +129,12 @@ function ermittleZeitpunkt(wert: string): number {
 }
 
 function bereinigeDateiname(wert: string): string {
-  return wert.trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ß/g, 'ss')
-    .replace(/[^A-Za-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 50)
+  return wert
+    .trim()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/ß/g, 'ss')
+    .replace(/[^A-Za-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 50)
 }

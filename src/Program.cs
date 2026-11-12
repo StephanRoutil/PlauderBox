@@ -86,12 +86,18 @@ builder.Services.AddRateLimiter(ratenlimit =>
 });
 
 WebApplication app = builder.Build();
-app.Logger.LogInformation(
+Action<ILogger, bool, string, string, bool, Exception?> protokolliereKiKonfiguration = LoggerMessage.Define<bool, string, string, bool>(
+    LogLevel.Information,
+    new EventId(1001, "KiKonfiguration"),
     "KI-Konfiguration: bereit={KiBereit}, Transkriptionsmodell={Transkriptionsmodell}, Strukturmodell={Strukturmodell}, KonfigurationshinweisVorhanden={HinweisVorhanden}",
+    new LogDefineOptions { SkipEnabledCheck = false });
+protokolliereKiKonfiguration(
+    app.Logger,
     !string.IsNullOrWhiteSpace(optionen.ApiKey),
     optionen.Modell,
     optionen.Strukturmodell,
-    !string.IsNullOrWhiteSpace(optionen.KiKonfigurationsfehler));
+    !string.IsNullOrWhiteSpace(optionen.KiKonfigurationsfehler),
+    null);
 app.UseExceptionHandler(fehleranwendung => fehleranwendung.Run(async context =>
 {
     context.Response.StatusCode = StatusCodes.Status500InternalServerError;

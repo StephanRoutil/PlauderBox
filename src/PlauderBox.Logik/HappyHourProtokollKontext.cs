@@ -12,6 +12,7 @@ public sealed record HappyHourVerteilerEintrag(
     bool IstTeilnehmer,
     bool IstCc,
     bool IstProtokollschreiber);
+#pragma warning disable CA1720 // "Guid" ist Teil des unveränderlichen HappyHour-Vertrags.
 public sealed record HappyHourProtokollpunktKontext(
     int Id,
     Guid Guid,
@@ -22,6 +23,7 @@ public sealed record HappyHourProtokollpunktKontext(
     string Thema,
     string Inhalt,
     string? Rechtsverweis);
+#pragma warning restore CA1720
 public sealed record HappyHourProtokollpunktArtKontext(int Id, string Bezeichnung);
 public sealed record HappyHourProtokollKontext(
     int ProtokollId,

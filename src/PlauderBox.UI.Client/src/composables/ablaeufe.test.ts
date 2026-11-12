@@ -1,6 +1,12 @@
 import { ref, toRaw } from 'vue'
 import { describe, expect, it, vi } from 'vitest'
-import { BegehungSpeicherfehler, erstelleBegehung, erstelleEintrag, type HappyHourProtokollKontext, type LokaleBegehung } from '@/services/begehungsSpeicher'
+import {
+  BegehungSpeicherfehler,
+  erstelleBegehung,
+  erstelleEintrag,
+  type HappyHourProtokollKontext,
+  type LokaleBegehung,
+} from '@/services/begehungsSpeicher'
 import { HappyHourUebergabefehler } from '@/services/happyHourProtokollpunktUebergabe'
 import { verwendeBegehung } from './verwendeBegehung'
 import { verwendeAuswertungsWarteschlange } from './verwendeAuswertungsWarteschlange'
@@ -67,7 +73,13 @@ describe('Begehungsablauf', () => {
     const gespeichert = begehung()
     const eintrag = erstelleEintrag(() => '00000000-0000-4000-8000-000000000002')
     eintrag.status = 'wird_ausgewertet'
-    eintrag.audio = { dateiname: 'synthetisch.webm', medientyp: 'audio/webm', groesse: 1, dauerSekunden: 1, audio: new Blob(['x']) }
+    eintrag.audio = {
+      dateiname: 'synthetisch.webm',
+      medientyp: 'audio/webm',
+      groesse: 1,
+      dauerSekunden: 1,
+      audio: new Blob(['x']),
+    }
     gespeichert.eintraege.push(eintrag)
     const ablauf = verwendeBegehung(begehungsAbhaengigkeiten({ begehungLaden: vi.fn(async () => gespeichert) }))
 
@@ -79,14 +91,20 @@ describe('Begehungsablauf', () => {
 
   it('zeigt unlesbare lokale Daten an, ohne eine Löschung anzufordern', async () => {
     const loeschen = vi.fn(async () => undefined)
-    const ablauf = verwendeBegehung(begehungsAbhaengigkeiten({
-      begehungLaden: vi.fn(async () => { throw new BegehungSpeicherfehler('unlesbare_daten') }),
-      loeschen,
-    }))
+    const ablauf = verwendeBegehung(
+      begehungsAbhaengigkeiten({
+        begehungLaden: vi.fn(async () => {
+          throw new BegehungSpeicherfehler('unlesbare_daten')
+        }),
+        loeschen,
+      }),
+    )
 
     await ablauf.initialisiere()
 
-    expect(ablauf.scannerMeldung.value).toBe('Die lokal gespeicherte Begehung ist unlesbar. Die Daten wurden nicht gelöscht.')
+    expect(ablauf.scannerMeldung.value).toBe(
+      'Die lokal gespeicherte Begehung ist unlesbar. Die Daten wurden nicht gelöscht.',
+    )
     expect(loeschen).not.toHaveBeenCalled()
   })
 })
@@ -96,9 +114,16 @@ describe('Auswertungswarteschlange', () => {
     const gespeichert = begehung()
     const eintrag = erstelleEintrag(() => '00000000-0000-4000-8000-000000000003')
     eintrag.status = 'wartet_auf_auswertung'
-    eintrag.audio = { dateiname: 'synthetisch.webm', medientyp: 'audio/webm', groesse: 1, dauerSekunden: 1, audio: new Blob(['x']) }
+    eintrag.audio = {
+      dateiname: 'synthetisch.webm',
+      medientyp: 'audio/webm',
+      groesse: 1,
+      dauerSekunden: 1,
+      audio: new Blob(['x']),
+    }
     gespeichert.eintraege.push(eintrag)
-    const speichern = vi.fn()
+    const speichern = vi
+      .fn()
       .mockResolvedValueOnce(undefined)
       .mockRejectedValueOnce(new Error('synthetischer Speicherfehler'))
     const ansicht = ref('aktiv')
@@ -107,7 +132,9 @@ describe('Auswertungswarteschlange', () => {
       ansicht,
       online: ref(true),
       speichern,
-      auswerten: vi.fn(async () => { throw new Error('synthetischer Auswertungsfehler') }),
+      auswerten: vi.fn(async () => {
+        throw new Error('synthetischer Auswertungsfehler')
+      }),
       istVerbunden: () => true,
     })
 
@@ -131,7 +158,9 @@ describe('HappyHour-Übergabe', () => {
       scannerMeldung: ref(''),
       kontextLaden: vi.fn(async () => kontext()),
       speichern: vi.fn(async () => undefined),
-      uebergeben: vi.fn(async () => { throw new HappyHourUebergabefehler('netzwerk') }),
+      uebergeben: vi.fn(async () => {
+        throw new HappyHourUebergabefehler('netzwerk')
+      }),
     })
 
     await ablauf.uebergibAnHappyHour()
@@ -144,7 +173,18 @@ describe('HappyHour-Übergabe', () => {
   it('erneuert nur die Freigabe desselben Protokolls und behält lokale Daten', async () => {
     const lokal = begehung('lokal_abgeschlossen')
     const begehungRef = ref<LokaleBegehung | null>(lokal)
-    const ansicht = ref<'abschluss' | 'scanner' | 'freigabe_erneuern' | 'laden' | 'start' | 'aktiv' | 'erfassen' | 'offline' | 'auswertung' | 'kontrolle'>('abschluss')
+    const ansicht = ref<
+      | 'abschluss'
+      | 'scanner'
+      | 'freigabe_erneuern'
+      | 'laden'
+      | 'start'
+      | 'aktiv'
+      | 'erfassen'
+      | 'offline'
+      | 'auswertung'
+      | 'kontrolle'
+    >('abschluss')
     const speichern = vi.fn(async () => undefined)
     const ablauf = verwendeHappyHourUebergabe({
       begehung: begehungRef,

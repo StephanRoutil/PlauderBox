@@ -1,4 +1,5 @@
 using System.Net;
+using System.Globalization;
 using System.Text;
 using System.Text.Json;
 using Microsoft.AspNetCore.Http;
@@ -6,6 +7,7 @@ using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using PlauderBox.Datenmanagement;
 using PlauderBox.Logik;
+using PlauderBox.Vertragstests;
 using PlauderBox.UI;
 using PlauderBox.UI.Endpunkte;
 using PlauderBox.UI.Sicherheit;
@@ -88,7 +90,7 @@ static async Task PruefeHappyHourBildSchreibenAsync()
 
     ProtokollpunktBildUebergabeErgebnis ergebnis = await ziel.SchreibeBildAsync(
         token,
-        new ProtokollpunktBildUebergabe(bildId, 41, "foto.jpg", "image/jpeg", DateTimeOffset.Parse("2026-11-12T08:15:30.123Z"), new MemoryStream([0xFF, 0xD8, 0xFF, 0xD9])),
+        new ProtokollpunktBildUebergabe(bildId, 41, "foto.jpg", "image/jpeg", DateTimeOffset.Parse("2026-11-12T08:15:30.123Z", CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind), new MemoryStream([0xFF, 0xD8, 0xFF, 0xD9])),
         CancellationToken.None);
     Pruefe(handler.LetzteMethode == HttpMethod.Post, "Bildvertrag muss POST verwenden.");
     Pruefe(handler.LetzteUri?.AbsolutePath == $"/api.svc/PlauderBox/Freigabe/{token}/Protokollpunkt/41/Bild/{bildId:D}", "Provider muss den gebundenen Bildpfad verwenden.");
@@ -101,7 +103,7 @@ static async Task PruefeHappyHourBildSchreibenAsync()
     {
         await kontingentZiel.SchreibeBildAsync(
             token,
-            new ProtokollpunktBildUebergabe(bildId, 41, "foto.jpg", "image/jpeg", DateTimeOffset.Parse("2026-11-12T08:15:30.123Z"), new MemoryStream([0xFF, 0xD8, 0xFF, 0xD9])),
+            new ProtokollpunktBildUebergabe(bildId, 41, "foto.jpg", "image/jpeg", DateTimeOffset.Parse("2026-11-12T08:15:30.123Z", CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind), new MemoryStream([0xFF, 0xD8, 0xFF, 0xD9])),
             CancellationToken.None);
         throw new InvalidOperationException("HTTP 429 wurde nicht als Bildkontingentfehler erkannt.");
     }

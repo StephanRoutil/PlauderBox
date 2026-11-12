@@ -15,16 +15,18 @@ const kontext = {
   objekt: null,
   mitarbeiter: { id: 1, name: 'Testperson' },
   traktanden: [],
-  verteiler: [{
-    id: 1,
-    projektAnsprechpartnerId: 1,
-    person: 'Testperson',
-    firma: 'Testfirma',
-    funktion: 'Testfunktion',
-    istTeilnehmer: true,
-    istCc: false,
-    istProtokollschreiber: true,
-  }],
+  verteiler: [
+    {
+      id: 1,
+      projektAnsprechpartnerId: 1,
+      person: 'Testperson',
+      firma: 'Testfirma',
+      funktion: 'Testfunktion',
+      istTeilnehmer: true,
+      istCc: false,
+      istProtokollschreiber: true,
+    },
+  ],
   protokollpunkte: [],
   protokollpunktArten: [{ id: 1, bezeichnung: 'Feststellung' }],
 }
@@ -40,21 +42,32 @@ describe('HappyHour-Begehungsfreigabe', () => {
   })
 
   it('lädt ausschliesslich über die eigene PlauderBox-Servergrenze', async () => {
-    const fetchFunktion = vi.fn<typeof fetch>().mockResolvedValue(new Response(JSON.stringify(kontext), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    }))
+    const fetchFunktion = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(JSON.stringify(kontext), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    )
     await expect(ladeHappyHourProtokollKontext(freigabe, fetchFunktion)).resolves.toEqual(kontext)
-    expect(fetchFunktion).toHaveBeenCalledWith(`/api/happyhour/freigaben/${token}`, expect.objectContaining({ credentials: 'same-origin' }))
+    expect(fetchFunktion).toHaveBeenCalledWith(
+      `/api/happyhour/freigaben/${token}`,
+      expect.objectContaining({ credentials: 'same-origin' }),
+    )
   })
 
   it('weist eine unvollständige Kontextantwort ab', async () => {
-    const fetchFunktion = vi.fn<typeof fetch>().mockResolvedValue(new Response(JSON.stringify({ ...kontext, projekt: null })))
-    await expect(ladeHappyHourProtokollKontext(freigabe, fetchFunktion)).rejects.toMatchObject({ art: 'ungueltige_antwort' })
+    const fetchFunktion = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(new Response(JSON.stringify({ ...kontext, projekt: null })))
+    await expect(ladeHappyHourProtokollKontext(freigabe, fetchFunktion)).rejects.toMatchObject({
+      art: 'ungueltige_antwort',
+    })
   })
 
   it.each([401, 403, 404, 410])('behandelt Status %s als ungültige oder abgelaufene Freigabe', async (status) => {
     const fetchFunktion = vi.fn<typeof fetch>().mockResolvedValue(new Response('', { status }))
-    await expect(ladeHappyHourProtokollKontext(freigabe, fetchFunktion)).rejects.toMatchObject({ art: 'freigabe_ungueltig' })
+    await expect(ladeHappyHourProtokollKontext(freigabe, fetchFunktion)).rejects.toMatchObject({
+      art: 'freigabe_ungueltig',
+    })
   })
 })

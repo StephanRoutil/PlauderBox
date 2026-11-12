@@ -5,6 +5,8 @@ $clientordner = Join-Path $projektordner 'src\PlauderBox.UI.Client'
 
 & (Join-Path $projektordner 'tests\Test-DockerBuildkontext.ps1')
 
+pnpm --dir $clientordner run lint
+if ($LASTEXITCODE -ne 0) { throw "PlauderBox-Lintprüfung fehlgeschlagen (Exitcode $LASTEXITCODE)." }
 pnpm --dir $clientordner run typecheck
 if ($LASTEXITCODE -ne 0) { throw "PlauderBox-TypeScript-Prüfung fehlgeschlagen (Exitcode $LASTEXITCODE)." }
 pnpm --dir $clientordner run test

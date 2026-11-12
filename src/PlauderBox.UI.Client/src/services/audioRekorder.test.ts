@@ -3,7 +3,9 @@ import { BrowserAudioRekorder } from './audioRekorder'
 
 class MedienRekorderAttrappe {
   static letzte: MedienRekorderAttrappe | null = null
-  static isTypeSupported(typ: string): boolean { return typ === 'audio/webm' }
+  static isTypeSupported(typ: string): boolean {
+    return typ === 'audio/webm'
+  }
 
   readonly mimeType: string
   state: RecordingState = 'inactive'
@@ -21,7 +23,9 @@ class MedienRekorderAttrappe {
     this.ereignisse.set(art, liste)
   }
 
-  start(): void { this.state = 'recording' }
+  start(): void {
+    this.state = 'recording'
+  }
 
   stop(): void {
     this.state = 'inactive'
@@ -49,7 +53,9 @@ afterEach(() => {
 describe('Browser-Audiorekorder', () => {
   it('startet die Mikrofonaufnahme', async () => {
     const spurStoppen = vi.fn()
-    const mediaDevices = richteBrowserEin(async () => ({ getTracks: () => [{ stop: spurStoppen }] }) as unknown as MediaStream)
+    const mediaDevices = richteBrowserEin(
+      async () => ({ getTracks: () => [{ stop: spurStoppen }] }) as unknown as MediaStream,
+    )
     const rekorder = new BrowserAudioRekorder()
 
     await rekorder.starten()
@@ -82,7 +88,9 @@ describe('Browser-Audiorekorder', () => {
   })
 
   it('weist verweigerten Mikrofonzugriff eindeutig aus', async () => {
-    richteBrowserEin(async () => { throw new DOMException('verweigert', 'NotAllowedError') })
+    richteBrowserEin(async () => {
+      throw new DOMException('verweigert', 'NotAllowedError')
+    })
     const rekorder = new BrowserAudioRekorder()
 
     await expect(rekorder.starten()).rejects.toThrow('nicht_erlaubt')

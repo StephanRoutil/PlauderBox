@@ -43,18 +43,22 @@ export class BrowserAudioRekorder implements AudioRekorder {
     if (!recorder || recorder.state === 'inactive') throw new Error('aufnahme_fehler')
     const dauerSekunden = Math.max(1, Math.floor((Date.now() - this.gestartetAm) / 1000))
     return await new Promise((resolve, reject) => {
-      recorder.addEventListener('stop', () => {
-        const medientyp = recorder.mimeType || 'audio/webm'
-        const audio = new Blob(this.teile, { type: medientyp })
-        this.teile = []
-        this.beendeStream()
-        this.recorder = null
-        if (!audio.size) {
-          reject(new Error('leere_aufnahme'))
-          return
-        }
-        resolve({ audio, medientyp, dauerSekunden })
-      }, { once: true })
+      recorder.addEventListener(
+        'stop',
+        () => {
+          const medientyp = recorder.mimeType || 'audio/webm'
+          const audio = new Blob(this.teile, { type: medientyp })
+          this.teile = []
+          this.beendeStream()
+          this.recorder = null
+          if (!audio.size) {
+            reject(new Error('leere_aufnahme'))
+            return
+          }
+          resolve({ audio, medientyp, dauerSekunden })
+        },
+        { once: true },
+      )
       recorder.stop()
     })
   }
@@ -67,8 +71,11 @@ export class BrowserAudioRekorder implements AudioRekorder {
   }
 
   private ermittleMedientyp(): string {
-    return ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg;codecs=opus']
-      .find((typ) => MediaRecorder.isTypeSupported(typ)) ?? ''
+    return (
+      ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg;codecs=opus'].find((typ) =>
+        MediaRecorder.isTypeSupported(typ),
+      ) ?? ''
+    )
   }
 
   private beendeStream(): void {

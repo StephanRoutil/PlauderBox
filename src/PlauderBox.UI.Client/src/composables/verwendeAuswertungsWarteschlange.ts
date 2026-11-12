@@ -1,6 +1,10 @@
 import { computed, ref, type Ref } from 'vue'
 import { verarbeiteWarteschlange as verarbeiteFachWarteschlange } from '@logik/begehungsAblauf'
-import { uebernehmeAuswertung, zaehleAusstehendeAudioaufnahmen, type LokaleBegehung } from '@/services/begehungsSpeicher'
+import {
+  uebernehmeAuswertung,
+  zaehleAusstehendeAudioaufnahmen,
+  type LokaleBegehung,
+} from '@/services/begehungsSpeicher'
 import type { Transkriptionsantwort } from '@/services/auswertungsDienst'
 
 export type Auswertungszustand = { art: 'bereit' } | { art: 'laeuft'; eintragId: string }
@@ -16,9 +20,9 @@ export interface AuswertungsWarteschlangeAbhaengigkeiten {
 
 export function verwendeAuswertungsWarteschlange(abhaengigkeiten: AuswertungsWarteschlangeAbhaengigkeiten) {
   const zustand = ref<Auswertungszustand>({ art: 'bereit' })
-  const anzahlAusstehend = computed(() => abhaengigkeiten.begehung.value
-    ? zaehleAusstehendeAudioaufnahmen(abhaengigkeiten.begehung.value)
-    : 0)
+  const anzahlAusstehend = computed(() =>
+    abhaengigkeiten.begehung.value ? zaehleAusstehendeAudioaufnahmen(abhaengigkeiten.begehung.value) : 0,
+  )
 
   async function werteEintragAus(id: string, ergebnisAnzeigen: boolean): Promise<void> {
     const begehung = abhaengigkeiten.begehung.value
@@ -51,10 +55,14 @@ export function verwendeAuswertungsWarteschlange(abhaengigkeiten: AuswertungsWar
   async function verarbeiteWarteschlange(): Promise<void> {
     const begehung = abhaengigkeiten.begehung.value
     if (!begehung || !abhaengigkeiten.online.value || zustand.value.art === 'laeuft') return
-    await verarbeiteFachWarteschlange(begehung, () => abhaengigkeiten.online.value, async (eintrag) => {
-      await werteEintragAus(eintrag.id, false)
-      return eintrag.status === 'ausgewertet'
-    })
+    await verarbeiteFachWarteschlange(
+      begehung,
+      () => abhaengigkeiten.online.value,
+      async (eintrag) => {
+        await werteEintragAus(eintrag.id, false)
+        return eintrag.status === 'ausgewertet'
+      },
+    )
   }
 
   return { anzahlAusstehend, auswertungszustand: zustand, verarbeiteWarteschlange, werteEintragAus }

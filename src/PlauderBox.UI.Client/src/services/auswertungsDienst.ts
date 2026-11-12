@@ -24,9 +24,10 @@ export async function sendeAudioZurAuswertung(
     headers: { 'X-PlauderBox-Freigabe': freigabeToken },
     body: formular,
   })
-  const ergebnis = await antwort.json().catch(() => null) as Record<string, unknown> | null
+  const ergebnis = (await antwort.json().catch(() => null)) as Record<string, unknown> | null
   if (!antwort.ok || !ergebnis || typeof ergebnis.text !== 'string' || !ergebnis.text.trim()) {
-    const detail = ergebnis && typeof ergebnis.detail === 'string' ? ergebnis.detail : 'Die Auswertung ist momentan nicht verfügbar.'
+    const detail =
+      ergebnis && typeof ergebnis.detail === 'string' ? ergebnis.detail : 'Die Auswertung ist momentan nicht verfügbar.'
     throw new Error(detail)
   }
   return {

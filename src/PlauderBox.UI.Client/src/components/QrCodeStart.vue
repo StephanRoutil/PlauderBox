@@ -3,15 +3,18 @@ import { onBeforeUnmount } from 'vue'
 import { BrowserQrCodeScanner, type QrCodeScanner } from '@/services/qrCodeScanner'
 import { verwendeQrCodeStartAblauf } from '@/services/qrCodeStartAblauf'
 
-const eigenschaften = withDefaults(defineProps<{
-  scanner?: QrCodeScanner
-  externeMeldung?: string
-  erneuerung?: boolean
-}>(), {
-  scanner: () => new BrowserQrCodeScanner(),
-  externeMeldung: '',
-  erneuerung: false,
-})
+const eigenschaften = withDefaults(
+  defineProps<{
+    scanner?: QrCodeScanner
+    externeMeldung?: string
+    erneuerung?: boolean
+  }>(),
+  {
+    scanner: () => new BrowserQrCodeScanner(),
+    externeMeldung: '',
+    erneuerung: false,
+  },
+)
 
 const emit = defineEmits<{
   erkannt: [inhalt: string]
@@ -25,6 +28,11 @@ const { setzeVideo, status, sichtbareMeldung, starteScanner, stoppeScanner } = v
 )
 
 onBeforeUnmount(() => eigenschaften.scanner.stoppen())
+
+function geheZurueck(): void {
+  stoppeScanner()
+  emit('zurueck')
+}
 </script>
 
 <template>
@@ -37,7 +45,13 @@ onBeforeUnmount(() => eigenschaften.scanner.stoppen())
     <section class="scan-card" aria-labelledby="scan-titel">
       <p class="eyebrow">{{ eigenschaften.erneuerung ? 'Bestehende Begehung behalten' : 'Begehung öffnen' }}</p>
       <h1 id="scan-titel">{{ eigenschaften.erneuerung ? 'Freigabe erneuern' : 'Code scannen' }}</h1>
-      <p class="scan-card__intro">{{ eigenschaften.erneuerung ? 'Scanne eine neue Freigabe für dasselbe HappyHour-Protokoll. Alle lokalen Einträge und Bilder bleiben erhalten.' : 'Scanne den QR-Code des vorbereiteten HappyHour-Protokolls.' }}</p>
+      <p class="scan-card__intro">
+        {{
+          eigenschaften.erneuerung
+            ? 'Scanne eine neue Freigabe für dasselbe HappyHour-Protokoll. Alle lokalen Einträge und Bilder bleiben erhalten.'
+            : 'Scanne den QR-Code des vorbereiteten HappyHour-Protokolls.'
+        }}
+      </p>
 
       <div class="scan-preview" :class="{ 'scan-preview--active': status === 'scannt' }">
         <video :ref="setzeVideo" muted playsinline aria-label="Kamerabild zum Scannen des QR-Codes"></video>
@@ -48,21 +62,31 @@ onBeforeUnmount(() => eigenschaften.scanner.stoppen())
         </div>
       </div>
 
-      <p v-if="sichtbareMeldung" class="scan-status" :class="{ 'scan-status--error': status === 'fehler' || !!eigenschaften.externeMeldung }" :role="status === 'fehler' || eigenschaften.externeMeldung ? 'alert' : 'status'">
+      <p
+        v-if="sichtbareMeldung"
+        class="scan-status"
+        :class="{ 'scan-status--error': status === 'fehler' || !!eigenschaften.externeMeldung }"
+        :role="status === 'fehler' || eigenschaften.externeMeldung ? 'alert' : 'status'"
+      >
         {{ sichtbareMeldung }}
       </p>
 
       <button v-if="status !== 'scannt'" class="mobile-primary" type="button" @click="starteScanner">
         Kamera öffnen
       </button>
-      <button v-else class="mobile-secondary" type="button" @click="stoppeScanner">
-        Scannen abbrechen
-      </button>
-      <button v-if="eigenschaften.erneuerung" class="mobile-secondary" type="button" @click="stoppeScanner(); emit('zurueck')">
+      <button v-else class="mobile-secondary" type="button" @click="stoppeScanner">Scannen abbrechen</button>
+      <button
+        v-if="eigenschaften.erneuerung"
+        class="mobile-secondary"
+        type="button"
+        @click="geheZurueck"
+      >
         Zurück zum Abschluss
       </button>
 
-      <p class="scan-hint">Der Code berechtigt nur zur freigegebenen Begehung und kann zeitlich begrenzt oder widerrufen sein.</p>
+      <p class="scan-hint">
+        Der Code berechtigt nur zur freigegebenen Begehung und kann zeitlich begrenzt oder widerrufen sein.
+      </p>
     </section>
   </main>
 </template>

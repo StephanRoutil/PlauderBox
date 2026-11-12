@@ -17,9 +17,10 @@ interface BarcodeErkennerKonstruktor {
   new (optionen: { formats: string[] }): BarcodeErkenner
 }
 
-type FensterMitBarcodeErkenner = Window & typeof globalThis & {
-  BarcodeDetector?: BarcodeErkennerKonstruktor
-}
+type FensterMitBarcodeErkenner = Window &
+  typeof globalThis & {
+    BarcodeDetector?: BarcodeErkennerKonstruktor
+  }
 
 export class BrowserQrCodeScanner implements QrCodeScanner {
   private stream: MediaStream | null = null

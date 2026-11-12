@@ -15,16 +15,16 @@ const emit = defineEmits<{
 function formatiereDatum(wert: string): string {
   const aspNetTreffer = /\/Date\((\d+)(?:[+-]\d+)?\)\//.exec(wert)
   const datum = aspNetTreffer ? new Date(Number(aspNetTreffer[1])) : new Date(wert)
-  return Number.isNaN(datum.getTime())
-    ? wert
-    : new Intl.DateTimeFormat('de-CH', { dateStyle: 'long' }).format(datum)
+  return Number.isNaN(datum.getTime()) ? wert : new Intl.DateTimeFormat('de-CH', { dateStyle: 'long' }).format(datum)
 }
 </script>
 
 <template>
   <main class="begehung-shell">
     <header class="mobile-brand">
-      <button class="back-button" type="button" aria-label="Zurück zum QR-Code-Scanner" @click="emit('zurueck')">‹</button>
+      <button class="back-button" type="button" aria-label="Zurück zum QR-Code-Scanner" @click="emit('zurueck')">
+        ‹
+      </button>
       <span class="mobile-brand__mark" aria-hidden="true">P</span>
       <strong>PlauderBox</strong>
     </header>
@@ -35,13 +35,37 @@ function formatiereDatum(wert: string): string {
       <p class="context-card__lead">Die vorbereiteten Daten sind aus HappyHour angekommen.</p>
 
       <dl class="context-facts">
-        <div><dt>Projekt</dt><dd>{{ kontext.projekt.nummer }} · {{ kontext.projekt.bezeichnung }}</dd></div>
-        <div v-if="kontext.objekt"><dt>Objekt</dt><dd>{{ kontext.objekt.bezeichnung }}<span v-if="kontext.objekt.adresse"> · {{ kontext.objekt.adresse }}</span><span v-if="kontext.objekt.gemeinde">, {{ kontext.objekt.gemeinde }}</span></dd></div>
-        <div><dt>Protokoll</dt><dd>P{{ String(kontext.protokollNummer).padStart(3, '0') }} · {{ kontext.typ }}</dd></div>
-        <div><dt>Datum</dt><dd>{{ formatiereDatum(kontext.datum) }}</dd></div>
-        <div><dt>Ort</dt><dd>{{ kontext.ort || 'Nicht angegeben' }}</dd></div>
-        <div><dt>Status</dt><dd>{{ kontext.status }}</dd></div>
-        <div><dt>Verantwortlich</dt><dd>{{ kontext.mitarbeiter.name }}</dd></div>
+        <div>
+          <dt>Projekt</dt>
+          <dd>{{ kontext.projekt.nummer }} · {{ kontext.projekt.bezeichnung }}</dd>
+        </div>
+        <div v-if="kontext.objekt">
+          <dt>Objekt</dt>
+          <dd>
+            {{ kontext.objekt.bezeichnung }}<span v-if="kontext.objekt.adresse"> · {{ kontext.objekt.adresse }}</span
+            ><span v-if="kontext.objekt.gemeinde">, {{ kontext.objekt.gemeinde }}</span>
+          </dd>
+        </div>
+        <div>
+          <dt>Protokoll</dt>
+          <dd>P{{ String(kontext.protokollNummer).padStart(3, '0') }} · {{ kontext.typ }}</dd>
+        </div>
+        <div>
+          <dt>Datum</dt>
+          <dd>{{ formatiereDatum(kontext.datum) }}</dd>
+        </div>
+        <div>
+          <dt>Ort</dt>
+          <dd>{{ kontext.ort || 'Nicht angegeben' }}</dd>
+        </div>
+        <div>
+          <dt>Status</dt>
+          <dd>{{ kontext.status }}</dd>
+        </div>
+        <div>
+          <dt>Verantwortlich</dt>
+          <dd>{{ kontext.mitarbeiter.name }}</dd>
+        </div>
       </dl>
 
       <section class="context-section" aria-labelledby="verteiler-titel">
@@ -55,7 +79,9 @@ function formatiereDatum(wert: string): string {
               <strong>{{ person.person }}</strong>
               <span>{{ person.funktion || person.firma || 'Ohne Funktion' }}</span>
             </div>
-            <small>{{ person.istProtokollschreiber ? 'Protokollschreiber' : person.istTeilnehmer ? 'Teilnehmer' : 'Verteiler' }}</small>
+            <small>{{
+              person.istProtokollschreiber ? 'Protokollschreiber' : person.istTeilnehmer ? 'Teilnehmer' : 'Verteiler'
+            }}</small>
           </li>
         </ul>
         <p v-else class="empty-state">Kein Verteiler vorhanden.</p>
@@ -89,7 +115,9 @@ function formatiereDatum(wert: string): string {
       </section>
 
       <p v-if="startMeldung" class="status-banner is-error" role="alert">{{ startMeldung }}</p>
-      <button class="mobile-primary" type="button" :disabled="startLaeuft" @click="emit('starten')">{{ startLaeuft ? 'Begehung wird gestartet …' : 'Begehung starten' }}</button>
+      <button class="mobile-primary" type="button" :disabled="startLaeuft" @click="emit('starten')">
+        {{ startLaeuft ? 'Begehung wird gestartet …' : 'Begehung starten' }}
+      </button>
       <p class="scan-hint">Die Begehung und alle neuen Einträge werden im internen App-Speicher gesichert.</p>
     </section>
   </main>

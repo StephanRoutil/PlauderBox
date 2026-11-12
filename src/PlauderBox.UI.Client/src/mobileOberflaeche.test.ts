@@ -1,18 +1,29 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 
-function lese(pfad: string): string { return readFileSync(new URL(pfad, import.meta.url), 'utf8') }
+function lese(pfad: string): string {
+  return readFileSync(new URL(pfad, import.meta.url), 'utf8')
+}
 
 describe('mobile Komponenten- und Navigationsverträge', () => {
   it('verdrahtet alle acht freigegebenen Ansichten ohne Abschluss-Sackgasse', () => {
     const app = lese('./App.vue')
-    for (const komponente of ['QrCodeStart', 'BegehungStart', 'AktiveBegehung', 'EintragErfassen', 'OfflineHinweis', 'EintragAuswertung', 'BegehungKontrolle', 'BegehungAbschluss']) {
+    for (const komponente of [
+      'QrCodeStart',
+      'BegehungStart',
+      'AktiveBegehung',
+      'EintragErfassen',
+      'OfflineHinweis',
+      'EintragAuswertung',
+      'BegehungKontrolle',
+      'BegehungAbschluss',
+    ]) {
       expect(app).toContain(komponente)
     }
     expect(app).toContain('@neu-starten="verwirfBegehungUndScanneNeu"')
     expect(app).toContain('@freigabe-erneuern="beginneFreigabeErneuerung"')
     const uebergabe = lese('./composables/verwendeHappyHourUebergabe.ts')
-    expect(uebergabe).toContain("neuerKontext.protokollId !== begehung.protokoll.protokollId")
+    expect(uebergabe).toContain('neuerKontext.protokollId !== begehung.protokoll.protokollId')
     const abschluss = lese('./components/BegehungAbschluss.vue')
     expect(abschluss).toContain('Lokale Begehung verwerfen und neuen Code scannen')
     expect(abschluss).toContain('Punkte und Bilder an HappyHour übergeben')
@@ -52,9 +63,21 @@ describe('mobile Komponenten- und Navigationsverträge', () => {
     const app = lese('./composables/verwendeBegehung.ts')
     const erfassung = lese('./components/EintragErfassen.vue')
     expect(app).toContain("ansicht.value = 'erfassen'")
-    for (const inhalt of ['Vorbereiteter Protokollpunkt', 'Traktandum', 'Art des Protokollpunkts', '<span>Wer</span>', 'Foto aufnehmen', 'Aus Galerie wählen', 'Aufnahme verwerfen', 'Gruppe', 'Thema', 'Inhalt (Um was geht es?)', 'Rechtsverweis']) {
+    for (const inhalt of [
+      'Vorbereiteter Protokollpunkt',
+      'Traktandum',
+      'Art des Protokollpunkts',
+      'Foto aufnehmen',
+      'Aus Galerie wählen',
+      'Aufnahme verwerfen',
+      'Gruppe',
+      'Thema',
+      'Inhalt (Um was geht es?)',
+      'Rechtsverweis',
+    ]) {
       expect(erfassung).toContain(inhalt)
     }
+    expect(erfassung).toMatch(/<span>\s*Wer\s*<\/span\s*>/)
   })
 
   it('erzeugt neue Punkte protokollbezogen und zeigt deduplizierte Wer-Optionen', () => {
@@ -77,14 +100,16 @@ describe('mobile Komponenten- und Navigationsverträge', () => {
   it('zeigt beim Begehungsstart einen laufenden Zustand und einen lokalen Speicherfehler', () => {
     const app = lese('./composables/verwendeBegehung.ts')
     const start = lese('./components/BegehungStart.vue')
-    expect(app).toContain("startzustand.value = { art: 'fehler', meldung: 'Die Begehung konnte nicht im internen App-Speicher gestartet werden. Bitte erneut versuchen.' }")
+    expect(app).toMatch(
+      /startzustand\.value = \{\s+art: 'fehler',\s+meldung: 'Die Begehung konnte nicht im internen App-Speicher gestartet werden\. Bitte erneut versuchen\.',\s+\}/,
+    )
     expect(start).toContain("startLaeuft ? 'Begehung wird gestartet …' : 'Begehung starten'")
     expect(start).toContain('role="alert"')
   })
 
   it('definiert mindestens 44 Pixel hohe Touchziele', () => {
     const styles = lese('./styles.css')
-    expect(styles).toContain('.entry-accordion summary, button, .image-action { min-height: 44px; }')
-    expect(styles).toMatch(/\.capture-images button[^}]+width: 44px; height: 44px;/)
+    expect(styles).toMatch(/\.entry-accordion summary,\s+button,\s+\.image-action \{\s+min-height: 44px;\s+\}/)
+    expect(styles).toMatch(/\.capture-images button[^}]+width: 44px;\s+height: 44px;/)
   })
 })

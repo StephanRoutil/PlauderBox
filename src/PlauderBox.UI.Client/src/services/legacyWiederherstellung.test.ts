@@ -1,12 +1,43 @@
 import { IDBFactory } from 'fake-indexeddb'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { ladeLegacyEintrag } from './legacyWiederherstellung'
-import { erstelleBegehung, ladeBegehung, normalisiereEintragProjektAnsprechpartner, speichereBegehung, uebernehmeAuswertung } from './begehungsSpeicher'
+import {
+  erstelleBegehung,
+  ladeBegehung,
+  normalisiereEintragProjektAnsprechpartner,
+  speichereBegehung,
+  uebernehmeAuswertung,
+} from './begehungsSpeicher'
 import { verarbeiteWarteschlange } from '@logik/begehungsAblauf'
 import type { HappyHourProtokollKontext } from './happyHourProtokollKontext'
 
-interface InterneAufnahme { id: string; erstelltAm: string; dateiname: string; medientyp: string; groesse: number; dauerSekunden: number; status: 'noch_nicht_uebertragen'; audio: Blob }
-interface LokalerProtokollpunkt { intProtokollpunktID: number; intProtokollFKID: number; intProtokollpunktArtFKID: number; datProtokollpunkt: string; blnNachverfolgen: boolean; intProjektAnsprechpartnerFKID: number | null; datFrist: string | null; blnErledigt: boolean; strRechtsverweis: string; strGruppe: string; intReihenfolge: number; strProtokollpunkt: string; txtProtokollpunkt: string; GUID: string; aktualisiertAm: string }
+interface InterneAufnahme {
+  id: string
+  erstelltAm: string
+  dateiname: string
+  medientyp: string
+  groesse: number
+  dauerSekunden: number
+  status: 'noch_nicht_uebertragen'
+  audio: Blob
+}
+interface LokalerProtokollpunkt {
+  intProtokollpunktID: number
+  intProtokollFKID: number
+  intProtokollpunktArtFKID: number
+  datProtokollpunkt: string
+  blnNachverfolgen: boolean
+  intProjektAnsprechpartnerFKID: number | null
+  datFrist: string | null
+  blnErledigt: boolean
+  strRechtsverweis: string
+  strGruppe: string
+  intReihenfolge: number
+  strProtokollpunkt: string
+  txtProtokollpunkt: string
+  GUID: string
+  aktualisiertAm: string
+}
 
 async function speichereLegacyDaten(aufnahme: InterneAufnahme, punkt?: LokalerProtokollpunkt): Promise<void> {
   const datenbank = await new Promise<IDBDatabase>((resolve, reject) => {
@@ -23,7 +54,19 @@ async function speichereLegacyDaten(aufnahme: InterneAufnahme, punkt?: LokalerPr
   transaktion.objectStore('aufnahmen').put(aufnahme)
   if (punkt) {
     transaktion.objectStore('protokollpunkt').put(punkt, 'aktueller-protokollpunkt')
-    transaktion.objectStore('protokollpunktbild').put({ id: 'bild-alt', dateiname: 'alt.jpg', medientyp: 'image/jpeg', groesse: 4, erstelltAm: '2026-11-10T00:00:00Z', bild: new Blob(['bild']) }, 'bild-alt')
+    transaktion
+      .objectStore('protokollpunktbild')
+      .put(
+        {
+          id: 'bild-alt',
+          dateiname: 'alt.jpg',
+          medientyp: 'image/jpeg',
+          groesse: 4,
+          erstelltAm: '2026-11-10T00:00:00Z',
+          bild: new Blob(['bild']),
+        },
+        'bild-alt',
+      )
   }
   await new Promise<void>((resolve, reject) => {
     transaktion.addEventListener('complete', () => resolve())
@@ -48,9 +91,30 @@ async function legacyAufnahmeIstVorhanden(): Promise<boolean> {
 }
 
 const protokoll: HappyHourProtokollKontext = {
-  protokollId: 378, protokollNummer: 1, thema: 'Test', typ: 'Protokoll', status: 'Entwurf', datum: '2026-11-10', ort: null,
-  projekt: { id: 1, nummer: 799, bezeichnung: 'Test' }, objekt: null, mitarbeiter: { id: 1, name: 'Test' }, traktanden: [],
-  verteiler: [{ id: 7, projektAnsprechpartnerId: 77, person: 'Protokollschreiberin', firma: null, funktion: null, istTeilnehmer: true, istCc: false, istProtokollschreiber: true }], protokollpunkte: [],
+  protokollId: 378,
+  protokollNummer: 1,
+  thema: 'Test',
+  typ: 'Protokoll',
+  status: 'Entwurf',
+  datum: '2026-11-10',
+  ort: null,
+  projekt: { id: 1, nummer: 799, bezeichnung: 'Test' },
+  objekt: null,
+  mitarbeiter: { id: 1, name: 'Test' },
+  traktanden: [],
+  verteiler: [
+    {
+      id: 7,
+      projektAnsprechpartnerId: 77,
+      person: 'Protokollschreiberin',
+      firma: null,
+      funktion: null,
+      istTeilnehmer: true,
+      istCc: false,
+      istProtokollschreiber: true,
+    },
+  ],
+  protokollpunkte: [],
 }
 
 describe('Legacy-Wiederherstellung', () => {
@@ -58,13 +122,44 @@ describe('Legacy-Wiederherstellung', () => {
 
   it('liest ältere Aufnahme, Bilder und Felder als sicheren neuen Eintrag ohne Legacy-Löschung', async () => {
     const audio = new Blob(['audio'], { type: 'audio/webm' })
-    const aufnahme: InterneAufnahme = { id: 'alt', erstelltAm: '2026-11-10T00:00:00Z', dateiname: 'alt.webm', medientyp: 'audio/webm', groesse: audio.size, dauerSekunden: 3, status: 'noch_nicht_uebertragen', audio }
-    const punkt: LokalerProtokollpunkt = { intProtokollpunktID: 0, intProtokollFKID: 0, intProtokollpunktArtFKID: 0, datProtokollpunkt: '2026-11-10', blnNachverfolgen: false, intProjektAnsprechpartnerFKID: 999, datFrist: null, blnErledigt: true, strRechtsverweis: 'VKF', strGruppe: 'Brandschutz', intReihenfolge: 0, strProtokollpunkt: 'Türe', txtProtokollpunkt: 'Blockiert', GUID: 'alt', aktualisiertAm: '2026-11-10T00:00:00Z' }
+    const aufnahme: InterneAufnahme = {
+      id: 'alt',
+      erstelltAm: '2026-11-10T00:00:00Z',
+      dateiname: 'alt.webm',
+      medientyp: 'audio/webm',
+      groesse: audio.size,
+      dauerSekunden: 3,
+      status: 'noch_nicht_uebertragen',
+      audio,
+    }
+    const punkt: LokalerProtokollpunkt = {
+      intProtokollpunktID: 0,
+      intProtokollFKID: 0,
+      intProtokollpunktArtFKID: 0,
+      datProtokollpunkt: '2026-11-10',
+      blnNachverfolgen: false,
+      intProjektAnsprechpartnerFKID: 999,
+      datFrist: null,
+      blnErledigt: true,
+      strRechtsverweis: 'VKF',
+      strGruppe: 'Brandschutz',
+      intReihenfolge: 0,
+      strProtokollpunkt: 'Türe',
+      txtProtokollpunkt: 'Blockiert',
+      GUID: 'alt',
+      aktualisiertAm: '2026-11-10T00:00:00Z',
+    }
     await speichereLegacyDaten(aufnahme, punkt)
 
     const wiederhergestellt = await ladeLegacyEintrag()
 
-    expect(wiederhergestellt).toMatchObject({ status: 'wartet_auf_auswertung', projektAnsprechpartnerId: 999, gruppe: 'Brandschutz', thema: 'Türe', inhalt: 'Blockiert' })
+    expect(wiederhergestellt).toMatchObject({
+      status: 'wartet_auf_auswertung',
+      projektAnsprechpartnerId: 999,
+      gruppe: 'Brandschutz',
+      thema: 'Türe',
+      inhalt: 'Blockiert',
+    })
     expect(normalisiereEintragProjektAnsprechpartner(wiederhergestellt!, protokoll)).toBe(true)
     expect(wiederhergestellt?.projektAnsprechpartnerId).toBe(77)
     expect(wiederhergestellt?.bilder[0]?.id).toBe('bild-alt')
@@ -73,7 +168,16 @@ describe('Legacy-Wiederherstellung', () => {
 
   it('markiert die Übernahme atomar und bietet denselben Altbestand beim zweiten Appstart nicht erneut an', async () => {
     const audio = new Blob(['audio'], { type: 'audio/webm' })
-    await speichereLegacyDaten({ id: 'stabil-alt', erstelltAm: '2026-11-10T00:00:00Z', dateiname: 'alt.webm', medientyp: 'audio/webm', groesse: audio.size, dauerSekunden: 3, status: 'noch_nicht_uebertragen', audio })
+    await speichereLegacyDaten({
+      id: 'stabil-alt',
+      erstelltAm: '2026-11-10T00:00:00Z',
+      dateiname: 'alt.webm',
+      medientyp: 'audio/webm',
+      groesse: audio.size,
+      dauerSekunden: 3,
+      status: 'noch_nicht_uebertragen',
+      audio,
+    })
 
     const ersterStart = await ladeLegacyEintrag()
     expect(ersterStart?.legacyImportId).toMatch(/^legacy-v1-/)
@@ -88,14 +192,30 @@ describe('Legacy-Wiederherstellung', () => {
     expect(await legacyAufnahmeIstVorhanden()).toBe(true)
 
     let externeAuftraege = 0
-    await verarbeiteWarteschlange(erneutGeladen!, () => true, async (eintrag) => {
-      externeAuftraege += 1
-      uebernehmeAuswertung(eintrag, { text: 'erfolgreich verarbeitet', gruppe: 'Test', thema: 'Test', inhalt: 'Test' })
-      return true
-    })
+    await verarbeiteWarteschlange(
+      erneutGeladen!,
+      () => true,
+      async (eintrag) => {
+        externeAuftraege += 1
+        uebernehmeAuswertung(eintrag, {
+          text: 'erfolgreich verarbeitet',
+          gruppe: 'Test',
+          thema: 'Test',
+          inhalt: 'Test',
+        })
+        return true
+      },
+    )
     await speichereBegehung(erneutGeladen!)
     const dritterStart = await ladeBegehung()
-    await verarbeiteWarteschlange(dritterStart!, () => true, async () => { externeAuftraege += 1; return true })
+    await verarbeiteWarteschlange(
+      dritterStart!,
+      () => true,
+      async () => {
+        externeAuftraege += 1
+        return true
+      },
+    )
     expect(externeAuftraege).toBe(1)
   })
 })
