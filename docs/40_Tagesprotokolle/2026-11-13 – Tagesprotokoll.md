@@ -62,6 +62,16 @@ Die globale Fortschrittskomponente wird nun sowohl für die KI-Auswertung als au
 
 **Bestanden:** vollständiger `tests/Pruefe-Prototyp.ps1` mit Lint, TypeScript, 104 Frontendtests, Vue-Produktionsbuild, Offline-Browsertest, .NET-Release-Build, 12 Integrationstests, 9 Vertragstests, Offline-App-Shell und Token-Logschutz. Commit `b68849b` wurde nach `origin/main` übertragen und auf Delphi01 als Image `plauderbox:delphi01-test-b68849b` (`sha256:6bed5a898586…`) bereitgestellt. HTTPS, neues Asset, HappyHour-Fortschritt, fehlendes Traktandum-CBO, KI-Status, direkte HappyHour-Testverbindung und Containerlog sind geprüft; der vorherige Stand bleibt als Rückfallimage erhalten. **Nicht geprüft:** reale Mobil- und PDF-Kontrolle in HappyHour.
 
+## Session – Einheitliches App-Icon und sichtbare Patch-Version
+
+- **Startzeit:** nicht zuverlässig bestimmbar
+- **Endzeit:** nicht zuverlässig bestimmbar
+- **Dauer:** nicht zuverlässig bestimmbar
+
+Das PWA-Icon und die Marke in allen App-Kopfzeilen wurden auf dieselbe Bildquelle vereinheitlicht. Die tatsächlich gebaute Version wird nun in jeder Kopfzeile angezeigt; Frontend- und Serverversion werden im Gesamtprüflauf gegeneinander geprüft. Der Stand erhält für diese kleinen Verbesserungen die Patch-Version `1.0.1`. D002 regelt neu, dass Haupt- und Nebenversionen nur nach Freigabe durch Stephan Routil erhöht werden, während der Coding-Agent die Patch-Stelle für abgeschlossene Bugfixes und kleine Verbesserungen selbstständig erhöht. Ebenfalls verbindlich ist nun eine sichtbare Status- und Fortschrittsanzeige bei wahrnehmbaren Wartezeiten durch interne oder externe Dienste.
+
+**Bestanden:** vollständiger `tests/Pruefe-Prototyp.ps1` mit Versionsabgleich, Lint, TypeScript, 105 Frontendtests, Vue-Produktionsbuild, Offline-Browsertest, .NET-Release-Build, 12 Integrationstests, 9 Vertragstests, Offline-App-Shell und Token-Logschutz. **Nicht geprüft:** reale Darstellung des gemeinsamen Icons und der Versionsnummer auf dem Mobilgerät. **Nächster Schritt:** geprüften Stand auf Delphi01 bereitstellen.
+
 ## Tagesgesamtzeit
 
 Nicht zuverlässig bestimmbar.

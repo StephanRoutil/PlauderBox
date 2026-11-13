@@ -759,6 +759,9 @@ footer {
   gap: 7px;
   padding-bottom: 9px;
 }
+.mobile-start-header {
+  position: relative;
+}
 .mobile-brand {
   min-height: 62px;
   display: flex;
@@ -771,13 +774,19 @@ footer {
 .mobile-brand__mark {
   width: 30px;
   height: 30px;
-  display: grid;
-  place-items: center;
   border-radius: 9px 9px 9px 3px;
-  color: #fff;
-  background: var(--accent);
-  font-size: 16px;
-  font-weight: 900;
+  object-fit: contain;
+}
+.mobile-brand__text {
+  display: grid;
+  line-height: 1.05;
+}
+.mobile-brand__text small {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
 }
 .mobile-header__navigation {
   display: grid;

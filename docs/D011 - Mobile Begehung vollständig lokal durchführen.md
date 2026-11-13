@@ -38,6 +38,7 @@ Als Mitarbeiter möchte ich eine freigegebene Begehung auf dem Mobilgerät start
 - **AK22:** Beim erneuten Einlesen einer Freigabe für dasselbe Protokoll wird der aktuelle HappyHour-Kontext mit der lokalen Begehung verlustfrei zusammengeführt. Neue HappyHour-Punkte werden ergänzt; lokale noch nicht übertragene Einträge, Texte, Audio und Bilder bleiben erhalten. Bereits oder neu bestätigte Punkte werden anhand Protokollpunkt-ID beziehungsweise stabiler GUID nicht dupliziert. Jede lokale Änderung entfernt veraltete Übertragungsmarkierungen, damit sie beim nächsten bewussten Übergabeversuch berücksichtigt wird.
 - **AK23:** Während einer gestarteten Begehung zeigt der Kopfbereich die drei kleinen, beschrifteten Navigationsbuttons `‹ Back`, `Start` und `Beenden`. `Start` führt zur aktiven Begehungsübersicht, `Beenden` zur Kontrolle und `Back` zur unmittelbar vorherigen Ansicht. Das bereits aktive oder nicht verfügbare Ziel ist sichtbar deaktiviert. Beim Navigieren aus der Erfassung wird ein geänderter Zwischenstand vor dem Ansichtswechsel lokal gesichert.
 - **AK24:** Während der vollständigen Übergabe an HappyHour bleibt eine deutlich sichtbare Fortschrittsanzeige mit Spinner, unbestimmtem Balken und Statustext eingeblendet. Sie endet erst, nachdem Protokollpunkte und Bilder bestätigt wurden oder ein verständlicher Fehler angezeigt wird.
+- **AK25:** Die installierte PWA und jede App-Kopfzeile verwenden dasselbe PlauderBox-Icon. Jede Kopfzeile zeigt zusätzlich die tatsächlich gebaute dreiteilige Version an.
 
 ## Abgrenzung und offene Integrationsgrenzen
 

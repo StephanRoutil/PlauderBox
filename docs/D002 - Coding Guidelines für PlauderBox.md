@@ -16,28 +16,28 @@ Diese Richtlinie übernimmt die bewährten Grundsätze aus FileBox D017 und pass
 
 ### PB-ARC-001 – Drei Schichten
 
-**Stufe:** Verbindlich  
+**Stufe:** Verbindlich
 **Prüfbarkeit:** Architekturtest / Review
 
 PlauderBox besteht aus `PlauderBox.UI`, `PlauderBox.Logik` und `PlauderBox.Datenmanagement`. Die Logik referenziert keine andere PlauderBox-Schicht. Das Datenmanagement darf die Logik referenzieren und deren Verträge implementieren. Die UI darf Logik und Datenmanagement nutzen; konkrete Datenmanagement-Implementierungen werden ausschliesslich im Composition Root verdrahtet.
 
 ### PB-ARC-002 – Fachregeln ausserhalb der UI
 
-**Stufe:** Verbindlich  
+**Stufe:** Verbindlich
 **Prüfbarkeit:** Review / Quality Agent
 
 Aufnahmezustände, Synchronisationsregeln, Wiederholungen, Freigaben und spätere Protokollbildung liegen in der Logik. Vue-Komponenten und HTTP-Endpunkte koordinieren Ein- und Ausgabe, enthalten aber keine parallelen Fachregeln.
 
 ### PB-ARC-003 – Datenmanagement kapselt Provider
 
-**Stufe:** Verbindlich  
+**Stufe:** Verbindlich
 **Prüfbarkeit:** Architekturtest / Review
 
 OpenAI- und HappyHour-Implementierungen gehören ins Datenmanagement. Eine später ausdrücklich entschiedene serverseitige Persistenz würde ebenfalls dort gekapselt. Provider-DTOs, SDK-Typen und Verbindungsdetails dürfen nicht in die Logik gelangen.
 
 ### PB-ARC-004 – Abhängigkeiten von aussen bereitstellen
 
-**Stufe:** Verbindlich  
+**Stufe:** Verbindlich
 **Prüfbarkeit:** Review
 
 Dienstabhängigkeiten werden injiziert. Globale Service-Locators und versteckte statische Laufzeitabhängigkeiten sind unzulässig. Kleine fachliche Wertobjekte dürfen normal erzeugt werden.
@@ -146,6 +146,13 @@ Lokale Aufnahmen besitzen stabile Identitäten und nachvollziehbare Zustände. S
 
 Primäre Aktionen sind per Touch und Tastatur bedienbar, Status ist nicht nur durch Farbe erkennbar, Fokus bleibt sichtbar und schmale Ansichten funktionieren ohne verdeckte Kernaktionen.
 
+### PB-TS-007 – Wartezeiten sichtbar machen
+
+**Stufe:** Verbindlich
+**Prüfbarkeit:** Verhaltenstest / Browser-/Gerätetest
+
+Wenn PlauderBox einen internen oder externen Dienst anspricht und für den Benutzer eine Wartezeit entstehen kann, zeigt die Oberfläche während des gesamten Vorgangs einen verständlichen Status und einen sichtbaren Spinner beziehungsweise eine gleichwertige Fortschrittsanzeige. Die Anzeige endet erst nach bestätigtem Erfolg oder sichtbarer Fehlermeldung. Ein deaktivierter Button allein genügt nicht.
+
 ## Daten und Schnittstellen
 
 ### PB-DAT-001 – Serverseitige Persistenz im Datenmanagement
@@ -161,6 +168,15 @@ Falls PlauderBox künftig eine eigene serverseitige Persistenz erhält, liegen d
 **Prüfbarkeit:** Vertragstest / Review
 
 UI und Server kommunizieren über versionierte HTTPS-/JSON- oder Multipart-Verträge. Änderungen berücksichtigen Abwärtskompatibilität, Wiederholung und klare Fehlerantworten.
+
+## Versionierung und Freigabe
+
+### PB-REL-001 – Versionsnummer kontrolliert erhöhen
+
+**Stufe:** Verbindlich
+**Prüfbarkeit:** Prüflauf / Review
+
+PlauderBox verwendet die dreiteilige Versionsnummer `Hauptversion.Nebenversion.Patch`. Eine Erhöhung der Haupt- oder Nebenversion und damit eine grosse Version wird ausschliesslich durch Stephan Routil freigegeben. Bei abgeschlossenen kleinen Verbesserungen und Bugfixes erhöht der Coding-Agent die Patch-Stelle selbstständig. Frontend- und Serverversion müssen übereinstimmen; die tatsächlich gebaute Version ist in jeder App-Kopfzeile sichtbar. Eine Versionsnummer wird nicht ohne zugehörigen geprüften Commit erhöht.
 
 ### PB-SEC-001 – Vertrauliche Inhalte minimieren
 

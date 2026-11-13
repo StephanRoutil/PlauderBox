@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { HappyHourProtokollKontext } from '@/services/happyHourProtokollKontext'
+import PlauderBoxMarke from './PlauderBoxMarke.vue'
 
 defineProps<{
   kontext: HappyHourProtokollKontext
@@ -22,12 +23,11 @@ function formatiereDatum(wert: string): string {
 
 <template>
   <main class="begehung-shell">
-    <header class="mobile-brand">
+    <header class="mobile-start-header">
       <button class="back-button" type="button" aria-label="Zurück zum QR-Code-Scanner" @click="emit('zurueck')">
         ‹
       </button>
-      <span class="mobile-brand__mark" aria-hidden="true">P</span>
-      <strong>PlauderBox</strong>
+      <PlauderBoxMarke />
     </header>
 
     <section class="context-card" aria-labelledby="context-titel">

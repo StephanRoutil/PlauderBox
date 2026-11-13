@@ -27,6 +27,8 @@ Die Erfassung zeigt kein separates Feld `Traktandum`. `Gruppe` wird als einziges
 
 `MobileKopf.vue` zeigt nach Beginn der Begehung die drei beschrifteten Kurznavigationen `‹ Back`, `Start` und `Beenden`. Die einzelnen Ansichten binden diese an Rücksprung, aktive Begehungsübersicht und Kontrolle; das aktuelle oder nicht verfügbare Ziel bleibt sichtbar deaktiviert. `EintragErfassen.vue` sichert beim Sprung zu Start oder Kontrolle zuerst den aktuellen Entwurf und wechselt nur nach erfolgreichem lokalem Commit.
 
+`PlauderBoxMarke.vue` bildet die gemeinsame Marke für Scanner, Begehungsstart und alle weiteren App-Kopfzeilen. Sie verwendet dasselbe `/icon.svg` wie das PWA-Manifest und zeigt die beim Vite-Build aus `package.json` eingebettete dreiteilige Version. `tests/Pruefe-Prototyp.ps1` verlangt zusätzlich, dass diese Frontendversion mit der Version in `PlauderBox.UI.csproj` übereinstimmt.
+
 `EintragErfassen.vue` trennt die Bildquellen: `Foto aufnehmen` verwendet einen Datei-Input mit `capture="environment"`; `Aus Galerie wählen` verwendet einen eigenen Mehrfach-Datei-Input ohne `capture`. Beide Wege übernehmen Bilder über dieselbe Validierung und dieselbe atomare IndexedDB-Speicherung.
 
 `bildSicherung.ts` erzeugt beim Abschluss aus allen Begehungseinträgen einzelne `File`-Objekte mit lesbaren Namen. `BegehungAbschluss.vue` startet mit einer Benutzeraktion direkt die einzelnen Browserdownloads und öffnet keinen Android-Teilen- oder Diensteauswahldialog. Es wird kein ZIP erstellt. Die Sicherungsaktion verändert weder interne Bild-Blobs noch Begehungsstatus oder HappyHour-Daten.
@@ -50,6 +52,7 @@ Freigabe-Tokens stehen technisch im Pfad des lesenden Vertrags. ASP.NET-Hosting-
 - `src/PlauderBox.UI.Client/src/components/EintragErfassen.vue`
 - `src/PlauderBox.UI.Client/src/components/VorgangsFortschritt.vue`
 - `src/PlauderBox.UI.Client/src/components/MobileKopf.vue`
+- `src/PlauderBox.UI.Client/src/components/PlauderBoxMarke.vue`
 - `src/PlauderBox.UI.Client/src/components/OfflineHinweis.vue`
 - `src/PlauderBox.UI.Client/src/components/EintragAuswertung.vue`
 - `src/PlauderBox.UI.Client/src/components/BegehungKontrolle.vue`

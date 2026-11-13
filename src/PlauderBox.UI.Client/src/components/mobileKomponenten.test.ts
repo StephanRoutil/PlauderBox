@@ -8,6 +8,7 @@ import BegehungStart from './BegehungStart.vue'
 import EintragErfassen from './EintragErfassen.vue'
 import MobileKopf from './MobileKopf.vue'
 import OfflineHinweis from './OfflineHinweis.vue'
+import PlauderBoxMarke from './PlauderBoxMarke.vue'
 import QrCodeStart from './QrCodeStart.vue'
 import VorgangsFortschritt from './VorgangsFortschritt.vue'
 import type { AudioRekorder } from '@/services/audioRekorder'
@@ -108,6 +109,14 @@ beforeEach(() => {
 })
 
 describe('mobile Komponenten', () => {
+  it('verwendet im Header das PWA-Icon und zeigt die gebaute Patch-Version', () => {
+    const wrapper = mount(PlauderBoxMarke)
+
+    expect(wrapper.get('img').attributes('src')).toBe('/icon.svg')
+    expect(wrapper.text()).toContain('PlauderBox')
+    expect(wrapper.text()).toContain('v1.0.1')
+  })
+
   it('zeigt die Begehungsnavigation als drei beschriftete Headerbuttons', async () => {
     const wrapper = mount(MobileKopf, { props: { navigation: true, zurueck: true } })
     const tasten = wrapper.findAll('button')

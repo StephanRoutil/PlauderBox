@@ -3,6 +3,13 @@ Add-Type -AssemblyName System.Net.Http
 $projektordner = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
 $clientordner = Join-Path $projektordner 'src\PlauderBox.UI.Client'
 
+$paket = Get-Content -Raw -LiteralPath (Join-Path $clientordner 'package.json') | ConvertFrom-Json
+[xml]$uiProjekt = Get-Content -Raw -LiteralPath (Join-Path $projektordner 'src\PlauderBox.UI.csproj')
+$serverVersion = [string]$uiProjekt.Project.PropertyGroup.Version
+if ([string]::IsNullOrWhiteSpace($paket.version) -or $paket.version -ne $serverVersion) {
+  throw "Frontend- und Serverversion stimmen nicht überein: '$($paket.version)' / '$serverVersion'."
+}
+
 & (Join-Path $projektordner 'tests\Test-DockerBuildkontext.ps1')
 
 pnpm --dir $clientordner run lint
@@ -38,6 +45,11 @@ if (-not (Test-Path -LiteralPath $icon)) { throw 'PWA-Icon fehlt im Produktionsb
 
 $manifestDaten = Get-Content -Raw -LiteralPath $manifest | ConvertFrom-Json
 if ($manifestDaten.display -ne 'standalone' -or $manifestDaten.start_url -ne '/') { throw 'PWA-Manifest enthält nicht den erwarteten Standalone-Start.' }
+
+$markenKomponente = Get-Content -Raw -LiteralPath (Join-Path $clientordner 'src\components\PlauderBoxMarke.vue')
+if ($markenKomponente -notmatch "iconPfad\s*=\s*'/icon\.svg'" -or $markenKomponente -notmatch '__PLAUDERBOX_VERSION__') {
+  throw 'Header muss dasselbe Icon wie die PWA und die gebaute PlauderBox-Version anzeigen.'
+}
 
 $serviceWorkerInhalt = Get-Content -Raw -LiteralPath $serviceWorker
 if ($serviceWorkerInhalt -notmatch "url\.pathname\.startsWith\('/api/'\)") { throw 'Service Worker muss API-Anfragen vom App-Cache ausschliessen.' }

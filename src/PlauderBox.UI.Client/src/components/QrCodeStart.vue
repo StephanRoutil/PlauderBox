@@ -2,6 +2,7 @@
 import { onBeforeUnmount, ref } from 'vue'
 import { BrowserQrCodeScanner, type QrCodeScanner } from '@/services/qrCodeScanner'
 import { verwendeQrCodeStartAblauf } from '@/services/qrCodeStartAblauf'
+import PlauderBoxMarke from './PlauderBoxMarke.vue'
 
 const eigenschaften = withDefaults(
   defineProps<{
@@ -48,10 +49,7 @@ function uebernehmeManuellenCode(): void {
 
 <template>
   <main class="begehung-shell">
-    <header class="mobile-brand">
-      <span class="mobile-brand__mark" aria-hidden="true">P</span>
-      <strong>PlauderBox</strong>
-    </header>
+    <PlauderBoxMarke />
 
     <section class="scan-card" aria-labelledby="scan-titel">
       <p class="eyebrow">{{ eigenschaften.erneuerung ? 'Bestehende Begehung behalten' : 'Begehung öffnen' }}</p>

@@ -1,8 +1,13 @@
+import { resolve } from 'node:path'
 import { fileURLToPath, URL } from 'node:url'
 import { readFileSync, writeFileSync } from 'node:fs'
 import { defineConfig } from 'vite'
 import type { Plugin } from 'vite'
 import vue from '@vitejs/plugin-vue'
+
+const paket = JSON.parse(
+  readFileSync(resolve(process.cwd(), 'package.json'), 'utf8'),
+) as { version: string }
 
 function serviceWorkerAppShell(): Plugin {
   return {
@@ -25,6 +30,9 @@ function serviceWorkerAppShell(): Plugin {
 
 export default defineConfig({
   plugins: [vue(), serviceWorkerAppShell()],
+  define: {
+    __PLAUDERBOX_VERSION__: JSON.stringify(paket.version),
+  },
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),

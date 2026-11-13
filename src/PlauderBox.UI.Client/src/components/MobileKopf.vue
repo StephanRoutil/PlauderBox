@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import PlauderBoxMarke from './PlauderBoxMarke.vue'
+
 withDefaults(
   defineProps<{
     titel?: string
@@ -14,10 +16,7 @@ defineEmits<{ zurueck: []; start: []; beenden: [] }>()
 
 <template>
   <header class="mobile-header">
-    <div class="mobile-brand">
-      <span class="mobile-brand__mark" aria-hidden="true">P</span>
-      <strong>{{ titel || 'PlauderBox' }}</strong>
-    </div>
+    <PlauderBoxMarke :titel="titel" />
     <nav v-if="navigation" class="mobile-header__navigation" aria-label="Begehungsnavigation">
       <button class="header-nav-button" type="button" :disabled="!zurueck" @click="$emit('zurueck')">‹ Back</button>
       <button class="header-nav-button" type="button" :disabled="startAktiv" @click="$emit('start')">Start</button>
