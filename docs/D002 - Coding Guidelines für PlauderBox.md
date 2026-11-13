@@ -44,7 +44,7 @@ Dienstabhängigkeiten werden injiziert. Globale Service-Locators und versteckte 
 
 ### PB-ARC-005 – Eine klar benennbare Verantwortung
 
-**Stufe:** Verbindlich  
+**Stufe:** Verbindlich
 **Prüfbarkeit:** Review / Quality Agent
 
 Methoden, Vue-Komponenten, Composables und Dienste erfüllen jeweils eine zusammenhängende Aufgabe. Abstraktionen werden für belegte Varianten und Testgrenzen eingeführt, nicht vorsorglich.
@@ -168,6 +168,17 @@ Falls PlauderBox künftig eine eigene serverseitige Persistenz erhält, liegen d
 **Prüfbarkeit:** Vertragstest / Review
 
 UI und Server kommunizieren über versionierte HTTPS-/JSON- oder Multipart-Verträge. Änderungen berücksichtigen Abwärtskompatibilität, Wiederholung und klare Fehlerantworten.
+
+## Entwicklungsumgebung und Arbeitsablage
+
+### PB-DEV-001 – Reproduzierbare Artefakte nach Abschluss entfernen
+
+**Stufe:** Verbindlich
+**Prüfbarkeit:** Abschlussprüfung / Quality Agent
+
+Nach Abschluss einer lokalen Entwicklungs-, Build-, Test- oder Veröffentlichungsarbeit werden nicht mehr benötigte, reproduzierbare Artefakte aus der Arbeitsablage entfernt. Dazu gehören insbesondere `bin`, `obj`, `.vs`, `node_modules`, Testergebnis- und Coverage-Ordner, temporäre Publish-/Release-Ablagen, heruntergeladene lokale Toolchains sowie lokale Test-Backups. Die Bereinigung erfolgt erst, nachdem erforderliche Prüfergebnisse nachvollziehbar festgehalten wurden.
+
+Versionierter Quellcode, Dokumentation, Konfiguration, freigegebene Produktionsartefakte und nicht reproduzierbare Nachweise dürfen durch diese Bereinigung nicht entfernt werden. Vor rekursivem Löschen sind die absoluten Ziele und ihr Git-Status zu prüfen. Die Bereinigung betrifft ausschliesslich die lokale Entwicklungsablage; Test- und Produktivsysteme werden nur durch einen ausdrücklichen Bereitstellungsauftrag verändert.
 
 ## Versionierung und Freigabe
 

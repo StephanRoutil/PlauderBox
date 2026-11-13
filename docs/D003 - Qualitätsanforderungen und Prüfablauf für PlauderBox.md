@@ -21,7 +21,8 @@ Anforderungen und Entscheide beschreiben den erwarteten Stand. [[D002 - Coding G
 - Integrationstests gegen die tatsächlich verwendeten Providergrenzen,
 - Browser- und reale Mobilgeräteprüfungen für Mikrofon, Offlinebetrieb und Wiederanlauf,
 - keine Geheimnisse oder vertraulichen Rohdaten in Repository, Build-Artefakten und Logs,
-- getrennte Linux-/Docker- und Wiederherstellungsnachweise vor einer Produktivfreigabe.
+- getrennte Linux-/Docker- und Wiederherstellungsnachweise vor einer Produktivfreigabe,
+- eine nach Abschluss der Prüfungen bereinigte lokale Arbeitsablage ohne nicht mehr benötigte reproduzierbare Artefakte gemäss `PB-DEV-001`.
 
 ## Prüfablauf
 
@@ -31,6 +32,7 @@ Anforderungen und Entscheide beschreiben den erwarteten Stand. [[D002 - Coding G
 4. Befunde nur mit konkreter Fundstelle und belegter Auswirkung melden.
 5. Priorisierte Aufgabenliste mit erwartetem Erledigungsnachweis erstellen.
 6. Korrektur und unabhängige Nachprüfung trennen.
+7. Nach gesichertem Prüfnachweis lokale Build-, Test-, Cache-, Publish- und Backup-Artefakte bereinigen und den bereinigten Zustand kontrollieren.
 
 ## Ergebnisstatus und Priorität
 
@@ -48,5 +50,6 @@ Anforderungen und Entscheide beschreiben den erwarteten Stand. [[D002 - Coding G
 - **Q3 Schutz und Schnittstellen:** Authentisierung, QR-Freigabe, Geheimnisschutz sowie OpenAI-/HappyHour-Verträge.
 - **Q4 Bedienbarkeit:** Browser, Touch, Tastatur, schmale Ansicht und repräsentative Mobilgeräte.
 - **Q5 Betrieb:** Docker auf Linux, Persistenz, Backup, Wiederherstellung, Health und TLS.
+- **Q6 Arbeitsablage:** Erforderliche Nachweise sind gesichert; nicht mehr benötigte reproduzierbare Artefakte wurden entfernt, die Löschziele lagen nachweislich nur in der lokalen Entwicklungsablage und versionierte Dateien blieben unverändert.
 
 Ein Build, HTTP 200 oder eine hohe Anzahl Tests ersetzt keines dieser Gates.
