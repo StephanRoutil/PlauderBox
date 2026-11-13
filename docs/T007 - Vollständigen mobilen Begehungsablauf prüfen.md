@@ -85,6 +85,8 @@ Dieser Bereitstellungsnachweis bestätigt den Serverbetrieb, nicht die vollstän
 13. Mit einem synthetischen, bald ablaufenden Testdatum die sichtbare Warnung und mit einem abgelaufenen Testdatum die klare Sperrmeldung prüfen. Der produktive Schlüsselwert darf dabei weder im Browser noch in Logs erscheinen.
 14. Ein HappyHour-Protokoll ohne Verteiler freigeben und scannen. Die Startansicht muss den Grund anzeigen, `Begehung starten` sperren und den erneuten QR-Scan anbieten. Nach Ergänzung des Verteilers und einer neuen Freigabe muss der Start möglich sein.
 
+> **Mobilnachweis vom 13.11.2026:** Die Sperre eines Protokolls ohne gültigen Verteiler wurde auf dem Mobilgerät geprüft und vom Product Owner als bestanden bestätigt. **Nicht geprüft:** Startfreigabe nach Ergänzung des Verteilers in HappyHour und Einlesen eines neu ausgestellten QR-Codes.
+
 ## Bewertung
 
 Der dokumentierte Gesamtlauf ist lokal vollständig grün. Dies ist ausdrücklich keine reale Geräteabnahme. Q2 bleibt für den Absturzfall zwischen erfolgreicher externer KI-Antwort und lokalem Commit sowie bis zum realen Offline-Wiederanlauftest offen. Es besteht noch keine serverpersistente Idempotenz beziehungsweise kein serverpersistenter Duplikatschutz für Transkriptionsaufträge: Die stabile `erfassungsId` wird validiert, aber nicht serverseitig persistent gespeichert. Q4 bleibt bis zur repräsentativen Mobilgeräteabnahme von Kamera, Galerie und direkten Mehrfachdownloads offen. Die Protokollpunktübergabe ist in T008 nachgewiesen; die lokal umgesetzte Bildübergabe wird bis zur realen Abnahme in T009 als teilweise bestanden geführt.

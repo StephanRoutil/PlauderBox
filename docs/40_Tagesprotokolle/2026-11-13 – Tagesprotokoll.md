@@ -142,6 +142,14 @@ Der Quality-Agent gab Commit `a24e374` ohne P1-, P2- oder P3-Befund frei und wie
 
 **Bestanden:** beide Containerstarts, Status, ausgelieferte Version `1.1.1`, HTTP 410 der synthetischen HappyHour-Negativfälle und fehlerfreie Startprotokolle. Auf Olymp01 bestanden zusätzlich öffentliche HTTPS-Prüfung und Sicherheitsheader; die Schlüsseldatei blieb mit `1000:1000` und Modus `600` geschützt. Nur die PlauderBox-App-Container wurden ersetzt; n8n, FileBox und beide PostgreSQL-Container liefen weiter. Der erste Olymp-Aktivierungslauf wurde wegen einer fehlerhaften internen Prüf-IP automatisch auf 1.1.0 zurückgestellt, der korrigierte zweite Lauf bestand. **Nicht geprüft:** reale Mobilbedienung des Verteiler-Quality-Gates. **Nicht anwendbar:** Änderung an HappyHour, Caddy, DNS, Firewall oder Datenbanken.
 
+## Session – Verteiler-Quality-Gate mobil bestätigen
+
+- **Startzeit:** nicht zuverlässig bestimmbar
+- **Endzeit:** nicht zuverlässig bestimmbar
+- **Dauer:** nicht zuverlässig bestimmbar
+
+Der Product Owner bestätigte die reale Mobilprüfung der Sperre als bestanden: Ein HappyHour-Protokoll ohne gültigen Verteiler kann in PlauderBox nicht als Begehung gestartet werden. **Bestanden:** sichtbare fachliche Sperre vor dem Begehungsstart. **Nicht geprüft:** erneuter Start nach Ergänzung des Verteilers und Einlesen einer neu ausgestellten Freigabe. Es wurden keine Anwendungs-, Server- oder Konfigurationsänderungen vorgenommen.
+
 ## Tagesgesamtzeit
 
 Nicht zuverlässig bestimmbar.
