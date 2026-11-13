@@ -112,6 +112,16 @@ Die geschützte Schlüsseldatei wurde um `GueltigBis` ergänzt. Version `1.1.0` 
 
 **Bestanden:** vollständiger `tests/Pruefe-Prototyp.ps1` mit Docker-Buildkontext, Lint, TypeScript, 113 Frontendtests, Vue-Produktionsbuild, Playwright-Offlinefall, .NET-Release-Build ohne Warnungen, 14 Integrationstests, 9 Vertragstests, Offline-App-Shell und Token-Logschutz. Commit `59ae459` und Tag `v1.1.0` wurden nach `origin` übertragen. Das Linux-Image `plauderbox:delphi01-test-59ae459` (`sha256:5cade7d1d5ef…`) wurde gebaut und auf Delphi01 bereitgestellt. Internes HTTPS, minimaler allgemeiner Status, Ablaufdatum `2027-11-11`, Frontendversion, Dateirechte und Containerstart sind bestanden; temporäre Schlüsselkopien wurden entfernt. **Nicht geprüft:** reale Audioauswertung und mobile Sichtprüfung der Warnanzeige. **Nächster Schritt:** auf dem Mobilgerät eine Audioauswertung durchführen; Olymp01 bleibt bis zur Abnahme unverändert.
 
+## Session – Version 1.1.0 produktiv auf Olymp01 veröffentlichen
+
+- **Startzeit:** nicht zuverlässig bestimmbar
+- **Endzeit:** nicht zuverlässig bestimmbar
+- **Dauer:** nicht zuverlässig bestimmbar
+
+Nach ausdrücklicher Freigabe wurde die Olymp01-Konfiguration von `test.siwako.ch` auf `happyhour.siwako.ch` umgestellt und Version `1.1.0` als Image `plauderbox:olymp01-live-1.1.0-59ae459` (`sha256:da71c75c5432…`) gebaut. Ein isolierter Kandidatencontainer bestätigte KI-Bereitschaft, Ablaufdatum und den produktiven HappyHour-Negativvertrag. Der erste Liveversuch wurde wegen einer für UID 1000 unlesbaren `root:root`-Schlüsseldatei automatisch zurückgerollt. Der korrigierte Rollout setzt Eigentümer `1000:1000` und Modus `600` im Erfolgs- und Rückfallpfad.
+
+**Bestanden:** interne und öffentliche Statusverträge, Version `1.1.0`, TLS, Sicherheitsheader, Ablaufdatum `2027-11-11` und HTTP 410 für eine synthetische unbekannte HappyHour-Freigabe. Nur `plauderbox-app-1` wurde ersetzt; n8n, FileBox und beide Datenbanken liefen weiter. Temporäre Schlüssel- und Quellkopien wurden entfernt. **Nicht geprüft:** realer produktiver Mobil-End-to-End-Lauf. **Nächster Schritt:** neue produktive QR-Freigabe erzeugen und einen kurzen Rundgang mit Audio, Punkt und Bild bis HappyHour durchführen.
+
 ## Tagesgesamtzeit
 
 Nicht zuverlässig bestimmbar.

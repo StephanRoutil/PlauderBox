@@ -22,7 +22,7 @@ Nachweis der isolierten, öffentlich vertrauenswürdigen Live-Bereitstellung, oh
 
 ## Status
 
-Live-Infrastruktur bestanden. Der technische Vertrag gegen `test.siwako.ch` antwortet nach dem Publish auch für Protokollpunkt- und Bildübergabe mit HTTP 200; der fachliche Mobil- und HappyHour-Nachweis der neuen Bildverarbeitung bleibt offen.
+Live-Infrastruktur und produktive technische Anbindung an `happyhour.siwako.ch` bestanden. Der fachliche Mobil- und HappyHour-End-to-End-Nachweis mit einer realen produktiven Freigabe bleibt offen.
 
 ## Ergebnis vom 11.11.2026
 
@@ -49,6 +49,17 @@ Live-Infrastruktur bestanden. Der technische Vertrag gegen `test.siwako.ch` antw
 - PlauderBox und n8n antworteten über den lokalen Caddy-Pfad mit HTTP 200, FileBox mit der erwarteten Weiterleitung. Die KI war bereit.
 - Die PlauderBox-Logs bestätigten erfolgreiche Freigabe-, Transkriptions-, Protokollpunkt- und Bildübergaben mit HTTP 200.
 - **OFFEN:** Mobiltest und Kontrolle des gespeicherten HappyHour-Bildes auf Lesbarkeit, Dateiname und lange Bildseite von höchstens 1200 Pixeln.
+
+## Ergänzung vom 13.11.2026
+
+- Der vollständige lokale Pflichtprüflauf für Version `1.1.0` bestand mit Lint, TypeScript, 113 Frontendtests, Produktionsbuild, Playwright-Offlinefall, .NET-Build ohne Warnungen, 14 Integrations- und 9 Vertragstests, Offline-App-Shell und Token-Logschutz.
+- Das Image `plauderbox:olymp01-live-1.1.0-59ae459`, ID `sha256:da71c75c5432…`, wurde aus Tag `v1.1.0` gebaut.
+- Ein isolierter Kandidatencontainer bestätigte KI-Bereitschaft, Ablaufdatum `2027-11-11` und HTTP 410 für einen formal gültigen, unbekannten Token über `https://happyhour.siwako.ch`.
+- Der erste Rollout wurde automatisch zurückgerollt, weil die neue Schlüsseldatei als `root:root` für den Containerbenutzer UID 1000 nicht lesbar war. Der korrigierte Rollout setzt Modus `600` und Eigentümer `1000:1000` sowohl im Erfolgs- als auch im Rückfallpfad.
+- Nur `plauderbox-app-1` wurde ersetzt. Der geschützte Rückfallstand liegt unter `/srv/backup/plauderbox/20261113-v1.1.0-live`.
+- Intern und öffentlich bestanden der minimale `/api/v1/status`, `/api/v1/ki-schluesselstatus`, Frontendversion `1.1.0`, TLS und Sicherheitsheader. Der synthetische produktive HappyHour-Freigabeabruf ergab erwartungsgemäss HTTP 410.
+- n8n, FileBox und beide PostgreSQL-Container liefen unverändert weiter. Temporäre Quell- und Schlüsselkopien wurden entfernt.
+- **Nicht geprüft:** realer produktiver QR-, Audio-, Punkt- und Bild-End-to-End-Lauf auf dem Mobilgerät.
 
 ## Verknüpfungen
 

@@ -19,7 +19,7 @@ Nicht lokale POST-Aufrufe werden nur mit dem exakt konfigurierten Origin akzepti
 
 ## Produktives HappyHour-Gate
 
-Olymp01 erreicht `https://happyhour.siwako.ch`. Der produktive Server leitete den PlauderBox-Dummy-Freigabeabruf am 11.11.2026 jedoch noch zur Anmeldung um. Damit ist der neue öffentliche HappyHour-Vertrag dort noch nicht nachgewiesen. PlauderBox kann live bereitstehen; QR-Kontext, Punkt- und Bildübergabe gelten produktiv erst nach separater HappyHour-Veröffentlichung und End-to-End-Abnahme als freigegeben.
+Olymp01 verwendet seit 13.11.2026 verbindlich `https://happyhour.siwako.ch` als HappyHour-Basisadresse. Ein formal gültiger, synthetischer und unbekannter Freigabetoken wird über die PlauderBox-Liveanwendung mit HTTP 410 abgewiesen. Damit sind Route, TLS-Verbindung und Fehlerabbildung des produktiven HappyHour-Vertrags technisch nachgewiesen. Der reale QR-, Audio-, Punkt- und Bild-End-to-End-Test mit einer produktiven Freigabe bleibt eine bewusste fachliche Abnahme durch den Mitarbeiter.
 
 ## Produktionsnahe Integrationsprüfung ab 12.11.2026
 
@@ -34,6 +34,14 @@ Nach dem HappyHour-Testpublish war der öffentliche Freigabevertrag aktiv: Ein u
 Beim ersten realen Testlauf am 12.11.2026 zeigte sich, dass der aktive Caddy-Siteblock den benutzerdefinierten Freigabeheader im Accesslog erfasste. Das site-spezifische PlauderBox-Accesslogging wurde aus der aktiven und der versionierten Konfiguration entfernt. Vorher wurde die Caddydatei unter `/srv/backup/plauderbox/20261112-tokenlog-fix` gesichert; nur Caddy wurde neu erstellt. PlauderBox, n8n und FileBox antworteten danach mit HTTP 200. Ein gezielter Nachtest ergab keine neue PlauderBox-Accesslogzeile. Die während des ersten Laufs verwendete Freigabe muss wegen des zuvor offengelegten Tokens zwingend widerrufen werden, bevor eine neue Freigabe für den Wiederholungstest erstellt wird.
 
 Nach dem durch Stephan Routil ausgeführten HappyHour-Publish wurde am 12.11.2026 das Image `plauderbox:olymp01-live-20261112-images` auf Olymp01 aktiviert. Die Image-ID lautet `sha256:2d4c1ebb41482a0ffb6e9010d36f23859c7745451711988aafb46e6bbc6e2aea`. Ausschliesslich `plauderbox-app-1` wurde neu erstellt; die vorherige Compose-Datei liegt unter `/srv/backup/plauderbox/20261112-images/compose.yaml.before`. Der lokale Caddy-Pfad lieferte für PlauderBox und n8n HTTP 200; FileBox lieferte die erwartete Weiterleitung. `/api/status` bestätigte die KI-Bereitschaft. Die PlauderBox-Logs wiesen anschliessend erfolgreiche Freigabe-, Transkriptions-, Protokollpunkt- und Bildübergaben mit HTTP 200 aus. **OFFEN:** fachlich am Mobilgerät und in HappyHour prüfen, ob Dateiname, lesbares Bild und die auf maximal 1200 Pixel begrenzte HappyHour-Kopie korrekt sind.
+
+## Version 1.1.0 und produktive HappyHour-Anbindung am 13.11.2026
+
+Das Image `plauderbox:olymp01-live-1.1.0-59ae459` mit der Image-ID `sha256:da71c75c543202f45ca92f704948844155ab137f57b4bb44b6a2565ece2dc16c` läuft auf Olymp01. Die aktive Compose-Konfiguration verwendet `https://happyhour.siwako.ch`. Die geschützte Schlüsseldatei gehört dem unprivilegierten Containerbenutzer `1000:1000`, besitzt Modus `600` und enthält zusätzlich das Ablaufdatum `2027-11-11`.
+
+Der erste Aktivierungsversuch wurde automatisch zurückgerollt, weil eine mit `sudo install` als `root:root` abgelegte Schlüsseldatei für den gehärteten Container nicht lesbar war. Ein isolierter Kandidatencontainer bestätigte danach mit korrekter Eigentümerschaft die KI-Bereitschaft, das Ablaufdatum und HTTP 410 des produktiven HappyHour-Vertrags. Der korrigierte Rollout ersetzte ausschliesslich `plauderbox-app-1`. Der Rückfallstand liegt geschützt unter `/srv/backup/plauderbox/20261113-v1.1.0-live`.
+
+Intern und öffentlich bestanden `/api/v1/status`, `/api/v1/ki-schluesselstatus`, Frontendversion `1.1.0`, Sicherheitsheader und der synthetische HappyHour-Negativtest. n8n, FileBox und beide PostgreSQL-Container liefen unverändert weiter. Temporäre Quellarchive und Schlüsselkopien wurden nach der Bereitstellung entfernt.
 
 ## Umgesetzter Stand am 11.11.2026
 
