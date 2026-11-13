@@ -128,6 +128,8 @@ export function verwendeBegehung(
     begehung.value.eintraege.push(eintrag)
     begehung.value.aktuellerEintragId = eintrag.id
     begehung.value.status = 'aktiv'
+    begehung.value.uebertragenAm = undefined
+    begehung.value.bilderUebertragenAm = undefined
     await abhaengigkeiten.speichern(begehung.value)
     ansicht.value = 'erfassen'
   }
@@ -171,6 +173,8 @@ export function verwendeBegehung(
       return
     begehung.value.eintraege = begehung.value.eintraege.filter((eintrag) => eintrag.id !== id)
     begehung.value.aktuellerEintragId = begehung.value.eintraege.at(-1)?.id ?? null
+    begehung.value.uebertragenAm = undefined
+    begehung.value.bilderUebertragenAm = undefined
     await abhaengigkeiten.speichern(begehung.value)
   }
 

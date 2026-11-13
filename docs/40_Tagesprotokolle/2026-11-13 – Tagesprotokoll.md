@@ -32,6 +32,16 @@ Commit `ec65e60` wurde auf Delphi01 als Image `plauderbox:delphi01-test-ec65e60`
 
 **Bestanden:** Imagebau, Containerstart, `Production`, internes HTTPS, `/api/v1/status`, direkte HappyHour-Testverbindung. **Nicht geprüft:** reale QR-Freigabe sowie die sieben Usabilityfälle auf dem Mobilgerät. **Nächster Schritt:** Mobiltest über `https://192.168.68.8`.
 
+## Session – Erneuerte Freigabe mit lokalem Stand zusammenführen
+
+- **Startzeit:** nicht zuverlässig bestimmbar
+- **Endzeit:** nicht zuverlässig bestimmbar
+- **Dauer:** nicht zuverlässig bestimmbar
+
+Ein gemeldeter Wiederaufnahmefehler wurde reproduzierbar auf zwei Ursachen eingegrenzt: Eine erneuerte Freigabe ersetzte im Client nur den Token und übernahm keinen inzwischen erweiterten HappyHour-Kontext; zudem konnten frühere Übertragungsmarkierungen später lokal ergänzte Einträge blockieren. PlauderBox führt den erneuerten Kontext nun über HappyHour-Protokollpunkt-ID beziehungsweise stabile GUID mit dem lokalen Stand zusammen. Neue Serverpunkte werden ergänzt, lokale Texte und Medien bleiben erhalten und nicht bestätigte lokale Einträge geben die Übergabe erneut frei. Lokales Speichern und der Wiederanlauf entfernen widersprüchliche Übertragungsmarkierungen.
+
+**Bestanden:** vollständiger `tests/Pruefe-Prototyp.ps1` mit Lint, TypeScript, 99 Frontendtests, Vue-Produktionsbuild, Offline-Browsertest, .NET-Release-Build, 12 Integrationstests, 9 Vertragstests, Offline-App-Shell und Token-Logschutz. **Nicht geprüft:** Bereitstellung auf Delphi01 und reale mobile Abnahme mit dem betroffenen Protokoll. Die zugehörige HappyHour-Korrektur aktualisiert bei einer erneut bewusst bestätigten Erstellen-Aktion den Cache-Snapshot bei unverändertem Token und unveränderter Ablaufzeit; statische Vertragsprüfung und vollständige ASP.NET-Vorkompilierung sind bestanden, mit ausschliesslich bereits vorhandenen Legacy-Warnungen.
+
 ## Tagesgesamtzeit
 
 Nicht zuverlässig bestimmbar.

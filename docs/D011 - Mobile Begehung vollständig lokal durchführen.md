@@ -35,6 +35,7 @@ Als Mitarbeiter möchte ich eine freigegebene Begehung auf dem Mobilgerät start
 - **AK19:** Bei einem Eintrag mit Audio steht `Diktat auswerten` unmittelbar nach dem Diktatbereich. Während der KI-Auswertung sind Aktion und Zustand sichtbar als laufend gekennzeichnet.
 - **AK20:** Die bei einem neuen Eintrag zuletzt bewusst gewählte HappyHour-Protokollpunktart wird als Standard für den nächsten neuen Eintrag derselben Begehung verwendet. Vorbereitete Punkte ändern diesen Standard nicht.
 - **AK21:** Ausstehende Offline-Aufnahmen können in Offline-Hinweis, Kontrolle und Abschluss mit einer Aktion ausgewertet werden, ohne die jeweilige Ansicht zuerst verlassen zu müssen. Ohne Verbindung bleibt die Aktion gesperrt und verständlich bezeichnet.
+- **AK22:** Beim erneuten Einlesen einer Freigabe für dasselbe Protokoll wird der aktuelle HappyHour-Kontext mit der lokalen Begehung verlustfrei zusammengeführt. Neue HappyHour-Punkte werden ergänzt; lokale noch nicht übertragene Einträge, Texte, Audio und Bilder bleiben erhalten. Bereits oder neu bestätigte Punkte werden anhand Protokollpunkt-ID beziehungsweise stabiler GUID nicht dupliziert. Jede lokale Änderung entfernt veraltete Übertragungsmarkierungen, damit sie beim nächsten bewussten Übergabeversuch berücksichtigt wird.
 
 ## Abgrenzung und offene Integrationsgrenzen
 

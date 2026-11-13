@@ -1,4 +1,5 @@
 import {
+  fuehreHappyHourKontextZusammen,
   normalisiereEintragProjektAnsprechpartner,
   type BegehungEintrag,
   type LokaleAudioaufnahme,
@@ -228,6 +229,8 @@ export async function committeEintrag(
   const vorhanden = begehung.eintraege.some((wert) => wert.id === normalisierterEintrag.id)
   const kandidat: LokaleBegehung = {
     ...begehung,
+    uebertragenAm: undefined,
+    bilderUebertragenAm: undefined,
     eintraege: vorhanden
       ? begehung.eintraege.map((wert) => (wert.id === normalisierterEintrag.id ? normalisierterEintrag : wert))
       : [...begehung.eintraege, normalisierterEintrag],
@@ -255,12 +258,11 @@ export async function committeHappyHourUebergabe(
 export async function committeFreigabeErneuerung(
   begehung: LokaleBegehung,
   freigabeToken: string,
-  protokollId: number,
+  neuerKontext: import('@logik/begehungsAblauf').HappyHourProtokollKontext,
   speichern: (kandidat: LokaleBegehung) => Promise<void> = speichereBegehung,
 ): Promise<LokaleBegehung> {
   if (!istFreigabeToken(freigabeToken)) throw new Error('ungueltige_freigabe')
-  if (protokollId !== begehung.protokoll.protokollId) throw new Error('falsches_protokoll')
-  const kandidat: LokaleBegehung = { ...begehung, freigabeToken }
+  const kandidat = fuehreHappyHourKontextZusammen(begehung, neuerKontext, freigabeToken)
   await speichern(kandidat)
   return kandidat
 }

@@ -116,28 +116,8 @@ export function erstelleBegehung(
   freigabeToken = "",
 ): LokaleBegehung {
   const jetzt = new Date().toISOString();
-  const vorbereiteteEintraege = protokoll.protokollpunkte.map(
-    (punkt): BegehungEintrag => ({
-      id: punkt.guid || neueId(),
-      erstelltAm: jetzt,
-      aktualisiertAm: jetzt,
-      status: "ausgewertet",
-      traktandum: "",
-      vorbereiteterProtokollpunktId: punkt.id,
-      protokollpunktArtId: punkt.protokollpunktArtId ?? null,
-      projektAnsprechpartnerId: normalisiereProjektAnsprechpartnerId(
-        protokoll,
-        punkt.projektAnsprechpartnerId ?? null,
-      ),
-      gruppe: punkt.gruppe,
-      thema: punkt.thema,
-      inhalt: punkt.inhalt,
-      rechtsverweis: punkt.rechtsverweis ?? "",
-      transkript: "",
-      fehler: "",
-      audio: null,
-      bilder: [],
-    }),
+  const vorbereiteteEintraege = protokoll.protokollpunkte.map((punkt) =>
+    erstelleVorbereitetenEintrag(punkt, protokoll, jetzt, neueId),
   );
   return {
     id: neueId(),
@@ -148,6 +128,111 @@ export function erstelleBegehung(
     freigabeToken,
     aktuellerEintragId: vorbereiteteEintraege.at(-1)?.id ?? null,
     eintraege: vorbereiteteEintraege,
+  };
+}
+
+function erstelleVorbereitetenEintrag(
+  punkt: HappyHourProtokollpunktKontext,
+  protokoll: HappyHourProtokollKontext,
+  jetzt: string,
+  neueId: () => string,
+): BegehungEintrag {
+  return {
+    id: punkt.guid || neueId(),
+    erstelltAm: jetzt,
+    aktualisiertAm: jetzt,
+    status: "ausgewertet",
+    traktandum: "",
+    vorbereiteterProtokollpunktId: punkt.id,
+    protokollpunktArtId: punkt.protokollpunktArtId ?? null,
+    projektAnsprechpartnerId: normalisiereProjektAnsprechpartnerId(
+      protokoll,
+      punkt.projektAnsprechpartnerId ?? null,
+    ),
+    gruppe: punkt.gruppe,
+    thema: punkt.thema,
+    inhalt: punkt.inhalt,
+    rechtsverweis: punkt.rechtsverweis ?? "",
+    transkript: "",
+    fehler: "",
+    audio: null,
+    bilder: [],
+  };
+}
+
+export function fuehreHappyHourKontextZusammen(
+  begehung: LokaleBegehung,
+  neuerKontext: HappyHourProtokollKontext,
+  freigabeToken: string,
+  neueId: () => string = () => crypto.randomUUID(),
+): LokaleBegehung {
+  if (neuerKontext.protokollId !== begehung.protokoll.protokollId)
+    throw new Error("falsches_protokoll");
+
+  const jetzt = new Date().toISOString();
+  const eintraege = begehung.eintraege.map((eintrag) => ({
+    ...eintrag,
+    bilder: [...eintrag.bilder],
+  }));
+  const nachVorbereiteterId = new Map(
+    eintraege
+      .filter((eintrag) => eintrag.vorbereiteterProtokollpunktId !== null)
+      .map((eintrag) => [eintrag.vorbereiteterProtokollpunktId!, eintrag]),
+  );
+  const nachGuid = new Map(
+    eintraege.map((eintrag) => [eintrag.id.toLocaleLowerCase("en-US"), eintrag]),
+  );
+  const happyHourGuids = new Set(
+    neuerKontext.protokollpunkte
+      .map((punkt) => punkt.guid.toLocaleLowerCase("en-US"))
+      .filter((guid) => guid.length > 0),
+  );
+  const hatNichtBestaetigteLokaleEintraege = eintraege.some(
+    (eintrag) =>
+      eintrag.vorbereiteterProtokollpunktId === null &&
+      !happyHourGuids.has(eintrag.id.toLocaleLowerCase("en-US")),
+  );
+
+  for (const punkt of neuerKontext.protokollpunkte) {
+    const vorhanden =
+      nachVorbereiteterId.get(punkt.id) ??
+      nachGuid.get(punkt.guid.toLocaleLowerCase("en-US"));
+    if (vorhanden) {
+      vorhanden.vorbereiteterProtokollpunktId = punkt.id;
+      continue;
+    }
+    eintraege.push(
+      erstelleVorbereitetenEintrag(punkt, neuerKontext, jetzt, neueId),
+    );
+  }
+
+  eintraege.forEach((eintrag) =>
+    normalisiereEintragProjektAnsprechpartner(eintrag, neuerKontext),
+  );
+  const hatOffeneLokaleAenderungen =
+    begehung.status !== "an_happyhour_uebertragen" ||
+    hatNichtBestaetigteLokaleEintraege;
+  return {
+    ...begehung,
+    protokoll: neuerKontext,
+    freigabeToken,
+    aktualisiertAm: jetzt,
+    status:
+      hatOffeneLokaleAenderungen &&
+      begehung.status === "an_happyhour_uebertragen"
+        ? "lokal_abgeschlossen"
+        : begehung.status,
+    uebertragenAm: hatOffeneLokaleAenderungen
+      ? undefined
+      : begehung.uebertragenAm,
+    bilderUebertragenAm: hatOffeneLokaleAenderungen
+      ? undefined
+      : begehung.bilderUebertragenAm,
+    aktuellerEintragId:
+      eintraege.some((eintrag) => eintrag.id === begehung.aktuellerEintragId)
+        ? begehung.aktuellerEintragId
+        : (eintraege.at(-1)?.id ?? null),
+    eintraege,
   };
 }
 
@@ -341,6 +426,14 @@ export function bereiteWiederanlaufVor(begehung: LokaleBegehung): boolean {
     }
     if (normalisiereEintragProjektAnsprechpartner(eintrag, begehung.protokoll))
       geaendert = true;
+  }
+  if (
+    begehung.status !== "an_happyhour_uebertragen" &&
+    (begehung.uebertragenAm || begehung.bilderUebertragenAm)
+  ) {
+    begehung.uebertragenAm = undefined;
+    begehung.bilderUebertragenAm = undefined;
+    geaendert = true;
   }
   return geaendert;
 }

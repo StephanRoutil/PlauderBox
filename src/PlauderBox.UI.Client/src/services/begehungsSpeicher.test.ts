@@ -1,6 +1,7 @@
 import { IDBFactory, IDBObjectStore } from 'fake-indexeddb'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { reactive } from 'vue'
+import { fuehreHappyHourKontextZusammen } from '@logik/begehungsAblauf'
 import {
   bereiteWiederanlaufVor,
   BegehungSpeicherfehler,
@@ -452,6 +453,17 @@ describe('Begehungsspeicher und Fachzustände', () => {
     expect(naechsterAusstehenderEintrag(begehung)?.id).toBe(eintrag.id)
   })
 
+  it('entfernt beim Wiederanlauf widersprüchliche Übertragungsmarkierungen lokaler Änderungen', () => {
+    const begehung = erstelleBegehung(protokoll)
+    begehung.status = 'lokal_abgeschlossen'
+    begehung.uebertragenAm = '2026-11-13T08:00:00Z'
+    begehung.bilderUebertragenAm = '2026-11-13T08:00:00Z'
+
+    expect(bereiteWiederanlaufVor(begehung)).toBe(true)
+    expect(begehung.uebertragenAm).toBeUndefined()
+    expect(begehung.bilderUebertragenAm).toBeUndefined()
+  })
+
   it('meldet Quota-Fehler weiter und behauptet keinen erfolgreichen Commit', async () => {
     const begehung = erstelleBegehung(protokoll)
     const vorher = begehung.aktualisiertAm
@@ -505,6 +517,25 @@ describe('Begehungsspeicher und Fachzustände', () => {
     expect(committed.eintraege[0]?.id).toBe(kanonisch.id)
   })
 
+  it('gibt eine bereits übertragene Begehung nach einer lokalen Änderung erneut zur Übergabe frei', async () => {
+    const begehung = erstelleBegehung(protokoll)
+    begehung.status = 'an_happyhour_uebertragen'
+    begehung.uebertragenAm = '2026-11-13T08:00:00Z'
+    begehung.bilderUebertragenAm = '2026-11-13T08:00:00Z'
+    const eintrag = erstelleEintrag()
+    begehung.eintraege.push(eintrag)
+
+    const committed = await committeEintrag(
+      begehung,
+      { ...eintrag, inhalt: 'Lokal ergänzt' },
+      async () => undefined,
+    )
+
+    expect(committed.uebertragenAm).toBeUndefined()
+    expect(committed.bilderUebertragenAm).toBeUndefined()
+    expect(committed.eintraege[0]?.inhalt).toBe('Lokal ergänzt')
+  })
+
   it('markiert die HappyHour-Übergabe erst nach erfolgreichem lokalem Commit', async () => {
     const begehung = erstelleBegehung(protokoll)
     begehung.status = 'lokal_abgeschlossen'
@@ -538,23 +569,110 @@ describe('Begehungsspeicher und Fachzustände', () => {
     begehung.eintraege.push(eintrag)
 
     await expect(
-      committeFreigabeErneuerung(begehung, 'b'.repeat(43), 378, async () => {
+      committeFreigabeErneuerung(begehung, 'b'.repeat(43), protokoll, async () => {
         throw new Error('Commit fehlgeschlagen')
       }),
     ).rejects.toThrow('Commit fehlgeschlagen')
     expect(begehung.freigabeToken).toBe('a'.repeat(43))
     expect(begehung.eintraege[0]?.bilder[0]?.bild).toBe(bild)
 
-    await expect(committeFreigabeErneuerung(begehung, 'c'.repeat(43), 379, async () => undefined)).rejects.toThrow(
-      'falsches_protokoll',
-    )
+    await expect(
+      committeFreigabeErneuerung(
+        begehung,
+        'c'.repeat(43),
+        { ...protokoll, protokollId: 379 },
+        async () => undefined,
+      ),
+    ).rejects.toThrow('falsches_protokoll')
     expect(begehung.freigabeToken).toBe('a'.repeat(43))
 
-    const committed = await committeFreigabeErneuerung(begehung, 'b'.repeat(43), 378, async () => undefined)
+    const committed = await committeFreigabeErneuerung(begehung, 'b'.repeat(43), protokoll, async () => undefined)
     expect(committed.freigabeToken).toBe('b'.repeat(43))
     expect(committed.status).toBe('lokal_abgeschlossen')
-    expect(committed.eintraege).toBe(begehung.eintraege)
+    expect(committed.eintraege).not.toBe(begehung.eintraege)
+    expect(committed.eintraege).toHaveLength(begehung.eintraege.length)
     expect(committed.eintraege[0]?.bilder[0]?.bild).toBe(bild)
+  })
+
+  it('führt acht aktuelle HappyHour-Punkte mit lokalen, noch nicht übertragenen Daten ohne Verlust zusammen', () => {
+    const punkt = (nummer: number) => ({
+      id: 100 + nummer,
+      guid: `00000000-0000-4000-8000-${String(nummer).padStart(12, '0')}`,
+      protokollpunktArtId: 1,
+      projektAnsprechpartnerId: 77,
+      gruppe: 'Kontrolle',
+      reihenfolge: nummer,
+      thema: `HappyHour ${nummer}`,
+      inhalt: `Bestehender Punkt ${nummer}`,
+      rechtsverweis: null,
+    })
+    const alterKontext = { ...protokoll, protokollpunkte: [1, 2, 3, 4].map(punkt) }
+    const neuerKontext = { ...protokoll, protokollpunkte: [1, 2, 3, 4, 5, 6, 7, 8].map(punkt) }
+    const rundgang = erstelleBegehung(alterKontext, undefined, 'a'.repeat(43))
+    rundgang.status = 'an_happyhour_uebertragen'
+    rundgang.uebertragenAm = '2026-11-13T08:00:00Z'
+    rundgang.bilderUebertragenAm = '2026-11-13T08:00:00Z'
+    const lokal = erstelleEintrag(() => '10000000-0000-4000-8000-000000000009', 77)
+    lokal.protokollpunktArtId = 1
+    lokal.gruppe = 'Lokal'
+    lokal.thema = 'Noch nicht übertragen'
+    lokal.inhalt = 'Muss erhalten bleiben'
+    const bild = new Blob(['beweis'], { type: 'image/jpeg' })
+    lokal.bilder.push({
+      id: '20000000-0000-4000-8000-000000000009',
+      dateiname: 'beweis.jpg',
+      medientyp: 'image/jpeg',
+      groesse: bild.size,
+      erstelltAm: lokal.erstelltAm,
+      bild,
+    })
+    rundgang.eintraege.push(lokal)
+
+    const zusammengefuehrt = fuehreHappyHourKontextZusammen(
+      rundgang,
+      neuerKontext,
+      'b'.repeat(43),
+    )
+
+    expect(zusammengefuehrt.protokoll.protokollpunkte).toHaveLength(8)
+    expect(zusammengefuehrt.eintraege).toHaveLength(9)
+    expect(zusammengefuehrt.eintraege.filter((eintrag) => eintrag.vorbereiteterProtokollpunktId !== null)).toHaveLength(8)
+    expect(zusammengefuehrt.eintraege.find((eintrag) => eintrag.id === lokal.id)?.bilder[0]?.bild).toBe(bild)
+    expect(zusammengefuehrt.status).toBe('lokal_abgeschlossen')
+    expect(zusammengefuehrt.uebertragenAm).toBeUndefined()
+    expect(zusammengefuehrt.bilderUebertragenAm).toBeUndefined()
+  })
+
+  it('ordnet einen inzwischen bestätigten lokalen Punkt über seine GUID dem HappyHour-Punkt zu', () => {
+    const rundgang = erstelleBegehung(protokoll)
+    const lokal = erstelleEintrag(() => '30000000-0000-4000-8000-000000000010', 77)
+    lokal.protokollpunktArtId = 1
+    lokal.gruppe = 'Lokal'
+    lokal.thema = 'Bestätigt'
+    lokal.inhalt = 'Bereits angekommen'
+    rundgang.eintraege.push(lokal)
+    const neuerKontext = {
+      ...protokoll,
+      protokollpunkte: [
+        {
+          id: 2401,
+          guid: lokal.id,
+          protokollpunktArtId: 1,
+          projektAnsprechpartnerId: 77,
+          gruppe: 'HappyHour',
+          reihenfolge: 1,
+          thema: 'Servertext',
+          inhalt: 'Serverinhalt',
+          rechtsverweis: null,
+        },
+      ],
+    }
+
+    const zusammengefuehrt = fuehreHappyHourKontextZusammen(rundgang, neuerKontext, 'b'.repeat(43))
+
+    expect(zusammengefuehrt.eintraege).toHaveLength(1)
+    expect(zusammengefuehrt.eintraege[0]?.vorbereiteterProtokollpunktId).toBe(2401)
+    expect(zusammengefuehrt.eintraege[0]?.thema).toBe('Bestätigt')
   })
 
   it('zählt nur tatsächlich ausstehende Audioaufnahmen und keine reine Offline-Mutation', () => {

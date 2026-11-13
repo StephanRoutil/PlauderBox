@@ -285,7 +285,7 @@ describe('HappyHour-Übergabe', () => {
     await ablauf.verarbeiteErneuerteFreigabe(`plauderbox://begehung?freigabe=${'B'.repeat(32)}`)
 
     expect(begehungRef.value?.freigabeToken).toBe('B'.repeat(32))
-    expect(toRaw(begehungRef.value?.eintraege)).toBe(lokal.eintraege)
+    expect(toRaw(begehungRef.value?.eintraege)).toStrictEqual(lokal.eintraege)
     expect(ansicht.value).toBe('abschluss')
     expect(speichern).toHaveBeenCalledTimes(1)
   })

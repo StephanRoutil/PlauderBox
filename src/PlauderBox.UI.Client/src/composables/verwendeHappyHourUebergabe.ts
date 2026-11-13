@@ -56,7 +56,7 @@ export function verwendeHappyHourUebergabe(abhaengigkeiten: HappyHourUebergabeAb
       abhaengigkeiten.begehung.value = await committeFreigabeErneuerung(
         begehung,
         freigabe.token,
-        neuerKontext.protokollId,
+        neuerKontext,
         abhaengigkeiten.speichern,
       )
       meldung.value =
