@@ -22,6 +22,16 @@ Der Android-Teilen-Dialog wurde aus der zusätzlichen Bildsicherung entfernt. Ei
 
 **Geänderte Dokumente:** D011, E009, E014, LD008 und T007. **Empfohlener nächster Schritt:** Korrekturstand zuerst auf Delphi01 bereitstellen und alle sieben Punkte auf dem Mobilgerät abnehmen; Olymp01 erst danach erneut aktualisieren.
 
+## Session – Usability-Korrektur auf Delphi01 bereitstellen
+
+- **Startzeit:** nicht zuverlässig bestimmbar
+- **Endzeit:** 10:22
+- **Dauer:** nicht zuverlässig bestimmbar
+
+Commit `ec65e60` wurde auf Delphi01 als Image `plauderbox:delphi01-test-ec65e60` gebaut und in der bestehenden Testablage bereitgestellt. Die Anwendung läuft in `Production` und verwendet serverseitig direkt `https://test.siwako.ch`; der frühere lokale Reverse-Tunnel wird nicht mehr benötigt. Der erste Aktualisierungsversuch wurde wegen eines Fehlers im Prüfskript vorsorglich zurückgerollt. Der korrigierte Lauf ersetzte nur den PlauderBox-App-Container und bestätigte das neue Frontend-Asset, KI-Bereitschaft und HTTP 410 für eine synthetische ungültige Freigabe. Caddy, FileBox, PostgreSQL und Olymp01 blieben unverändert. Das vorherige Delphi01-Image bleibt bis zur Mobilabnahme als Rückfall erhalten.
+
+**Bestanden:** Imagebau, Containerstart, `Production`, internes HTTPS, `/api/v1/status`, direkte HappyHour-Testverbindung. **Nicht geprüft:** reale QR-Freigabe sowie die sieben Usabilityfälle auf dem Mobilgerät. **Nächster Schritt:** Mobiltest über `https://192.168.68.8`.
+
 ## Tagesgesamtzeit
 
 Nicht zuverlässig bestimmbar.

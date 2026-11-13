@@ -2,12 +2,12 @@
 typ: loesungsdokumentation
 id: LD002
 status: testbetrieb
-datum: 2026-11-11
+datum: 2026-11-13
 ---
 
 # LD002 – PlauderBox-Testumgebung Delphi01
 
-> **Gültigkeitsvermerk vom 11.11.2026:** Die Betriebs- und HTTPS-Angaben bleiben gültig. Kontrollierte Protokollpunkte werden gemäss [[LD009 - Kontrollierte Protokollpunkte an HappyHour übergeben]] geschrieben und der End-to-End-Hauptfall einschliesslich `Wer` ist bestanden. Bilder, HappyHour-Abschluss und Versand bleiben ausgeschlossen.
+> **Gültigkeitsvermerk vom 13.11.2026:** Die Testumgebung läuft mit dem Usability-Korrekturstand `ec65e60` und verbindet sich direkt mit `https://test.siwako.ch`. Kontrollierte Protokollpunkte und Bilder werden gemäss [[LD009 - Kontrollierte Protokollpunkte an HappyHour übergeben]] und [[LD010 - Begehungsbilder kontrolliert an HappyHour übertragen]] geschrieben. HappyHour-Abschluss und Versand bleiben ausgeschlossen.
 
 ## Gültiger Stand
 
@@ -17,10 +17,10 @@ PlauderBox läuft als getrennte Testumgebung auf Delphi01. FileBox und der zentr
 
 | Bestandteil | Stand |
 |---|---|
-| Quellstand | vollständiger lokal geprüfter PlauderBox-Arbeitsstand vom 11.11.2026; Commitzuordnung noch offen |
-| Anwendungsimage | `plauderbox:delphi01-test-20261110-full` |
-| Image-ID | `sha256:f7f1d60381dd…` |
-| Rückfallimage | vorheriger Stand als `plauderbox:delphi01-test-before-fotosicherung` markiert |
+| Quellstand | Commit `ec65e600699eb19b070b04bd8a4d6e9a8044a684` |
+| Anwendungsimage | `plauderbox:delphi01-test-ec65e60` |
+| Image-ID | `sha256:5ffe84fd1c593751d8bda2614cdd3d31d11f88c7996c083c25746d286ef634cd` |
+| Rückfallimage | vorheriger Stand `plauderbox:delphi01-test-20261110-full` |
 | Laufende Ablage | `/home/zeus/plauderbox-test-vorbereitung` |
 | Anwendungslistener | `127.0.0.1:5187` auf Delphi01 |
 | Interner HTTPS-Zugriff | `https://192.168.68.8` |
@@ -35,12 +35,12 @@ Die OpenAI-Testschlüsseldatei wurde nach ausdrücklicher Freigabe ausschliessli
 ## Erfolgreiche Prüfungen
 
 - TypeScript-, Vue-, .NET-, Vertrags-, Offline-App-Shell-, Tokenlog- und Docker-Buildkontextprüfungen lokal bestanden.
-- Vollständiges Linux-Docker-Image auf Delphi01 einschliesslich der externen TypeScript-Logikschicht erfolgreich gebaut; der aktuelle Foto-Sicherungsstand ist das Image `plauderbox:delphi01-test-20261110-full`, ID `sha256:f7f1d60381dd…`.
-- Anwendungs- und HTTPS-Container aus `/home/zeus/plauderbox-test-vorbereitung` erfolgreich gestartet; der vorherige Stand ist über `plauderbox:delphi01-test-before-fotosicherung` als Rückfallimage markiert.
+- Vollständiges Linux-Docker-Image aus Commit `ec65e60` einschliesslich der TypeScript-Logikschicht erfolgreich gebaut; der aktuelle Stand ist `plauderbox:delphi01-test-ec65e60`, ID `sha256:5ffe84fd1c59…`.
+- Anwendungscontainer aus `/home/zeus/plauderbox-test-vorbereitung` in `Production` erfolgreich ersetzt; der bestehende HTTPS-Container blieb unverändert. Der unmittelbar vorherige Anwendungsstand bleibt bis zur Mobilabnahme als Rückfallimage erhalten.
 - Anwendung bindet nur an Delphi01-Loopback.
 - Root, PWA-Manifest, Service Worker sowie die gebauten JavaScript- und CSS-Assets liefern über internes HTTPS Status 200; das Manifest besitzt den korrekten MIME-Typ.
-- `/api/status` meldet die KI-Anbindung als bereit.
-- Ein ungültiger HappyHour-Freigabe-Token erreicht den internen Testendpunkt über den SSH-Reverse-Tunnel und liefert erwartungsgemäss Status 410.
+- `/api/v1/status` meldet die KI-Anbindung als bereit.
+- Delphi01 erreicht `https://test.siwako.ch` direkt. Ein synthetischer ungültiger HappyHour-Freigabe-Token liefert über die PlauderBox-API erwartungsgemäss Status 410.
 - Ein markierter Dummy-Token erscheint nicht im Containerlog.
 - Download des öffentlichen Caddy-Stammzertifikats liefert HTTP 200.
 - QR-Codes für Zertifikatsdownload und Testanwendung lokal erzeugt.
@@ -57,7 +57,7 @@ Das Handy muss sich im internen WLAN befinden. Zuerst wird das Caddy-Stammzertif
 - Verschieben der laufenden Ablage nach `/srv/docker/plauderbox-test`; dies benötigt eine interaktive `sudo`-Bestätigung,
 - Start nach Host-Neustart praktisch prüfen,
 - Caddy-Stammzertifikat und Schlüssel in die spätere Sicherungsregel aufnehmen,
-- Bildübergabe an HappyHour; PlauderBox schliesst oder versendet weiterhin kein Protokoll.
+- reale mobile End-to-End-Abnahme der Bildübergabe gegen `test.siwako.ch`; PlauderBox schliesst oder versendet weiterhin kein Protokoll.
 
 ## Verknüpfungen
 

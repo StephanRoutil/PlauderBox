@@ -1,6 +1,6 @@
 services:
   app:
-    image: plauderbox:delphi01-test-20261110-full
+    image: plauderbox:delphi01-test-ec65e60
     network_mode: host
     user: "1000:1000"
     restart: unless-stopped
@@ -11,7 +11,7 @@ services:
       ASPNETCORE_ENVIRONMENT: Production
       PlauderBox__Url: http://127.0.0.1:5187
       PlauderBox__ErlaubterUrsprung: https://192.168.68.8
-      PlauderBox__HappyHour__Basisadresse: http://localhost:8081
+      PlauderBox__HappyHour__Basisadresse: https://test.siwako.ch
       PlauderBox__KI__Schluesseldatei: /run/secrets/openai.json
     volumes:
       - ./secrets/openai.json:/run/secrets/openai.json:ro

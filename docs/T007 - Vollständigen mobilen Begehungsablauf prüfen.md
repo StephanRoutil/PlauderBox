@@ -27,6 +27,8 @@ anforderung: D011
 
 ## Delphi01-Bereitstellungsnachweis
 
+> **Aktualisierung vom 13.11.2026:** Der Usability-Korrekturstand aus Commit `ec65e60` läuft als Image `plauderbox:delphi01-test-ec65e60`, ID `sha256:5ffe84fd1c59…`, in `Production`. Root und das neue Asset `index-DftIBvEC.js` werden über internes HTTPS ausgeliefert, `/api/v1/status` meldet die KI als bereit und ein synthetischer ungültiger Freigabecode liefert über die direkte Verbindung zu `https://test.siwako.ch` HTTP 410. Die reale Mobilgeräteabnahme bleibt offen.
+
 - Vollständiger Linux-Dockerbuild auf Delphi01 einschliesslich `src/PlauderBox.Logik/Client`: bestanden. Die Fotoerweiterung läuft als Image `sha256:f7f1d60381dd…`; der unmittelbar vorherige Stand ist als `plauderbox:delphi01-test-before-fotosicherung` markiert.
 - Anwendungs- und HTTPS-Container aus `/home/zeus/plauderbox-test-vorbereitung` gestartet: bestanden.
 - Root, Manifest, Service Worker und die gehashten JavaScript-/CSS-Assets liefern über internes HTTPS Status 200; Manifest-MIME-Typ korrekt: bestanden.
