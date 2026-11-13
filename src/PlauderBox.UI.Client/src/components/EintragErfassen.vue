@@ -9,6 +9,7 @@ import {
 } from '@/services/begehungsSpeicher'
 import {
   kopiereEintrag,
+  markiereManuellenEintragAlsAusgewertet,
   setzeAudioaufnahme,
   speichereEntwurf,
   verwerfeAudioaufnahme,
@@ -199,6 +200,7 @@ function eintragSpeichern(): void {
     meldung.value = 'Bitte eine Audioaufnahme erstellen oder Thema beziehungsweise Inhalt manuell erfassen.'
     return
   }
+  markiereManuellenEintragAlsAusgewertet(entwurf.value)
   entwurf.value.aktualisiertAm = new Date().toISOString()
   emit('gespeichert', kopiereEintrag(entwurf.value))
 }

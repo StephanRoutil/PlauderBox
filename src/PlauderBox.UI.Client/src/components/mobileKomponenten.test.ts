@@ -114,7 +114,7 @@ describe('mobile Komponenten', () => {
 
     expect(wrapper.get('img').attributes('src')).toBe('/icon.svg')
     expect(wrapper.text()).toContain('PlauderBox')
-    expect(wrapper.text()).toContain('v1.0.3')
+    expect(wrapper.text()).toContain('v1.0.4')
   })
 
   it('zeigt die Begehungsnavigation als drei beschriftete Headerbuttons', async () => {
@@ -294,6 +294,7 @@ describe('mobile Komponenten', () => {
   it('übernimmt einen vollständig manuell erfassten Eintrag ohne Audio', async () => {
     const eintrag = erstelleEintrag()
     eintrag.protokollpunktArtId = 5
+    eintrag.gruppe = 'Organisation'
     eintrag.thema = 'Manueller Punkt'
     eintrag.inhalt = 'Ohne Diktat erfasst'
     const wrapper = mount(EintragErfassen, {
@@ -304,6 +305,7 @@ describe('mobile Komponenten', () => {
     await taste!.trigger('click')
 
     expect(wrapper.emitted('gespeichert')).toHaveLength(1)
+    expect(wrapper.emitted<BegehungEintrag[]>('gespeichert')?.[0]?.[0]?.status).toBe('ausgewertet')
   })
 
   it('zeigt die laufende KI-Auswertung und sperrt den Diktatknopf direkt unter dem Aufnahmebereich', () => {

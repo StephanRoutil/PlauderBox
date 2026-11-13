@@ -1,8 +1,36 @@
 import { describe, expect, it, vi } from 'vitest'
 import { erstelleEintrag, type LokaleAudioaufnahme } from '@logik/begehungsAblauf'
-import { setzeAudioaufnahme, speichereEntwurf, verwerfeAudioaufnahme } from './eintragErfassungsAblauf'
+import {
+  markiereManuellenEintragAlsAusgewertet,
+  setzeAudioaufnahme,
+  speichereEntwurf,
+  verwerfeAudioaufnahme,
+} from './eintragErfassungsAblauf'
 
 describe('Audioentwurf und fehlgeschlagener lokaler Commit', () => {
+  it('markiert einen Eintrag ohne Audio als ausgewertet und lässt einen Audioeintrag unverändert', () => {
+    const manuell = erstelleEintrag()
+    manuell.status = 'entwurf'
+    manuell.fehler = 'alter Fehler'
+
+    markiereManuellenEintragAlsAusgewertet(manuell)
+
+    expect(manuell.status).toBe('ausgewertet')
+    expect(manuell.fehler).toBe('')
+
+    const mitAudio = erstelleEintrag()
+    mitAudio.status = 'wartet_auf_auswertung'
+    mitAudio.audio = {
+      dateiname: 'aufnahme.webm',
+      medientyp: 'audio/webm',
+      groesse: 1,
+      dauerSekunden: 1,
+      audio: new Blob(['x']),
+    }
+    markiereManuellenEintragAlsAusgewertet(mitAudio)
+    expect(mitAudio.status).toBe('wartet_auf_auswertung')
+  })
+
   it('behält nach einem Fehler denselben Blob und dieselbe Erfassungs-ID für den sichtbaren Retry', async () => {
     const eintrag = erstelleEintrag(() => '00000000-0000-4000-8000-000000000123')
     const blob = new Blob(['identisches-audio'], { type: 'audio/webm' })

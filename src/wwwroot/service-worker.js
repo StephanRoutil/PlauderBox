@@ -1,5 +1,5 @@
-const CACHE_NAME = 'plauderbox-app-xBjqvHyQjsassetsindexBMgrr9vPcss'
-const BUILD_ASSETS = ["/assets/index-B-jqvHyQ.js","/assets/index-BMgrr9vP.css"]
+const CACHE_NAME = 'plauderbox-app-C3JiHCmujsassetsindexBMgrr9vPcss'
+const BUILD_ASSETS = ["/assets/index-C3JiHCmu.js","/assets/index-BMgrr9vP.css"]
 const APP_SHELL = ['/', '/index.html', '/manifest.webmanifest', '/icon.svg', ...BUILD_ASSETS]
 
 self.addEventListener('install', (event) => {

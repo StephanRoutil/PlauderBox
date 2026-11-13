@@ -92,6 +92,16 @@ In der Kontrollansicht zeigte der Zähler zwar einen offenen Eintrag, die Liste 
 
 **Bestanden:** vollständiger `tests/Pruefe-Prototyp.ps1` mit Versionsabgleich, Lint, TypeScript, 108 Frontendtests, Vue-Produktionsbuild, Offline-Browsertest, .NET-Release-Build, 12 Integrationstests, 9 Vertragstests, Offline-App-Shell und Token-Logschutz. Commit `c9c319a` und Tag `v1.0.3` wurden nach `origin` übertragen. Version `1.0.3` läuft auf Delphi01 als Image `plauderbox:delphi01-test-c9c319a` (`sha256:3aeccc176165…`); HTTPS, eingebettete Version und neue Korrekturaktion, KI-Status und Containerlog sind geprüft. **Nicht geprüft:** reale Sicht-/Touchprüfung auf dem Mobilgerät. **Nächster Schritt:** offenen Eintrag am Handy antippen und die Korrekturansicht kontrollieren.
 
+## Session – Manuellen Eintrag ohne Audio abschliessbar machen
+
+- **Startzeit:** nicht zuverlässig bestimmbar
+- **Endzeit:** nicht zuverlässig bestimmbar
+- **Dauer:** nicht zuverlässig bestimmbar
+
+Ein bewusst übernommener manueller Eintrag ohne Audio behielt fälschlich den Status `entwurf` und blockierte dadurch trotz vollständiger Felder den Begehungsabschluss. Version `1.0.4` setzt nur Einträge ohne Audio bei der bewussten Übernahme auf `ausgewertet` und entfernt einen früheren Auswertungsfehler. Einträge mit Audio bleiben unverändert bis zur bestätigten KI-Auswertung ausstehend.
+
+**Bestanden:** vollständiger `tests/Pruefe-Prototyp.ps1` mit Versionsabgleich, Lint, TypeScript, 109 Frontendtests, Vue-Produktionsbuild, Offline-Browsertest, .NET-Release-Build, 12 Integrationstests, 9 Vertragstests, Offline-App-Shell und Token-Logschutz. **Nicht geprüft:** Delphi01-Bereitstellung und realer Abschluss eines manuellen Eintrags auf dem Mobilgerät. **Nächster Schritt:** Commit und Testbereitstellung von `1.0.4`.
+
 ## Tagesgesamtzeit
 
 Nicht zuverlässig bestimmbar.

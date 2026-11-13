@@ -41,6 +41,7 @@ Als Mitarbeiter möchte ich eine freigegebene Begehung auf dem Mobilgerät start
 - **AK25:** Die installierte PWA und jede App-Kopfzeile verwenden dasselbe PlauderBox-Icon. Jede Kopfzeile zeigt zusätzlich die tatsächlich gebaute dreiteilige Version an.
 - **AK26:** Wird eine Audioauswertung wegen einer abgelaufenen oder widerrufenen Rundgangsfreigabe abgewiesen, bleiben Audio und Eintrag lokal erhalten. Die App führt unmittelbar zur Erneuerung für dasselbe Protokoll und kehrt danach zur vorherigen Ansicht zurück, damit die Auswertung erneut ausgelöst werden kann.
 - **AK27:** Die Kontrolle kennzeichnet jeden nicht ausgewerteten, fehlgeschlagenen oder unvollständigen Eintrag einzeln mit der konkreten Ursache. Eine sichtbare Aktion öffnet genau diesen Eintrag zur Korrektur.
+- **AK28:** Ein vollständig manuell erfasster Eintrag ohne Audio gilt nach der bewussten Übernahme als ausgewertet und blockiert den Begehungsabschluss nicht. Einträge mit Audio bleiben bis zur bestätigten KI-Auswertung ausstehend.
 
 ## Abgrenzung und offene Integrationsgrenzen
 

@@ -12,6 +12,12 @@ export function setzeAudioaufnahme(eintrag: BegehungEintrag, audio: LokaleAudioa
   eintrag.aktualisiertAm = new Date().toISOString()
 }
 
+export function markiereManuellenEintragAlsAusgewertet(eintrag: BegehungEintrag): void {
+  if (eintrag.audio) return
+  eintrag.status = 'ausgewertet'
+  eintrag.fehler = ''
+}
+
 export async function speichereEntwurf(eintrag: BegehungEintrag, speichern: EintragSpeichern): Promise<void> {
   eintrag.aktualisiertAm = new Date().toISOString()
   await speichern(kopiereEintrag(eintrag))
