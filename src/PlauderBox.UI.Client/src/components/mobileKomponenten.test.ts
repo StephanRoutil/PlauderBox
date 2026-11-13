@@ -204,6 +204,7 @@ describe('mobile Komponenten', () => {
   it('öffnet bei fehlenden Startvoraussetzungen einen Dialog und führt zum erneuten QR-Scan zurück', async () => {
     const unvollstaendig = { ...protokoll, verteiler: [], protokollpunktArten: [] }
     const wrapper = mount(BegehungStart, {
+      attachTo: document.body,
       props: {
         kontext: unvollstaendig,
         startLaeuft: false,
@@ -215,17 +216,36 @@ describe('mobile Komponenten', () => {
         ],
       },
     })
+    await flushPromises()
 
     const dialog = wrapper.get('[role="dialog"]')
     expect(dialog.attributes('aria-modal')).toBe('true')
     expect(dialog.text()).toContain('Verteiler fehlt')
     expect(dialog.text()).toContain('Art des Protokollpunkts fehlt')
     expect(dialog.text()).toContain('Ein Widerruf ist nicht erforderlich')
+    expect(document.activeElement).toBe(dialog.get('#startvoraussetzungen-titel').element)
+    const startansicht = wrapper.get('main')
+    expect(startansicht.attributes('inert')).toBeDefined()
+    expect(startansicht.attributes('aria-hidden')).toBe('true')
+
+    const dialogTasten = dialog.findAll('button')
+    await dialog.get('#startvoraussetzungen-titel').trigger('keydown', { key: 'Tab', shiftKey: true })
+    expect(document.activeElement).toBe(dialogTasten[dialogTasten.length - 1]!.element)
+    await dialogTasten[dialogTasten.length - 1]!.trigger('keydown', { key: 'Tab' })
+    expect(document.activeElement).toBe(dialogTasten[0]!.element)
+
     const gesperrterStart = wrapper.findAll('button').find((taste) => taste.text() === 'Start nicht möglich')
     expect(gesperrterStart?.attributes('disabled')).toBeDefined()
-    const erneutScannen = dialog.findAll('button').find((taste) => taste.text() === 'Anderen QR-Code scannen')
+
+    await dialogTasten.find((taste) => taste.text() === 'Hinweis schliessen')!.trigger('click')
+    expect(wrapper.find('[role="dialog"]').exists()).toBe(false)
+    expect(startansicht.attributes('inert')).toBeUndefined()
+    expect(startansicht.attributes('aria-hidden')).toBeUndefined()
+
+    const erneutScannen = wrapper.findAll('button').find((taste) => taste.text() === 'Anderen QR-Code scannen')
     await erneutScannen!.trigger('click')
     expect(wrapper.emitted('zurueck')).toHaveLength(1)
+    wrapper.unmount()
   })
 
   it('zeigt offline den Singular und beide Navigationsaktionen', async () => {

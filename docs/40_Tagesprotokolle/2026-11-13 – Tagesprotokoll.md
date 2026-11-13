@@ -160,6 +160,8 @@ Version `1.1.2` erweitert das Start-Quality-Gate um die zwingend benötigte Prot
 
 **Bestanden:** vollständiger `tests/Pruefe-Prototyp.ps1` mit Lint, TypeScript, 116 Frontendtests, Vue-Produktionsbuild, Playwright-Offlinefall, .NET-Release-Build ohne Warnungen, 14 Integrationstests, 9 Vertragstests, Offline-App-Shell und Token-Logschutz. **Nicht geprüft:** Dockerbuild, Bereitstellung und reale Mobilprüfung von Version `1.1.2`. **Nicht anwendbar:** neue Paketabhängigkeit oder Datenmigration.
 
+Das unabhängige Quality-Gate beanstandete vor der Bereitstellung, dass der optisch modale Startdialog den Tastaturfokus noch nicht im Dialog hielt. Nach Freigabe des Befunds wurde die Hintergrundansicht während der Anzeige mit `inert` gesperrt, die Tab-Navigation vorwärts und rückwärts im Dialog begrenzt und die Freigabe nach dem Schliessen als Verhaltenstest nachgewiesen. Der vollständige Pflichtprüflauf bestand danach erneut unverändert.
+
 ## Tagesgesamtzeit
 
 Nicht zuverlässig bestimmbar.

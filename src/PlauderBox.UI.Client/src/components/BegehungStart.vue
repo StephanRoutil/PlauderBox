@@ -19,6 +19,34 @@ const emit = defineEmits<{
 
 const dialogSichtbar = ref(eigenschaften.startBlockiert)
 const dialogTitel = ref<HTMLElement | null>(null)
+const startdialog = ref<HTMLElement | null>(null)
+
+function fokussierbareDialogelemente(): HTMLElement[] {
+  if (!startdialog.value) return []
+  return Array.from(
+    startdialog.value.querySelectorAll<HTMLElement>('button:not([disabled]), [href], [tabindex]:not([tabindex="-1"])'),
+  )
+}
+
+function halteFokusImDialog(ereignis: KeyboardEvent): void {
+  if (ereignis.key !== 'Tab') return
+  const elemente = fokussierbareDialogelemente()
+  if (elemente.length === 0) {
+    ereignis.preventDefault()
+    dialogTitel.value?.focus()
+    return
+  }
+  const erstesElement = elemente[0]!
+  const letztesElement = elemente[elemente.length - 1]!
+  const aktivesElement = document.activeElement
+  if (ereignis.shiftKey && (aktivesElement === erstesElement || !elemente.includes(aktivesElement as HTMLElement))) {
+    ereignis.preventDefault()
+    letztesElement.focus()
+  } else if (!ereignis.shiftKey && aktivesElement === letztesElement) {
+    ereignis.preventDefault()
+    erstesElement.focus()
+  }
+}
 
 async function zeigeStartdialog(): Promise<void> {
   dialogSichtbar.value = true
@@ -48,11 +76,13 @@ function formatiereDatum(wert: string): string {
 <template>
   <div
     v-if="startBlockiert && dialogSichtbar"
+    ref="startdialog"
     class="startvoraussetzungen-dialog"
     role="dialog"
     aria-modal="true"
     aria-labelledby="startvoraussetzungen-titel"
     aria-describedby="startvoraussetzungen-beschreibung"
+    @keydown="halteFokusImDialog"
   >
     <section class="startvoraussetzungen-dialog__inhalt">
       <p class="eyebrow">Start nicht möglich</p>
@@ -70,7 +100,11 @@ function formatiereDatum(wert: string): string {
       <button class="mobile-secondary" type="button" @click="dialogSichtbar = false">Hinweis schliessen</button>
     </section>
   </div>
-  <main class="begehung-shell">
+  <main
+    class="begehung-shell"
+    :inert="startBlockiert && dialogSichtbar"
+    :aria-hidden="startBlockiert && dialogSichtbar ? 'true' : undefined"
+  >
     <header class="mobile-start-header">
       <button class="back-button" type="button" aria-label="Zurück zum QR-Code-Scanner" @click="emit('zurueck')">
         ‹
