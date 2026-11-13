@@ -13,6 +13,8 @@ Der QR-Token wird beim bewussten Start zusammen mit der lokalen Begehung in Inde
 
 `normalisiereProjektAnsprechpartnerId` prüft jeden Kandidaten gegen die eindeutigen Projektansprechpartner-IDs des aktuellen Verteilers. Ein gültiger Kandidat bleibt erhalten. Andernfalls wird nur bei genau einer als Protokollschreiber markierten Projektansprechpartner-ID diese verwendet; ohne eindeutigen Schreiber bleibt der Wert `null`. `erstelleBegehung`, `erstelleEintragFuerProtokoll`, `bereiteWiederanlaufVor`, der Legacy-Import, `committeEintrag` und die Übergabegrenze wenden dieselbe Regel an. `eindeutigeVerteileroptionen` verhindert doppelte Auswahlwerte im Feld `Wer`.
 
+Da `Wer` beim Schreiben eines Protokollpunkts Pflicht ist, verhindert `pruefeBegehungsstart` bereits vor dem ersten lokalen Commit den Start eines neu gescannten Protokolls ohne gültigen Verteiler. Die Startansicht zeigt den fachlichen Grund und führt zum erneuten QR-Scan zurück. Die serverseitige Pflichtfeldprüfung an der Übergabegrenze bleibt als zweite Schutzschicht unverändert bestehen.
+
 Die Abschlussansicht bietet die Aktion zur HappyHour-Übergabe nur online und nur vor einer vollständigen Bestätigung. Der Punktvertrag wird durch die nachgelagerte Bildübergabe gemäss [[LD010 - Begehungsbilder kontrolliert an HappyHour übertragen]] ergänzt. Fehler unterscheiden fehlende Verbindung, abgelaufene Freigabe, Konflikt, ungültige Daten, ungültige Antwort und technische Nichterreichbarkeit. Lokale Daten werden in keinem Fehlerfall entfernt.
 
 `happyHourProtokollpunktUebergabe.ts` prüft GUIDs, Vollständigkeit und doppelte vorbereitete IDs. Es sendet ausschliesslich Token sowie die kontrollierte Allowlist aus Erfassungs-ID, vorbereiteter Punkt-ID, Protokollpunktart, `Wer`/`intProjektAnsprechpartnerFKID`, Gruppe, Thema, Inhalt und Rechtsverweis an den gleichursprünglichen Endpunkt `/api/v1/happyhour/protokollpunkte/uebergeben`; Bilder und Rohtranskript sind nicht Bestandteil des JSON-Vertrags.
@@ -30,6 +32,8 @@ HappyHour schreibt jeden Punkt einzeln idempotent. Bestätigt der Sammellauf nic
 - `src/Program.cs`
 - `src/PlauderBox.UI.Client/src/services/happyHourProtokollpunktUebergabe.ts`
 - `src/PlauderBox.UI.Client/src/components/EintragErfassen.vue`
+- `src/PlauderBox.UI.Client/src/components/BegehungStart.vue`
+- `src/PlauderBox.UI.Client/src/composables/verwendeBegehung.ts`
 - `src/PlauderBox.UI.Client/src/components/BegehungAbschluss.vue`
 - `src/PlauderBox.UI.Client/src/App.vue`
 

@@ -115,7 +115,7 @@ describe('mobile Komponenten', () => {
 
     expect(wrapper.get('img').attributes('src')).toBe('/icon.svg')
     expect(wrapper.text()).toContain('PlauderBox')
-    expect(wrapper.text()).toContain('v1.1.0')
+    expect(wrapper.text()).toContain('v1.1.1')
   })
 
   it('zeigt die Begehungsnavigation als drei beschriftete Headerbuttons', async () => {
@@ -199,6 +199,25 @@ describe('mobile Komponenten', () => {
     expect(wrapper.get('[role="alert"]').text()).toBe('Lokale Sicherung fehlgeschlagen.')
     await wrapper.get('button.mobile-primary').trigger('click')
     expect(wrapper.emitted('starten')).toHaveLength(1)
+  })
+
+  it('sperrt den Start ohne Verteiler und führt zum erneuten QR-Scan zurück', async () => {
+    const ohneVerteiler = { ...protokoll, verteiler: [] }
+    const wrapper = mount(BegehungStart, {
+      props: {
+        kontext: ohneVerteiler,
+        startLaeuft: false,
+        startBlockiert: true,
+        startMeldung: 'Das Protokoll besitzt keinen gültigen Verteiler.',
+      },
+    })
+
+    expect(wrapper.get('[role="alert"]').text()).toContain('keinen gültigen Verteiler')
+    expect(wrapper.get('button.mobile-primary').attributes('disabled')).toBeDefined()
+    expect(wrapper.get('button.mobile-primary').text()).toBe('Start nicht möglich')
+    const erneutScannen = wrapper.findAll('button').find((taste) => taste.text() === 'Anderen QR-Code scannen')
+    await erneutScannen!.trigger('click')
+    expect(wrapper.emitted('zurueck')).toHaveLength(1)
   })
 
   it('zeigt offline den Singular und beide Navigationsaktionen', async () => {

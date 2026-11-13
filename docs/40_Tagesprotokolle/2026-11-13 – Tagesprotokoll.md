@@ -122,6 +122,16 @@ Nach ausdrücklicher Freigabe wurde die Olymp01-Konfiguration von `test.siwako.c
 
 **Bestanden:** interne und öffentliche Statusverträge, Version `1.1.0`, TLS, Sicherheitsheader, Ablaufdatum `2027-11-11` und HTTP 410 für eine synthetische unbekannte HappyHour-Freigabe. Nur `plauderbox-app-1` wurde ersetzt; n8n, FileBox und beide Datenbanken liefen weiter. Temporäre Schlüssel- und Quellkopien wurden entfernt. **Nicht geprüft:** realer produktiver Mobil-End-to-End-Lauf. **Nächster Schritt:** neue produktive QR-Freigabe erzeugen und einen kurzen Rundgang mit Audio, Punkt und Bild bis HappyHour durchführen.
 
+## Session – Begehungsstart ohne HappyHour-Verteiler sperren
+
+- **Startzeit:** nicht zuverlässig bestimmbar
+- **Endzeit:** nicht zuverlässig bestimmbar
+- **Dauer:** nicht zuverlässig bestimmbar
+
+Version `1.1.1` ergänzt das Quality-Gate vor dem ersten lokalen Start. Der geladene HappyHour-Kontext muss mindestens eine gültige Person im Verteiler enthalten, weil `Wer` beim späteren Schreiben eines Protokollpunkts Pflicht ist. Ohne gültigen Verteiler bleibt der Start gesperrt, die App erklärt die notwendige Korrektur in HappyHour und bietet einen erneuten QR-Scan. Es wird keine lokale Begehung angelegt und bestehender lokaler Speicher bleibt unverändert.
+
+**Bestanden:** vollständiger `tests/Pruefe-Prototyp.ps1` mit Docker-Buildkontext, Lint, TypeScript, 115 Frontendtests, Vue-Produktionsbuild, Playwright-Offlinefall, .NET-Release-Build ohne Warnungen, 14 Integrationstests, 9 Vertragstests, Offline-App-Shell und Token-Logschutz. **Nicht geprüft:** Dockerbuild, Bereitstellung und reale Mobilprüfung von Version `1.1.1`. **Nicht anwendbar:** HappyHour-Code- oder Datenbankänderung; das Gate verwendet den bestehenden Kontextvertrag. **Nächster Schritt:** Commit erstellen und Version `1.1.1` zuerst auf Delphi01 bereitstellen.
+
 ## Tagesgesamtzeit
 
 Nicht zuverlässig bestimmbar.

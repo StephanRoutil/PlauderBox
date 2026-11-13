@@ -7,6 +7,7 @@ import {
   erstelleBegehung,
   erstelleEintragFuerProtokoll,
   normalisiereEintragProjektAnsprechpartner,
+  pruefeBegehungsstart,
   type BegehungEintrag,
   type HappyHourProtokollKontext,
   type LokaleBegehung,
@@ -19,7 +20,11 @@ import {
 import { verwendeAppZustand, type AppZustand } from './verwendeAppZustand'
 
 export type { AppAnsicht } from './verwendeAppZustand'
-export type Begehungsstartzustand = { art: 'bereit' } | { art: 'laeuft' } | { art: 'fehler'; meldung: string }
+export type Begehungsstartzustand =
+  | { art: 'bereit' }
+  | { art: 'laeuft' }
+  | { art: 'blockiert'; meldung: string }
+  | { art: 'fehler'; meldung: string }
 
 export interface BegehungsAbhaengigkeiten {
   kontextLaden: (freigabe: HappyHourBegehungsfreigabe) => Promise<HappyHourProtokollKontext>
@@ -57,7 +62,12 @@ export function verwendeBegehung(
     () => begehung.value?.eintraege.find((eintrag) => eintrag.id === begehung.value?.aktuellerEintragId) ?? null,
   )
   const startLaeuft = computed(() => startzustand.value.art === 'laeuft')
-  const startMeldung = computed(() => (startzustand.value.art === 'fehler' ? startzustand.value.meldung : ''))
+  const startBlockiert = computed(() => startzustand.value.art === 'blockiert')
+  const startMeldung = computed(() =>
+    startzustand.value.art === 'blockiert' || startzustand.value.art === 'fehler'
+      ? startzustand.value.meldung
+      : '',
+  )
 
   async function verarbeiteQrCode(inhalt: string): Promise<void> {
     if (speicherblockiert.value) {
@@ -75,6 +85,10 @@ export function verwendeBegehung(
     try {
       protokollKontext.value = await abhaengigkeiten.kontextLaden(freigabe)
       aktiveFreigabeToken.value = freigabe.token
+      const startpruefung = pruefeBegehungsstart(protokollKontext.value)
+      startzustand.value = startpruefung.gueltig
+        ? { art: 'bereit' }
+        : { art: 'blockiert', meldung: startpruefung.meldung }
       ansicht.value = 'start'
     } catch (fehler: unknown) {
       ansicht.value = 'scanner'
@@ -89,6 +103,11 @@ export function verwendeBegehung(
 
   async function starteBegehung(): Promise<void> {
     if (speicherblockiert.value || !protokollKontext.value || startzustand.value.art === 'laeuft') return
+    const startpruefung = pruefeBegehungsstart(protokollKontext.value)
+    if (!startpruefung.gueltig) {
+      startzustand.value = { art: 'blockiert', meldung: startpruefung.meldung }
+      return
+    }
     startzustand.value = { art: 'laeuft' }
     try {
       const neueBegehung = erstelleBegehung(protokollKontext.value, undefined, aktiveFreigabeToken.value)
@@ -305,6 +324,7 @@ export function verwendeBegehung(
     speichereZwischenstand,
     starteBegehung,
     startLaeuft,
+    startBlockiert,
     startMeldung,
     speicherblockiert,
     verbindungAktualisiert,

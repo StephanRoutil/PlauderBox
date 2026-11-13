@@ -15,6 +15,8 @@ datum: 2026-11-11
 
 Die produktiven mobilen Fachtypen und Ablaufregeln liegen ausschliesslich in `src/PlauderBox.Logik/Client/begehungsAblauf.ts`: Erzeugung, Vollständigkeit, Zuordnung, Wiederanlauf sowie FIFO-/Fehlerstopp werden direkt im Offline-Client ausgeführt und getestet. C# dupliziert diese Regeln nicht. `ErfassungsId.cs` validiert nur die tatsächlich serverrelevante Kennung am Transkriptionsendpunkt. Vue koordiniert den Ablauf.
 
+`pruefeBegehungsstart` bildet das Quality-Gate vor dem ersten lokalen Commit. Der geladene HappyHour-Kontext muss mindestens eine eindeutige gültige Person im Verteiler enthalten, weil `Wer` beim späteren Schreiben eines Protokollpunkts Pflicht ist. Ohne gültigen Verteiler verwendet `verwendeBegehung.ts` den typisierten Zustand `blockiert`; `BegehungStart.vue` sperrt den Start, erklärt die notwendige Korrektur in HappyHour und bietet den Rückweg zu einem neuen QR-Scan. Die Prüfung wird beim Laden und unmittelbar vor dem Start ausgeführt. Es wird weder eine lokale Begehung angelegt noch bestehender lokaler Speicher entfernt.
+
 `begehungsSpeicher.ts` kapselt IndexedDB für `PlauderBoxBegehungsspeicher`. Eine lokale Begehung enthält den gelesenen Protokollkontext, stabile Eintragskennungen, explizite Verweise auf Traktandum beziehungsweise vorbereiteten Protokollpunkt, Audio-Blobs, mehrere Bild-Blobs und Zustände. `committeEintrag` erzeugt zuerst einen Kandidaten, wartet dessen Commit ab und gibt ihn erst danach als neuen kanonischen Zustand zurück. Bei einem Fehler bleibt der Parentzustand unverändert; der Erfassungsentwurf behält exakt denselben Audio-Blob und dieselbe Erfassungs-ID für den sichtbaren Retry. Das Verwerfen rollt bei Commitfehler Audio und vorherigen Status zurück.
 
 `legacyWiederherstellung.ts` bildet aus den vorhandenen Legacy-Metadaten einen stabilen Importbezeichner. Bei bewusster Übernahme werden neue Begehung und Migrationsmarker in derselben IndexedDB-Transaktion bestätigt. Spätere Starts unterdrücken genau diesen Altbestand. Die ursprünglichen Legacy-Daten bleiben unangetastet und können nicht durch einen halbfertigen Import verloren gehen.
@@ -56,6 +58,8 @@ Freigabe-Tokens stehen technisch im Pfad des lesenden Vertrags. ASP.NET-Hosting-
 ## Relevante Dateien
 
 - `src/PlauderBox.UI.Client/src/App.vue`
+- `src/PlauderBox.UI.Client/src/composables/verwendeBegehung.ts`
+- `src/PlauderBox.UI.Client/src/components/BegehungStart.vue`
 - `src/PlauderBox.UI.Client/src/components/AktiveBegehung.vue`
 - `src/PlauderBox.UI.Client/src/components/EintragErfassen.vue`
 - `src/PlauderBox.UI.Client/src/components/VorgangsFortschritt.vue`

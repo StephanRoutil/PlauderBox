@@ -45,6 +45,7 @@ export {
   naechsterAusstehenderEintrag,
   normalisiereEintragProjektAnsprechpartner,
   normalisiereProjektAnsprechpartnerId,
+  pruefeBegehungsstart,
   uebernehmeAuswertung,
   zaehleAusstehendeAudioaufnahmen,
 } from '@logik/begehungsAblauf'

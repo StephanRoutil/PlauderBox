@@ -2,11 +2,12 @@
 import type { HappyHourProtokollKontext } from '@/services/happyHourProtokollKontext'
 import PlauderBoxMarke from './PlauderBoxMarke.vue'
 
-defineProps<{
+withDefaults(defineProps<{
   kontext: HappyHourProtokollKontext
   startLaeuft: boolean
+  startBlockiert?: boolean
   startMeldung: string
-}>()
+}>(), { startBlockiert: false })
 
 const emit = defineEmits<{
   zurueck: []
@@ -116,8 +117,11 @@ function formatiereDatum(wert: string): string {
       </section>
 
       <p v-if="startMeldung" class="status-banner is-error" role="alert">{{ startMeldung }}</p>
-      <button class="mobile-primary" type="button" :disabled="startLaeuft" @click="emit('starten')">
-        {{ startLaeuft ? 'Begehung wird gestartet …' : 'Begehung starten' }}
+      <button class="mobile-primary" type="button" :disabled="startLaeuft || startBlockiert" @click="emit('starten')">
+        {{ startLaeuft ? 'Begehung wird gestartet …' : startBlockiert ? 'Start nicht möglich' : 'Begehung starten' }}
+      </button>
+      <button v-if="startBlockiert" class="mobile-secondary" type="button" @click="emit('zurueck')">
+        Anderen QR-Code scannen
       </button>
       <p class="scan-hint">Die Begehung und alle neuen Einträge werden im internen App-Speicher gesichert.</p>
       <button class="danger-button" type="button" :disabled="startLaeuft" @click="emit('speicherLeeren')">

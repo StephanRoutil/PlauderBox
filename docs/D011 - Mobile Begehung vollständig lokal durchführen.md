@@ -43,6 +43,7 @@ Als Mitarbeiter möchte ich eine freigegebene Begehung auf dem Mobilgerät start
 - **AK27:** Die Kontrolle kennzeichnet jeden nicht ausgewerteten, fehlgeschlagenen oder unvollständigen Eintrag einzeln mit der konkreten Ursache. Eine sichtbare Aktion öffnet genau diesen Eintrag zur Korrektur.
 - **AK28:** Ein vollständig manuell erfasster Eintrag ohne Audio gilt nach der bewussten Übernahme als ausgewertet und blockiert den Begehungsabschluss nicht. Einträge mit Audio bleiben bis zur bestätigten KI-Auswertung ausstehend.
 - **AK29:** Der serverseitige KI-Schlüssel besitzt ein Ablaufdatum. Ab 30 Tagen vor Ablauf zeigt die App eine verständliche Warnung; nach Ablauf sperrt der Server die KI-Auswertung mit dem konkreten Datum. Prüfung und Meldung dürfen weder Schlüsselwert noch internen Dateipfad offenlegen. Während der Statusabfrage ist eine sichtbare Arbeitsanzeige vorhanden.
+- **AK30:** Vor dem ersten lokalen Start prüft PlauderBox, ob der geladene HappyHour-Kontext mindestens eine gültige Person im Verteiler enthält. Ohne gültigen Verteiler bleibt `Begehung starten` gesperrt, die Ursache und die notwendige Korrektur in HappyHour werden verständlich angezeigt und ein erneuter QR-Scan bleibt möglich. Dabei wird keine lokale Begehung angelegt und kein vorhandener lokaler Datenbestand entfernt.
 
 ## Abgrenzung und offene Integrationsgrenzen
 

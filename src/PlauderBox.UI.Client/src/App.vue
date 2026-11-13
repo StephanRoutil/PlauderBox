@@ -105,6 +105,7 @@ const {
   speichereZwischenstand,
   starteBegehung,
   startLaeuft,
+  startBlockiert,
   startMeldung,
   speicherblockiert,
   verbindungAktualisiert,
@@ -172,6 +173,7 @@ onBeforeUnmount(() => {
     v-else-if="ansicht === 'start' && protokollKontext"
     :kontext="protokollKontext"
     :start-laeuft="startLaeuft"
+    :start-blockiert="startBlockiert"
     :start-meldung="startMeldung"
     @zurueck="ansicht = 'scanner'"
     @starten="starteBegehung"

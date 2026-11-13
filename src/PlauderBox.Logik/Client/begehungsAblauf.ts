@@ -312,6 +312,22 @@ export function eindeutigeVerteileroptionen(
   });
 }
 
+export type BegehungsstartPruefung =
+  | Readonly<{ gueltig: true }>
+  | Readonly<{ gueltig: false; meldung: string }>;
+
+export function pruefeBegehungsstart(
+  protokoll: HappyHourProtokollKontext,
+): BegehungsstartPruefung {
+  if (eindeutigeVerteileroptionen(protokoll).length > 0)
+    return { gueltig: true };
+  return {
+    gueltig: false,
+    meldung:
+      "Das Protokoll besitzt keinen gültigen Verteiler. Bitte in HappyHour mindestens eine Person im Verteiler erfassen, eine neue Rundgangsfreigabe erstellen und den QR-Code erneut scannen.",
+  };
+}
+
 export function normalisiereProjektAnsprechpartnerId(
   protokoll: HappyHourProtokollKontext,
   kandidat: number | null | undefined,

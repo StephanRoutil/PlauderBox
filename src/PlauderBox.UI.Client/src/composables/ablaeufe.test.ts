@@ -39,7 +39,18 @@ function kontext(protokollId = 17): HappyHourProtokollKontext {
     objekt: null,
     mitarbeiter: { id: 1, name: 'Testperson' },
     traktanden: [],
-    verteiler: [],
+    verteiler: [
+      {
+        id: 7,
+        projektAnsprechpartnerId: 77,
+        person: 'Erika Muster',
+        firma: null,
+        funktion: 'Protokollführung',
+        istTeilnehmer: true,
+        istCc: false,
+        istProtokollschreiber: true,
+      },
+    ],
     protokollpunkte: [],
     protokollpunktArten: [],
   }
@@ -82,6 +93,24 @@ describe('Begehungsablauf', () => {
     expect(ablauf.begehung.value?.protokoll.protokollId).toBe(17)
     expect(ablauf.ansicht.value).toBe('aktiv')
     expect(ablauf.startLaeuft.value).toBe(false)
+  })
+
+  it('blockiert den Start ohne gültigen Verteiler vor dem ersten lokalen Commit', async () => {
+    const ohneVerteiler = kontext()
+    ohneVerteiler.verteiler = []
+    const abhaengigkeiten = begehungsAbhaengigkeiten({
+      kontextLaden: vi.fn(async () => ohneVerteiler),
+    })
+    const ablauf = verwendeBegehung(abhaengigkeiten)
+
+    await ablauf.verarbeiteQrCode(`plauderbox://begehung?freigabe=${token}`)
+    await ablauf.starteBegehung()
+
+    expect(ablauf.ansicht.value).toBe('start')
+    expect(ablauf.startBlockiert.value).toBe(true)
+    expect(ablauf.startMeldung.value).toContain('keinen gültigen Verteiler')
+    expect(abhaengigkeiten.speichern).not.toHaveBeenCalled()
+    expect(ablauf.begehung.value).toBeNull()
   })
 
   it('bereitet eine unterbrochene Auswertung beim Wiederanlauf erneut vor', async () => {
