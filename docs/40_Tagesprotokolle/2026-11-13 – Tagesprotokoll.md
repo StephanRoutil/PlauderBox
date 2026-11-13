@@ -52,6 +52,16 @@ Die während der KI-Anfrage nur in der Erfassungsansicht vorhandene Textmeldung 
 
 **Bestanden:** vollständiger `tests/Pruefe-Prototyp.ps1` mit Lint, TypeScript, 102 Frontendtests, Vue-Produktionsbuild, Offline-Browsertest, .NET-Release-Build, 12 Integrationstests, 9 Vertragstests, Offline-App-Shell und Token-Logschutz. Commit `6484eea` wurde nach `origin/main` übertragen und auf Delphi01 als Image `plauderbox:delphi01-test-6484eea` (`sha256:bb6523332992…`) bereitgestellt. HTTPS, neues Asset und UI-Marker, KI-Status, direkte HappyHour-Testverbindung und Containerlog sind geprüft; der vorherige Stand bleibt als Rückfallimage erhalten. **Nicht geprüft:** reale Sicht- und Touchprüfung auf dem Mobilgerät.
 
+## Session – HappyHour-Übergabe anzeigen und doppelte Gruppierung entfernen
+
+- **Startzeit:** nicht zuverlässig bestimmbar
+- **Endzeit:** nicht zuverlässig bestimmbar
+- **Dauer:** nicht zuverlässig bestimmbar
+
+Die globale Fortschrittskomponente wird nun sowohl für die KI-Auswertung als auch für die vollständige HappyHour-Übergabe verwendet. Während Punkte und Bilder übertragen werden, zeigt sie Spinner, animierten unbestimmten Balken und den Hinweis, die App geöffnet zu lassen. Das doppelte CBO-Feld `Traktandum` wurde aus der Erfassung entfernt. `Gruppe` ist damit das einzige fachliche Gruppierungsfeld für die zusammengefasste Protokollansicht und die Traktandenliste im HappyHour-PDF. Die frühere lokale Eigenschaft bleibt leer als reine Abwärtskompatibilität für bestehende IndexedDB-Daten erhalten und wird nicht übertragen.
+
+**Bestanden:** vollständiger `tests/Pruefe-Prototyp.ps1` mit Lint, TypeScript, 104 Frontendtests, Vue-Produktionsbuild, Offline-Browsertest, .NET-Release-Build, 12 Integrationstests, 9 Vertragstests, Offline-App-Shell und Token-Logschutz. **Nicht geprüft:** Delphi01-Bereitstellung und reale PDF-Kontrolle in HappyHour.
+
 ## Tagesgesamtzeit
 
 Nicht zuverlässig bestimmbar.

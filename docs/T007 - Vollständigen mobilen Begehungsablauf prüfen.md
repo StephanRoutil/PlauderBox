@@ -13,11 +13,12 @@ anforderung: D011
 ## Automatisierte Prüfungen
 
 - TypeScript-Typecheck für produktive Vue-Dateien.
-- Vitest: 102 Tests in 14 Dateien bestanden. Geprüft werden zusätzlich die normalisierte Zuständigkeit `Wer`, Verteilergrenzfälle, Legacy-Import und -Löschung, IndexedDB-Roundtrip, getrennte Kamera-/Galerieauswahl, Bildablehnungen, die einmalige Einzelbildsicherung sowie die verlustfreie Zusammenführung eines erneuerten HappyHour-Kontexts.
+- Vitest: 104 Tests in 14 Dateien bestanden. Geprüft werden zusätzlich die normalisierte Zuständigkeit `Wer`, Verteilergrenzfälle, Legacy-Import und -Löschung, IndexedDB-Roundtrip, getrennte Kamera-/Galerieauswahl, Bildablehnungen, die einmalige Einzelbildsicherung sowie die verlustfreie Zusammenführung eines erneuerten HappyHour-Kontexts.
 - Die Bildsicherung prüft Dateinamen und Einzeldateien sowie direkte Einzel-Downloads ohne Teilen-Dialog und ohne ZIP, einschliesslich 82 Bildern aus einer Benutzeraktion. Der mobile UI-Vertrag prüft getrennte Kamera- und Galerie-Eingaben.
 - Verhaltenstests prüfen zusätzlich die vollständig manuelle Erfassung ohne Audio, den sichtbaren KI-Laufzustand, die Ein-Klick-Auswertung ausstehender Offline-Aufnahmen, das bestätigte Leeren beider internen Datenspeicher und den Standardwert der Protokollpunktart für den nächsten neuen Eintrag.
 - Ein Regressionstest führt vier lokal bekannte HappyHour-Punkte, vier später hinzugekommene HappyHour-Punkte und einen lokalen, noch nicht übertragenen Punkt mit Bild zusammen. Er erwartet neun sichtbare Einträge, acht HappyHour-Zuordnungen, unveränderten Bild-Blob und eine erneut mögliche Übergabe. Ein zweiter Test ordnet einen inzwischen bestätigten lokalen Punkt über seine GUID ohne Duplikat zu. Wiederanlauf und lokaler Commit entfernen zusätzlich veraltete Übertragungsmarkierungen.
 - Komponententests prüfen die drei beschrifteten Headerbuttons samt Ereignissen und deaktivierten Zielen sowie die ansichtsunabhängige KI-Fortschrittsanzeige mit zugänglichem Status, Spinner und animiertem unbestimmtem Balken.
+- Weitere Verhaltenstests halten den typisierten Zustand während einer noch nicht bestätigten HappyHour-Übergabe auf `laeuft`, prüfen den dazugehörigen Statustext mit Spinner und Balken und stellen sicher, dass die Erfassung nur noch zwei CBO-Felder enthält und kein `Traktandum` mehr anzeigt.
 - Bestehende Tests für QR-Freigabe, HappyHour-Grenze und früheren lokalen Speicher bleiben Bestandteil des Laufs.
 - Vue-Produktionsbuild mit 39 transformierten Modulen einschliesslich Manifest, Service Worker und App-Icon: bestanden.
 - Docker-Buildkontextprüfung: Der Frontend-Stage kopiert `src/PlauderBox.Logik/Client` vor `pnpm run build` an den vom TypeScript-/Vite-Alias `@logik` erwarteten Pfad; `.dockerignore` schliesst ihn nicht aus: bestanden.
@@ -59,6 +60,7 @@ Dieser Bereitstellungsnachweis bestätigt den Serverbetrieb, nicht die vollstän
 9. Einen Punkt ohne Audio manuell erfassen, eine laufende KI-Auswertung beobachten, den Protokollpunktart-Standard am Folgepunkt prüfen und mehrere offline erfasste Aufnahmen aus der Kontrolle mit einer Aktion auswerten.
 10. Für ein bestehendes Protokoll mit lokal noch nicht übertragenem Punkt weitere Punkte direkt in HappyHour ergänzen, die Freigabe erneut bewusst bestätigen und den Code einlesen. Alle HappyHour-Punkte und der lokale Punkt müssen sichtbar sein; bei der anschliessenden Übergabe darf der lokale Punkt nicht ignoriert oder dupliziert werden.
 11. Während einer Audioauswertung zwischen Erfassung und Übersicht wechseln und prüfen, dass die KI-Fortschrittsanzeige bis zum Ergebnis sichtbar bleibt. Danach `‹ Back`, `Start` und `Beenden` in Erfassung, Offline-Hinweis, Kontrolle und Abschluss auf einem schmalen Mobilgerät bedienen.
+12. Die Übergabe an HappyHour starten und die Fortschrittsanzeige bis zur Bestätigung von Punkten und Bildern beobachten. In der Erfassung prüfen, dass nur `Gruppe` und kein zusätzliches CBO-Feld `Traktandum` vorhanden ist; anschliessend die Gruppierung und Traktandenliste im HappyHour-PDF kontrollieren.
 
 ## Bewertung
 

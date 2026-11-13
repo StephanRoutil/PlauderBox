@@ -6,10 +6,10 @@ import BegehungAbschluss from './BegehungAbschluss.vue'
 import BegehungKontrolle from './BegehungKontrolle.vue'
 import BegehungStart from './BegehungStart.vue'
 import EintragErfassen from './EintragErfassen.vue'
-import KiAuswertungsFortschritt from './KiAuswertungsFortschritt.vue'
 import MobileKopf from './MobileKopf.vue'
 import OfflineHinweis from './OfflineHinweis.vue'
 import QrCodeStart from './QrCodeStart.vue'
+import VorgangsFortschritt from './VorgangsFortschritt.vue'
 import type { AudioRekorder } from '@/services/audioRekorder'
 import type { BegehungEintrag, HappyHourProtokollKontext, LokaleBegehung } from '@/services/begehungsSpeicher'
 
@@ -136,13 +136,27 @@ describe('mobile Komponenten', () => {
   })
 
   it('zeigt während der KI-Anfrage eine sichtbare unbestimmte Fortschrittsanzeige', () => {
-    const wrapper = mount(KiAuswertungsFortschritt)
+    const wrapper = mount(VorgangsFortschritt)
 
     expect(wrapper.get('[role="status"]').attributes('aria-live')).toBe('assertive')
     expect(wrapper.text()).toContain('KI-Auswertung läuft')
     expect(wrapper.text()).toContain('Audio wird übertragen und ausgewertet')
     expect(wrapper.find('.spinner').exists()).toBe(true)
-    expect(wrapper.find('.ki-fortschritt__balken').exists()).toBe(true)
+    expect(wrapper.find('.vorgangs-fortschritt__balken').exists()).toBe(true)
+  })
+
+  it('zeigt denselben Fortschritt mit dem Statustext der HappyHour-Übergabe', () => {
+    const wrapper = mount(VorgangsFortschritt, {
+      props: {
+        titel: 'Übergabe an HappyHour läuft',
+        hinweis: 'Protokollpunkte und Bilder werden übertragen. Bitte die App geöffnet lassen.',
+      },
+    })
+
+    expect(wrapper.get('[role="status"]').attributes('aria-label')).toBe('Übergabe an HappyHour läuft')
+    expect(wrapper.text()).toContain('Protokollpunkte und Bilder werden übertragen')
+    expect(wrapper.find('.spinner').exists()).toBe(true)
+    expect(wrapper.find('.vorgangs-fortschritt__balken').exists()).toBe(true)
   })
 
   it('zeigt den laufenden Startzustand und sperrt die Startaktion', () => {
@@ -238,7 +252,9 @@ describe('mobile Komponenten', () => {
     })
     expect(wrapper.text()).toContain('Foto aufnehmen')
     expect(wrapper.text()).toContain('Aus Galerie wählen')
-    expect(wrapper.findAll('select')[2]!.findAll('option')).toHaveLength(2)
+    expect(wrapper.text()).not.toContain('Traktandum')
+    expect(wrapper.findAll('select')).toHaveLength(2)
+    expect(wrapper.findAll('select')[1]!.findAll('option')).toHaveLength(2)
   })
 
   it('übernimmt einen vollständig manuell erfassten Eintrag ohne Audio', async () => {

@@ -229,15 +229,6 @@ async function geheZuKontrolle(): Promise<void> {
         <p class="eyebrow">Zuordnung</p>
         <h1>Wo gehört die Feststellung hin?</h1>
         <label
-          ><span>Traktandum <small>optional</small></span
-          ><select v-model="entwurf.traktandum" @change="zwischenspeichern">
-            <option value="">Kein Traktandum gewählt</option>
-            <option v-for="traktandum in protokoll.traktanden" :key="traktandum" :value="traktandum">
-              {{ traktandum }}
-            </option>
-          </select></label
-        >
-        <label
           ><span>Protokollpunkt</span
           ><input
             :value="

@@ -822,7 +822,7 @@ footer {
   outline: 4px solid rgba(23, 134, 103, 0.35);
 }
 
-.ki-fortschritt {
+.vorgangs-fortschritt {
   width: min(calc(100% - 24px), 456px);
   position: fixed;
   z-index: 1000;
@@ -838,33 +838,33 @@ footer {
   background: #f1faf7;
   box-shadow: 0 18px 50px rgba(31, 37, 40, 0.2);
 }
-.ki-fortschritt__inhalt {
+.vorgangs-fortschritt__inhalt {
   min-width: 0;
   display: grid;
   flex: 1;
   gap: 3px;
 }
-.ki-fortschritt__inhalt > span:not(.ki-fortschritt__balken) {
+.vorgangs-fortschritt__inhalt > span:not(.vorgangs-fortschritt__balken) {
   color: var(--muted);
   font-size: 12px;
   line-height: 1.35;
 }
-.ki-fortschritt__balken {
+.vorgangs-fortschritt__balken {
   height: 5px;
   margin-top: 6px;
   overflow: hidden;
   border-radius: 99px;
   background: #d9e9e4;
 }
-.ki-fortschritt__balken i {
+.vorgangs-fortschritt__balken i {
   width: 45%;
   height: 100%;
   display: block;
   border-radius: inherit;
   background: var(--green);
-  animation: ki-fortschritt 1.15s ease-in-out infinite alternate;
+  animation: vorgangs-fortschritt 1.15s ease-in-out infinite alternate;
 }
-@keyframes ki-fortschritt {
+@keyframes vorgangs-fortschritt {
   from { transform: translateX(-10%); }
   to { transform: translateX(135%); }
 }

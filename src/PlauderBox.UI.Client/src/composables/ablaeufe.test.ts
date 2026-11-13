@@ -236,6 +236,35 @@ describe('Auswertungswarteschlange', () => {
 })
 
 describe('HappyHour-Übergabe', () => {
+  it('kennzeichnet die gesamte laufende HappyHour-Übergabe bis zur Bestätigung', async () => {
+    const lokal = begehung('lokal_abgeschlossen')
+    let bestaetigeUebergabe: (() => void) | undefined
+    const uebergeben = vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          bestaetigeUebergabe = resolve
+        }),
+    )
+    const ablauf = verwendeHappyHourUebergabe({
+      begehung: ref<LokaleBegehung | null>(lokal),
+      ansicht: ref('abschluss'),
+      scannerMeldung: ref(''),
+      kontextLaden: vi.fn(async () => kontext()),
+      speichern: vi.fn(async () => undefined),
+      uebergeben,
+    })
+
+    const vorgang = ablauf.uebergibAnHappyHour()
+    expect(ablauf.uebergabezustand.value).toEqual({ art: 'laeuft', vorgang: 'uebergabe' })
+    expect(ablauf.uebergabeLaeuft.value).toBe(true)
+
+    bestaetigeUebergabe!()
+    await vorgang
+
+    expect(ablauf.uebergabezustand.value).toEqual({ art: 'bereit' })
+    expect(ablauf.uebergabeLaeuft.value).toBe(false)
+  })
+
   it('zeigt einen Übergabefehler und erhält die lokale Begehung', async () => {
     const lokal = begehung('lokal_abgeschlossen')
     const begehungRef = ref<LokaleBegehung | null>(lokal)

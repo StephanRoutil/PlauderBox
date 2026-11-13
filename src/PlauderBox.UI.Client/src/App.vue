@@ -6,9 +6,9 @@ import BegehungKontrolle from '@/components/BegehungKontrolle.vue'
 import BegehungStart from '@/components/BegehungStart.vue'
 import EintragAuswertung from '@/components/EintragAuswertung.vue'
 import EintragErfassen from '@/components/EintragErfassen.vue'
-import KiAuswertungsFortschritt from '@/components/KiAuswertungsFortschritt.vue'
 import OfflineHinweis from '@/components/OfflineHinweis.vue'
 import QrCodeStart from '@/components/QrCodeStart.vue'
+import VorgangsFortschritt from '@/components/VorgangsFortschritt.vue'
 import { verwendeBegehung } from '@/composables/verwendeBegehung'
 import { verwendeAuswertungsWarteschlange } from '@/composables/verwendeAuswertungsWarteschlange'
 import { verwendeHappyHourUebergabe } from '@/composables/verwendeHappyHourUebergabe'
@@ -108,6 +108,7 @@ const {
   beginneFreigabeErneuerung,
   uebergabeLaeuft,
   uebergabeMeldung,
+  uebergabezustand,
   uebergibAnHappyHour,
   verarbeiteErneuerteFreigabe,
 } = happyHourAblauf
@@ -124,7 +125,12 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <KiAuswertungsFortschritt v-if="auswertungszustand.art === 'laeuft'" />
+  <VorgangsFortschritt v-if="auswertungszustand.art === 'laeuft'" />
+  <VorgangsFortschritt
+    v-else-if="uebergabezustand.art === 'laeuft' && uebergabezustand.vorgang === 'uebergabe'"
+    titel="Übergabe an HappyHour läuft"
+    hinweis="Protokollpunkte und Bilder werden übertragen. Bitte die App geöffnet lassen."
+  />
   <QrCodeStart
     v-if="ansicht === 'scanner'"
     :externe-meldung="scannerMeldung"
