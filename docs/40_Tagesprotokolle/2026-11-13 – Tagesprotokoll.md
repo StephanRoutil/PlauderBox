@@ -164,6 +164,14 @@ Das unabhängige Quality-Gate beanstandete vor der Bereitstellung, dass der opti
 
 Der Quality-Agent erteilte nach der Korrektur die Freigabe. Commit `9c42dfc` wurde nach `origin/main` übertragen und auf Delphi01 als `plauderbox:delphi01-test-9c42dfc` (`sha256:8f9c9b038f84…`) aktiviert. Internes HTTPS, KI-Bereitschaft, Version `1.1.2`, neues Frontend-Asset und beide konkreten Startdialogtexte sind bestanden; der vorherige Stand `1.1.1` bleibt als Rückfallimage erhalten. **Nicht geprüft:** reale Mobilprüfung mit nachträglich ergänztem Verteiler und aktualisierter HappyHour-Freigabe. **Nicht anwendbar:** Änderung an Caddy, DNS, Firewall, FileBox oder PostgreSQL.
 
+## Session – Fehlende Protokollpunktart direkt anzeigen
+
+- **Startzeit:** nicht zuverlässig bestimmbar
+- **Endzeit:** nicht zuverlässig bestimmbar
+- **Dauer:** nicht zuverlässig bestimmbar
+
+Version `1.1.3` korrigiert die Pflichtfeldmeldung beim einzelnen Eintrag. Die KI erfindet weiterhin keine Protokollpunktart. Fehlt die bewusste Auswahl beim Auswerten eines Diktats oder beim manuellen Übernehmen, erscheint sofort ein modaler Dialog statt nur des Hinweises am Seitenende. Die Dialogaktion führt direkt zum Auswahlfeld; die gewählte Art bleibt wie bisher Standard für nachfolgende neue Einträge derselben Begehung. **Nicht geprüft:** Dockerbuild, Bereitstellung und reale Mobilprüfung von Version `1.1.3`. **Nicht anwendbar:** Änderung des HappyHour-Vertrags oder neue Paketabhängigkeit.
+
 ## Tagesgesamtzeit
 
 Nicht zuverlässig bestimmbar.

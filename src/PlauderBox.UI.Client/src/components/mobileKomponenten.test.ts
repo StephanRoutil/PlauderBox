@@ -115,7 +115,7 @@ describe('mobile Komponenten', () => {
 
     expect(wrapper.get('img').attributes('src')).toBe('/icon.svg')
     expect(wrapper.text()).toContain('PlauderBox')
-    expect(wrapper.text()).toContain('v1.1.2')
+    expect(wrapper.text()).toContain('v1.1.3')
   })
 
   it('zeigt die Begehungsnavigation als drei beschriftete Headerbuttons', async () => {
@@ -336,12 +336,29 @@ describe('mobile Komponenten', () => {
     expect(wrapper.emitted('bearbeiten')).toEqual([[fehlerhaft.id]])
   })
 
-  it('zeigt fehlende Protokollpunktart als zugänglichen Fehler', async () => {
+  it('zeigt die fehlende Protokollpunktart sofort im Dialog und führt zum Auswahlfeld', async () => {
     const wrapper = mount(EintragErfassen, {
+      attachTo: document.body,
       props: { eintrag: erstelleEintrag(), protokoll, online: true, speichern: vi.fn(), audioRekorder },
     })
     await wrapper.get('button.mobile-primary').trigger('click')
+    await flushPromises()
+
     expect(wrapper.get('[role="alert"]').text()).toBe('Bitte die Art des Protokollpunkts wählen.')
+    const dialog = wrapper.get('[role="dialog"]')
+    expect(dialog.text()).toContain('Pflichtfeld fehlt')
+    expect(dialog.text()).toContain('Art des Protokollpunkts wählen')
+    expect(dialog.text()).toContain('wird danach für neue Einträge als Standard übernommen')
+    expect(document.activeElement).toBe(dialog.get('#protokollpunktart-dialog-titel').element)
+    expect(wrapper.get('main').attributes('inert')).toBeDefined()
+
+    await dialog.get('button').trigger('click')
+    await flushPromises()
+
+    expect(wrapper.find('[role="dialog"]').exists()).toBe(false)
+    expect(wrapper.get('main').attributes('inert')).toBeUndefined()
+    expect(document.activeElement).toBe(wrapper.findAll('select')[0]!.element)
+    wrapper.unmount()
   })
 
   it('zeigt deduplizierte Zuständigkeiten und getrennte Bildquellen', () => {

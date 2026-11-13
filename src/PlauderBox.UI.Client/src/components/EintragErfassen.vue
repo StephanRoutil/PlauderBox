@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import MobileKopf from './MobileKopf.vue'
 import {
   eindeutigeVerteileroptionen,
@@ -48,6 +48,10 @@ const speicherstatus = ref<'bereit' | 'speichert' | 'gespeichert' | 'fehler'>(
   props.eintrag.audio || props.eintrag.status === 'ausgewertet' ? 'gespeichert' : 'bereit',
 )
 const bildUrls = ref<Record<string, string>>({})
+const protokollpunktArtAuswahl = ref<HTMLSelectElement | null>(null)
+const protokollpunktArtDialog = ref<HTMLElement | null>(null)
+const protokollpunktArtDialogTitel = ref<HTMLElement | null>(null)
+const protokollpunktArtDialogSichtbar = ref(false)
 let timer = 0
 let gestartetAm = 0
 
@@ -187,9 +191,47 @@ function zeigeSpeicherfehler(fehler: unknown): void {
       : 'Die lokale Sicherung ist fehlgeschlagen. Die App bitte geöffnet lassen und erneut versuchen.'
 }
 
+async function zeigeProtokollpunktArtDialog(): Promise<void> {
+  protokollpunktArtDialogSichtbar.value = true
+  await nextTick()
+  protokollpunktArtDialogTitel.value?.focus()
+}
+
+function halteFokusImProtokollpunktArtDialog(ereignis: KeyboardEvent): void {
+  if (ereignis.key !== 'Tab' || !protokollpunktArtDialog.value) return
+  const elemente = Array.from(
+    protokollpunktArtDialog.value.querySelectorAll<HTMLElement>(
+      'button:not([disabled]), [href], [tabindex]:not([tabindex="-1"])',
+    ),
+  )
+  if (elemente.length === 0) {
+    ereignis.preventDefault()
+    protokollpunktArtDialogTitel.value?.focus()
+    return
+  }
+  const erstesElement = elemente[0]!
+  const letztesElement = elemente[elemente.length - 1]!
+  const aktivesElement = document.activeElement
+  if (ereignis.shiftKey && (aktivesElement === erstesElement || !elemente.includes(aktivesElement as HTMLElement))) {
+    ereignis.preventDefault()
+    letztesElement.focus()
+  } else if (!ereignis.shiftKey && aktivesElement === letztesElement) {
+    ereignis.preventDefault()
+    erstesElement.focus()
+  }
+}
+
+async function waehleProtokollpunktArt(): Promise<void> {
+  protokollpunktArtDialogSichtbar.value = false
+  await nextTick()
+  protokollpunktArtAuswahl.value?.scrollIntoView?.({ block: 'center', behavior: 'smooth' })
+  protokollpunktArtAuswahl.value?.focus()
+}
+
 function eintragSpeichern(): void {
   if (!entwurf.value.protokollpunktArtId) {
     meldung.value = 'Bitte die Art des Protokollpunkts wählen.'
+    void zeigeProtokollpunktArtDialog()
     return
   }
   if (!entwurf.value.projektAnsprechpartnerId) {
@@ -217,7 +259,35 @@ async function geheZuKontrolle(): Promise<void> {
 </script>
 
 <template>
-  <main class="begehung-shell">
+  <div
+    v-if="protokollpunktArtDialogSichtbar"
+    ref="protokollpunktArtDialog"
+    class="startvoraussetzungen-dialog"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="protokollpunktart-dialog-titel"
+    aria-describedby="protokollpunktart-dialog-beschreibung"
+    @keydown="halteFokusImProtokollpunktArtDialog"
+  >
+    <section class="startvoraussetzungen-dialog__inhalt">
+      <p class="eyebrow">Pflichtfeld fehlt</p>
+      <h2 id="protokollpunktart-dialog-titel" ref="protokollpunktArtDialogTitel" tabindex="-1">
+        Art des Protokollpunkts wählen
+      </h2>
+      <p id="protokollpunktart-dialog-beschreibung">
+        Die KI ergänzt Gruppe, Thema, Inhalt und Rechtsverweis. Die Art des Protokollpunkts muss beim ersten Eintrag
+        bewusst gewählt werden und wird danach für neue Einträge als Standard übernommen.
+      </p>
+      <button class="mobile-primary" type="button" @click="waehleProtokollpunktArt">
+        Art des Protokollpunkts wählen
+      </button>
+    </section>
+  </div>
+  <main
+    class="begehung-shell"
+    :inert="protokollpunktArtDialogSichtbar"
+    :aria-hidden="protokollpunktArtDialogSichtbar ? 'true' : undefined"
+  >
     <MobileKopf
       titel="Neuer Eintrag"
       navigation
@@ -241,6 +311,7 @@ async function geheZuKontrolle(): Promise<void> {
         <label
           ><span>Art des Protokollpunkts</span
           ><select
+            ref="protokollpunktArtAuswahl"
             v-model="entwurf.protokollpunktArtId"
             :disabled="entwurf.vorbereiteterProtokollpunktId !== null"
             @change="zwischenspeichern"
