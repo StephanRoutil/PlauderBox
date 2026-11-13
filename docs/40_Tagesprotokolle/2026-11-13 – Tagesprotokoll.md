@@ -50,7 +50,7 @@ Ein gemeldeter Wiederaufnahmefehler wurde reproduzierbar auf zwei Ursachen einge
 
 Die während der KI-Anfrage nur in der Erfassungsansicht vorhandene Textmeldung wurde durch eine ansichtsunabhängige Fortschrittsanzeige mit Spinner, animiertem unbestimmtem Balken und verständlichem Statustext ergänzt. Der mobile Kopf zeigt während der gestarteten Begehung die kleinen, beschrifteten Buttons `‹ Back`, `Start` und `Beenden`; aktive oder nicht verfügbare Ziele sind sichtbar deaktiviert. Beim Sprung aus der Erfassung zu Start oder Kontrolle wird der aktuelle Entwurf zuerst lokal gesichert.
 
-**Bestanden:** vollständiger `tests/Pruefe-Prototyp.ps1` mit Lint, TypeScript, 102 Frontendtests, Vue-Produktionsbuild, Offline-Browsertest, .NET-Release-Build, 12 Integrationstests, 9 Vertragstests, Offline-App-Shell und Token-Logschutz. **Nicht geprüft:** Bereitstellung auf Delphi01 sowie reale Sicht- und Touchprüfung auf dem Mobilgerät.
+**Bestanden:** vollständiger `tests/Pruefe-Prototyp.ps1` mit Lint, TypeScript, 102 Frontendtests, Vue-Produktionsbuild, Offline-Browsertest, .NET-Release-Build, 12 Integrationstests, 9 Vertragstests, Offline-App-Shell und Token-Logschutz. Commit `6484eea` wurde nach `origin/main` übertragen und auf Delphi01 als Image `plauderbox:delphi01-test-6484eea` (`sha256:bb6523332992…`) bereitgestellt. HTTPS, neues Asset und UI-Marker, KI-Status, direkte HappyHour-Testverbindung und Containerlog sind geprüft; der vorherige Stand bleibt als Rückfallimage erhalten. **Nicht geprüft:** reale Sicht- und Touchprüfung auf dem Mobilgerät.
 
 ## Tagesgesamtzeit
 
