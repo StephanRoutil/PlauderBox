@@ -59,6 +59,8 @@ anforderung: D011
 
 > **Aktualisierung vom 13.11.2026:** Version `1.1.2` aus Commit `9c42dfc` läuft als Image `plauderbox:delphi01-test-9c42dfc`, ID `sha256:8f9c9b038f84…`, in `Production` und verwendet weiterhin `https://test.siwako.ch`. Der Linux-Dockerbuild, interner Status, internes HTTPS, Frontendversion und die konkreten Dialogtexte für fehlenden Verteiler und fehlende Protokollpunktart sind bestanden; die Startlogs enthalten keine unbehandelte Ausnahme. Version `1.1.1` bleibt als Rückfallstand erhalten. **Nicht geprüft:** realer Mobilablauf nach Aktualisierung einer aktiven HappyHour-Freigabe.
 
+> **Aktualisierung vom 13.11.2026:** Version `1.1.3` aus Commit `958d3c0` läuft als Image `plauderbox:delphi01-test-958d3c0`, ID `sha256:2865c91700a4…`, in `Production` und verwendet weiterhin `https://test.siwako.ch`. Linux-Dockerbuild, interner Status, internes HTTPS, Frontendversion, beide Pflichtfeldwege und die identische SHA-256-Prüfsumme des neuen Quell- und Containerlogos sind bestanden. Die Startlogs enthalten keine unbehandelte Ausnahme. Der Product Owner bestätigte das neue Logo auf dem Mobilgerät als angekommen. Version `1.1.2` bleibt als Rückfallstand erhalten. **Nicht geprüft:** reale mobile Freigabeerneuerung.
+
 - Vollständiger Linux-Dockerbuild auf Delphi01 einschliesslich `src/PlauderBox.Logik/Client`: bestanden. Die Fotoerweiterung läuft als Image `sha256:f7f1d60381dd…`; der unmittelbar vorherige Stand ist als `plauderbox:delphi01-test-before-fotosicherung` markiert.
 - Anwendungs- und HTTPS-Container aus `/home/zeus/plauderbox-test-vorbereitung` gestartet: bestanden.
 - Root, Manifest, Service Worker und die gehashten JavaScript-/CSS-Assets liefern über internes HTTPS Status 200; Manifest-MIME-Typ korrekt: bestanden.

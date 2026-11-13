@@ -176,6 +176,8 @@ Das erste Quality-Gate fand zwei Restlücken: einen vorbereiteten lokalen Punkt 
 
 Die Nachprüfung zeigte, dass die erneuerte HappyHour-Art im bereits vorhandenen vorbereiteten Eintrag noch nicht gesetzt wurde. Die zentrale Zusammenführung übernimmt nun ID und Art des vorbereiteten Punkts aus dem aktualisierten HappyHour-Kontext, während lokale Texte, Audio und Bilder erhalten bleiben. Ein zusammenhängender Ablaufstest belegt Art `null` vor der Erneuerung, die korrigierte Art danach, das Rückkehrziel `erfassen` sowie den Medien- und Texterhalt.
 
+Der Quality-Agent schloss danach alle P2-/P3-Befunde und gab Commit `958d3c0` frei. Version `1.1.3` wurde als `plauderbox:delphi01-test-958d3c0` (`sha256:2865c91700a4…`) auf Delphi01 aktiviert. Internes HTTPS, KI-Bereitschaft, Version, beide Pflichtfeldtexte und die exakte Prüfsumme des neuen Logos sind bestanden. Der Product Owner bestätigte das neue Logo auf dem Mobilgerät als angekommen. Version `1.1.2` bleibt als Rückfallimage erhalten. **Nicht geprüft:** reale mobile Freigabeerneuerung. **Nicht anwendbar:** Änderungen an Olymp01, Caddy, DNS, Firewall, FileBox oder PostgreSQL.
+
 ## Tagesgesamtzeit
 
 Nicht zuverlässig bestimmbar.

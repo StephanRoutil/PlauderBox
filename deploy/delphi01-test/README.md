@@ -6,9 +6,9 @@ Die interne Testumgebung läuft auf Delphi01 aus `/home/zeus/plauderbox-test-vor
 
 | Bestandteil | Stand |
 |---|---|
-| Anwendung | Version `1.1.2` aus `plauderbox:delphi01-test-9c42dfc` |
-| Image-ID | `sha256:8f9c9b038f84…` |
-| Rückfallimage | vorheriger Stand `plauderbox:delphi01-test-a24e374` |
+| Anwendung | Version `1.1.3` aus `plauderbox:delphi01-test-958d3c0` |
+| Image-ID | `sha256:2865c91700a4…` |
+| Rückfallimage | vorheriger Stand `plauderbox:delphi01-test-9c42dfc` |
 | Anwendungslistener | ausschliesslich `127.0.0.1:5187` auf Delphi01 |
 | interner HTTPS-Zugriff | `https://192.168.68.8` über den eigenen Caddy-Container |
 | Zertifikatsdownload | `http://192.168.68.8:8080/delphi01-root.crt` |
