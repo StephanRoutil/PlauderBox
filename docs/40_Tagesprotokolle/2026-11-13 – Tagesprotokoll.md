@@ -82,6 +82,16 @@ Die fehlgeschlagenen Auswertungen auf Delphi01 wurden anhand der redigierten Ser
 
 **Bestanden:** vollständiger `tests/Pruefe-Prototyp.ps1` mit Versionsabgleich, Lint, TypeScript, 107 Frontendtests, Vue-Produktionsbuild, Offline-Browsertest, .NET-Release-Build, 12 Integrationstests, 9 Vertragstests, Offline-App-Shell und Token-Logschutz. Darin enthalten sind HTTP-410-Klassifikation, Erhalt des Audio-Blobs und Rückkehr zur vorherigen Ansicht. Commit `e0c71e2` und Tag `v1.0.2` wurden nach `origin` übertragen. Version `1.0.2` läuft auf Delphi01 als Image `plauderbox:delphi01-test-e0c71e2` (`sha256:cb0de38438d0…`); HTTPS, eingebettete Version und Fehlermeldung, KI-Status, HappyHour-Negativtest und Containerlog sind geprüft. **Nicht geprüft:** reale Erneuerung und anschliessende Audioauswertung mit HappyHour auf dem Mobilgerät. **Nächster Schritt:** Mobiltest mit einer neuen Freigabe desselben Protokolls.
 
+## Session – Offenen Eintrag in der Kontrolle auffindbar machen
+
+- **Startzeit:** nicht zuverlässig bestimmbar
+- **Endzeit:** nicht zuverlässig bestimmbar
+- **Dauer:** nicht zuverlässig bestimmbar
+
+In der Kontrollansicht zeigte der Zähler zwar einen offenen Eintrag, die Liste kennzeichnete aber weder den betroffenen Punkt noch den Grund ausreichend sichtbar. Version `1.0.3` hebt jeden nicht ausgewerteten, fehlgeschlagenen oder unvollständigen Eintrag einzeln hervor, kombiniert die zutreffenden Ursachen und zeigt die explizite Aktion `Öffnen und korrigieren`. Der gesamte Eintrag bleibt antippbar und öffnet über seine stabile ID genau den betroffenen Punkt.
+
+**Bestanden:** vollständiger `tests/Pruefe-Prototyp.ps1` mit Versionsabgleich, Lint, TypeScript, 108 Frontendtests, Vue-Produktionsbuild, Offline-Browsertest, .NET-Release-Build, 12 Integrationstests, 9 Vertragstests, Offline-App-Shell und Token-Logschutz. **Nicht geprüft:** Delphi01-Bereitstellung und reale Sicht-/Touchprüfung auf dem Mobilgerät. **Nächster Schritt:** Commit und Testbereitstellung von `1.0.3`.
+
 ## Tagesgesamtzeit
 
 Nicht zuverlässig bestimmbar.

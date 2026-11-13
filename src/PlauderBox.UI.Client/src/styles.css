@@ -1402,6 +1402,35 @@ footer {
   background: #f5f3ef;
   outline: 2px solid #ef7562;
 }
+.entry-list-item--offen {
+  margin: 5px 0;
+  border: 1px solid #ed9b8d;
+  border-radius: 11px;
+  background: #fff4f1;
+}
+.entry-list-item__status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #a13e2e;
+  font-size: 10px;
+  font-weight: 800;
+}
+.entry-list-item__status span {
+  width: 16px;
+  height: 16px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 50%;
+  color: #fff;
+  background: #c84d39;
+}
+.entry-list-item__aktion {
+  margin-top: 4px;
+  color: #a13e2e;
+  font-size: 11px;
+  font-weight: 800;
+}
 .entry-list-item strong {
   font-size: 12px;
 }

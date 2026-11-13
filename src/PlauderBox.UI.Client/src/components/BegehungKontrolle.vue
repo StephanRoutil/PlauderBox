@@ -1,7 +1,12 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import MobileKopf from './MobileKopf.vue'
-import { gruppiereEintraege, istEintragUnvollstaendig, type LokaleBegehung } from '@/services/begehungsSpeicher'
+import {
+  gruppiereEintraege,
+  istEintragUnvollstaendig,
+  type BegehungEintrag,
+  type LokaleBegehung,
+} from '@/services/begehungsSpeicher'
 const props = withDefaults(defineProps<{
   begehung: LokaleBegehung
   online?: boolean
@@ -16,6 +21,14 @@ const offen = computed(
     props.begehung.eintraege.filter((eintrag) => eintrag.status !== 'ausgewertet' || istEintragUnvollstaendig(eintrag))
       .length,
 )
+
+function ermittleOffenGrund(eintrag: BegehungEintrag): string {
+  const gruende: string[] = []
+  if (eintrag.status === 'fehler') gruende.push('Auswertung fehlgeschlagen')
+  else if (eintrag.status !== 'ausgewertet') gruende.push('Noch nicht ausgewertet')
+  if (istEintragUnvollstaendig(eintrag)) gruende.push('Angaben unvollständig')
+  return gruende.join(' · ')
+}
 </script>
 
 <template>
@@ -64,11 +77,19 @@ const offen = computed(
             :key="eintrag.id"
             type="button"
             class="entry-list-item"
+            :class="{ 'entry-list-item--offen': ermittleOffenGrund(eintrag) }"
+            :data-offen="ermittleOffenGrund(eintrag) ? 'true' : undefined"
             @click="$emit('bearbeiten', eintrag.id)"
           >
+            <span v-if="ermittleOffenGrund(eintrag)" class="entry-list-item__status">
+              <span aria-hidden="true">!</span>{{ ermittleOffenGrund(eintrag) }}
+            </span>
             <strong>{{ eintrag.thema || 'Noch ohne Thema' }}</strong><small>{{
               eintrag.inhalt || eintrag.status.replaceAll('_', ' ')
             }}</small>
+            <span v-if="ermittleOffenGrund(eintrag)" class="entry-list-item__aktion">
+              Öffnen und korrigieren →
+            </span>
           </button>
         </details>
       </section>

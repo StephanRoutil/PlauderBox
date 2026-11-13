@@ -40,6 +40,7 @@ Als Mitarbeiter möchte ich eine freigegebene Begehung auf dem Mobilgerät start
 - **AK24:** Während der vollständigen Übergabe an HappyHour bleibt eine deutlich sichtbare Fortschrittsanzeige mit Spinner, unbestimmtem Balken und Statustext eingeblendet. Sie endet erst, nachdem Protokollpunkte und Bilder bestätigt wurden oder ein verständlicher Fehler angezeigt wird.
 - **AK25:** Die installierte PWA und jede App-Kopfzeile verwenden dasselbe PlauderBox-Icon. Jede Kopfzeile zeigt zusätzlich die tatsächlich gebaute dreiteilige Version an.
 - **AK26:** Wird eine Audioauswertung wegen einer abgelaufenen oder widerrufenen Rundgangsfreigabe abgewiesen, bleiben Audio und Eintrag lokal erhalten. Die App führt unmittelbar zur Erneuerung für dasselbe Protokoll und kehrt danach zur vorherigen Ansicht zurück, damit die Auswertung erneut ausgelöst werden kann.
+- **AK27:** Die Kontrolle kennzeichnet jeden nicht ausgewerteten, fehlgeschlagenen oder unvollständigen Eintrag einzeln mit der konkreten Ursache. Eine sichtbare Aktion öffnet genau diesen Eintrag zur Korrektur.
 
 ## Abgrenzung und offene Integrationsgrenzen
 

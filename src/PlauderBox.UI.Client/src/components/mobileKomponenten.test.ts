@@ -114,7 +114,7 @@ describe('mobile Komponenten', () => {
 
     expect(wrapper.get('img').attributes('src')).toBe('/icon.svg')
     expect(wrapper.text()).toContain('PlauderBox')
-    expect(wrapper.text()).toContain('v1.0.2')
+    expect(wrapper.text()).toContain('v1.0.3')
   })
 
   it('zeigt die Begehungsnavigation als drei beschriftete Headerbuttons', async () => {
@@ -245,6 +245,31 @@ describe('mobile Komponenten', () => {
     await taste!.trigger('click')
 
     expect(wrapper.emitted('auswerten')).toHaveLength(1)
+  })
+
+  it('kennzeichnet den offenen Eintrag und öffnet genau diesen zur Korrektur', async () => {
+    const rundgang = erstelleBegehung()
+    const fertig = rundgang.eintraege[0]!
+    fertig.protokollpunktArtId = 5
+    fertig.gruppe = 'Arbeitssicherheit'
+    fertig.thema = 'Geländer'
+    fertig.inhalt = 'Geländer ist in Ordnung.'
+    const fehlerhaft = erstelleEintrag()
+    fehlerhaft.id = '10000000-0000-4000-8000-000000000002'
+    fehlerhaft.status = 'fehler'
+    fehlerhaft.gruppe = 'Organisation'
+    fehlerhaft.thema = 'Offline-Termin'
+    fehlerhaft.fehler = 'Die Auswertung ist fehlgeschlagen.'
+    rundgang.eintraege.push(fehlerhaft)
+    const wrapper = mount(BegehungKontrolle, { props: { begehung: rundgang, online: true } })
+
+    const offenerEintrag = wrapper.get('[data-offen="true"]')
+    expect(offenerEintrag.text()).toContain('Auswertung fehlgeschlagen')
+    expect(offenerEintrag.text()).toContain('Angaben unvollständig')
+    expect(offenerEintrag.text()).toContain('Öffnen und korrigieren')
+
+    await offenerEintrag.trigger('click')
+    expect(wrapper.emitted('bearbeiten')).toEqual([[fehlerhaft.id]])
   })
 
   it('zeigt fehlende Protokollpunktart als zugänglichen Fehler', async () => {

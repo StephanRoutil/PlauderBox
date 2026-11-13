@@ -29,6 +29,8 @@ Die Erfassung zeigt kein separates Feld `Traktandum`. `Gruppe` wird als einziges
 
 `MobileKopf.vue` zeigt nach Beginn der Begehung die drei beschrifteten Kurznavigationen `‹ Back`, `Start` und `Beenden`. Die einzelnen Ansichten binden diese an Rücksprung, aktive Begehungsübersicht und Kontrolle; das aktuelle oder nicht verfügbare Ziel bleibt sichtbar deaktiviert. `EintragErfassen.vue` sichert beim Sprung zu Start oder Kontrolle zuerst den aktuellen Entwurf und wechselt nur nach erfolgreichem lokalem Commit.
 
+`BegehungKontrolle.vue` hebt jeden offenen Eintrag einzeln hervor. Die Kennzeichnung unterscheidet `Auswertung fehlgeschlagen`, `Noch nicht ausgewertet` und `Angaben unvollständig`, kann mehrere Ursachen kombinieren und bietet sichtbar `Öffnen und korrigieren`. Die Aktion öffnet anhand der stabilen Eintrags-ID genau den betroffenen Eintrag.
+
 `PlauderBoxMarke.vue` bildet die gemeinsame Marke für Scanner, Begehungsstart und alle weiteren App-Kopfzeilen. Sie verwendet dasselbe `/icon.svg` wie das PWA-Manifest und zeigt die beim Vite-Build aus `package.json` eingebettete dreiteilige Version. `tests/Pruefe-Prototyp.ps1` verlangt zusätzlich, dass diese Frontendversion mit der Version in `PlauderBox.UI.csproj` übereinstimmt.
 
 `EintragErfassen.vue` trennt die Bildquellen: `Foto aufnehmen` verwendet einen Datei-Input mit `capture="environment"`; `Aus Galerie wählen` verwendet einen eigenen Mehrfach-Datei-Input ohne `capture`. Beide Wege übernehmen Bilder über dieselbe Validierung und dieselbe atomare IndexedDB-Speicherung.
