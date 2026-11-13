@@ -2,7 +2,7 @@ name: plauderbox
 
 services:
   app:
-    image: plauderbox:olymp01-live-20261112-images
+    image: plauderbox:olymp01-live-1.1.0-59ae459
     user: "1000:1000"
     restart: unless-stopped
     read_only: true
@@ -13,7 +13,7 @@ services:
       PlauderBox__Url: http://0.0.0.0:5187
       PlauderBox__ErlaubterUrsprung: https://plauderbox.routil.ch
       PlauderBox__ErlaubtesProxyNetz: 172.22.0.0/24
-      PlauderBox__HappyHour__Basisadresse: https://test.siwako.ch
+      PlauderBox__HappyHour__Basisadresse: https://happyhour.siwako.ch
       PlauderBox__KI__Schluesseldatei: /run/secrets/openai.json
     volumes:
       - ./secrets/openai.json:/run/secrets/openai.json:ro
