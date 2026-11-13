@@ -70,6 +70,16 @@ Live-Infrastruktur und produktive technische Anbindung an `happyhour.siwako.ch` 
 - Nur `plauderbox-app-1` wurde ersetzt. n8n, FileBox und beide PostgreSQL-Container liefen unverändert weiter. Die Schlüsseldatei blieb bei Eigentümer `1000:1000` und Modus `600`.
 - **Nicht geprüft:** reale mobile Bedienung des neuen Verteiler-Quality-Gates.
 
+### Version 1.1.3
+
+- Der Quality-Agent schloss für Commit `958d3c0` alle P2-/P3-Befunde. Der vollständige Pflichtprüflauf bestand mit 118 Frontendtests, Playwright-Offlinefall, .NET-Build ohne Warnungen, 14 Integrations- und 9 Vertragstests sowie Offline-App-Shell und Token-Logschutz.
+- Das Image `plauderbox:olymp01-live-1.1.3-958d3c0`, ID `sha256:9895b7ff1d51…`, wurde aktiviert. Die Compose-Rückfallsicherung liegt unter `/srv/backup/plauderbox/1.1.3-958d3c0/compose.yaml`.
+- Öffentlich liefern Root und `/api/v1/status` erfolgreich; das Frontend-Asset enthält Version `1.1.3` und beide Pflichtfeldwege. Die KI meldet bereit.
+- Die aktive Live-Konfiguration verwendet `https://happyhour.siwako.ch`, `https://plauderbox.routil.ch` und das begrenzte Proxy-Netz `172.22.0.0/24`. Der App-Container befindet sich nur in `plauderbox_proxy` und `plauderbox_egress`.
+- Das ausgelieferte Logo stimmt per SHA-256 exakt mit der freigegebenen Quelldatei überein. Der Product Owner hatte Logo und Dialogbox zuvor auf Delphi01 mobil abgenommen.
+- Nur `plauderbox-app-1` wurde ersetzt. Caddy, n8n, FileBox und beide PostgreSQL-Container liefen unverändert weiter.
+- **Nicht geprüft:** realer produktiver QR-, Audio-, Punkt- und Bild-End-to-End-Lauf.
+
 ## Verknüpfungen
 
 - [[E012 - Olymp01 als Live-System und Delphi01 als Testsystem betreiben]]

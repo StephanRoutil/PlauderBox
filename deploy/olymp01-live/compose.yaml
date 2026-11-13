@@ -2,7 +2,7 @@ name: plauderbox
 
 services:
   app:
-    image: plauderbox:olymp01-live-1.1.1-a24e374
+    image: plauderbox:olymp01-live-1.1.3-958d3c0
     user: "1000:1000"
     restart: unless-stopped
     read_only: true

@@ -178,6 +178,14 @@ Die Nachprüfung zeigte, dass die erneuerte HappyHour-Art im bereits vorhandenen
 
 Der Quality-Agent schloss danach alle P2-/P3-Befunde und gab Commit `958d3c0` frei. Version `1.1.3` wurde als `plauderbox:delphi01-test-958d3c0` (`sha256:2865c91700a4…`) auf Delphi01 aktiviert. Internes HTTPS, KI-Bereitschaft, Version, beide Pflichtfeldtexte und die exakte Prüfsumme des neuen Logos sind bestanden. Der Product Owner bestätigte das neue Logo auf dem Mobilgerät als angekommen. Version `1.1.2` bleibt als Rückfallimage erhalten. **Nicht geprüft:** reale mobile Freigabeerneuerung. **Nicht anwendbar:** Änderungen an Olymp01, Caddy, DNS, Firewall, FileBox oder PostgreSQL.
 
+## Session – Version 1.1.3 auf Olymp01 freigeben
+
+- **Startzeit:** nicht zuverlässig bestimmbar
+- **Endzeit:** nicht zuverlässig bestimmbar
+- **Dauer:** nicht zuverlässig bestimmbar
+
+Nach bestätigtem Mobiltest von Logo und Dialogbox wurde Commit `958d3c0` als `plauderbox:olymp01-live-1.1.3-958d3c0` (`sha256:9895b7ff1d51…`) auf Olymp01 aktiviert. Die aktive Live-Konfiguration verwendet weiterhin `https://happyhour.siwako.ch`, `https://plauderbox.routil.ch` und das begrenzte Proxy-Netz. Öffentlich bestanden Version `1.1.3`, HTTPS, KI-Status, beide Pflichtfeldwege und die exakte Logo-Prüfsumme. Ausschliesslich `plauderbox-app-1` wurde ersetzt; der vorherige Compose-Stand wurde unter `/srv/backup/plauderbox/1.1.3-958d3c0/compose.yaml` gesichert. **Nicht geprüft:** realer produktiver QR-, Audio-, Punkt- und Bild-End-to-End-Lauf. **Nicht anwendbar:** Änderungen an Caddy, DNS, Firewall, n8n, FileBox oder PostgreSQL.
+
 ## Tagesgesamtzeit
 
 Nicht zuverlässig bestimmbar.
