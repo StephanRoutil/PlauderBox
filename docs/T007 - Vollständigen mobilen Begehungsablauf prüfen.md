@@ -57,6 +57,8 @@ anforderung: D011
 
 > **Aktualisierung vom 13.11.2026:** Version `1.1.1` aus Commit `a24e374` läuft als Image `plauderbox:delphi01-test-a24e374`, ID `sha256:cc0124a78d67…`, in `Production` und verwendet `https://test.siwako.ch`. Interner Status, Frontendversion und HTTP 410 für einen synthetischen unbekannten Freigabetoken sind bestanden; die Startlogs enthalten keine unbehandelte Ausnahme. Version `1.1.0` bleibt als Rückfallstand erhalten. **Nicht geprüft:** reale Sicht- und Touchprüfung des Verteiler-Quality-Gates sowie Start nach Ergänzung des Verteilers.
 
+> **Aktualisierung vom 13.11.2026:** Version `1.1.2` aus Commit `9c42dfc` läuft als Image `plauderbox:delphi01-test-9c42dfc`, ID `sha256:8f9c9b038f84…`, in `Production` und verwendet weiterhin `https://test.siwako.ch`. Der Linux-Dockerbuild, interner Status, internes HTTPS, Frontendversion und die konkreten Dialogtexte für fehlenden Verteiler und fehlende Protokollpunktart sind bestanden; die Startlogs enthalten keine unbehandelte Ausnahme. Version `1.1.1` bleibt als Rückfallstand erhalten. **Nicht geprüft:** realer Mobilablauf nach Aktualisierung einer aktiven HappyHour-Freigabe.
+
 - Vollständiger Linux-Dockerbuild auf Delphi01 einschliesslich `src/PlauderBox.Logik/Client`: bestanden. Die Fotoerweiterung läuft als Image `sha256:f7f1d60381dd…`; der unmittelbar vorherige Stand ist als `plauderbox:delphi01-test-before-fotosicherung` markiert.
 - Anwendungs- und HTTPS-Container aus `/home/zeus/plauderbox-test-vorbereitung` gestartet: bestanden.
 - Root, Manifest, Service Worker und die gehashten JavaScript-/CSS-Assets liefern über internes HTTPS Status 200; Manifest-MIME-Typ korrekt: bestanden.

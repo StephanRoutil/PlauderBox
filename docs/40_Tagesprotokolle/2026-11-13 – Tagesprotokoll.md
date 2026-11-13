@@ -162,6 +162,8 @@ Version `1.1.2` erweitert das Start-Quality-Gate um die zwingend benötigte Prot
 
 Das unabhängige Quality-Gate beanstandete vor der Bereitstellung, dass der optisch modale Startdialog den Tastaturfokus noch nicht im Dialog hielt. Nach Freigabe des Befunds wurde die Hintergrundansicht während der Anzeige mit `inert` gesperrt, die Tab-Navigation vorwärts und rückwärts im Dialog begrenzt und die Freigabe nach dem Schliessen als Verhaltenstest nachgewiesen. Der vollständige Pflichtprüflauf bestand danach erneut unverändert.
 
+Der Quality-Agent erteilte nach der Korrektur die Freigabe. Commit `9c42dfc` wurde nach `origin/main` übertragen und auf Delphi01 als `plauderbox:delphi01-test-9c42dfc` (`sha256:8f9c9b038f84…`) aktiviert. Internes HTTPS, KI-Bereitschaft, Version `1.1.2`, neues Frontend-Asset und beide konkreten Startdialogtexte sind bestanden; der vorherige Stand `1.1.1` bleibt als Rückfallimage erhalten. **Nicht geprüft:** reale Mobilprüfung mit nachträglich ergänztem Verteiler und aktualisierter HappyHour-Freigabe. **Nicht anwendbar:** Änderung an Caddy, DNS, Firewall, FileBox oder PostgreSQL.
+
 ## Tagesgesamtzeit
 
 Nicht zuverlässig bestimmbar.

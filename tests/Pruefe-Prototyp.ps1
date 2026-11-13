@@ -68,7 +68,7 @@ if ($optionenInhalt -notmatch 'MaximaleAudiodateigroesseBytes.+20L \* 1024 \* 10
 $liveCompose = Get-Content -Raw -LiteralPath (Join-Path $projektordner 'deploy\olymp01-live\compose.yaml')
 if ($liveCompose -notmatch 'image: plauderbox:olymp01-live-1\.1\.1-a24e374') { throw 'PlauderBox-Livecompose verweist nicht auf das dokumentierte aktive Image.' }
 $testCompose = Get-Content -Raw -LiteralPath (Join-Path $projektordner 'deploy\delphi01-test\compose.yaml')
-if ($testCompose -notmatch 'image: plauderbox:delphi01-test-a24e374') { throw 'PlauderBox-Testcompose verweist nicht auf das dokumentierte aktive Image.' }
+if ($testCompose -notmatch 'image: plauderbox:delphi01-test-9c42dfc') { throw 'PlauderBox-Testcompose verweist nicht auf das dokumentierte aktive Image.' }
 if ($testCompose -notmatch 'ASPNETCORE_ENVIRONMENT:\s*Production') { throw 'PlauderBox-Testcompose muss produktionsnah mit ASPNETCORE_ENVIRONMENT=Production laufen.' }
 if ($testCompose -match 'ASPNETCORE_ENVIRONMENT:\s*Development') { throw 'PlauderBox-Testcompose darf nicht im Development-Modus laufen.' }
 if ($liveCompose -match '(?m)^\s*ports:') { throw 'PlauderBox-Livecompose darf keinen Hostport veröffentlichen.' }
