@@ -20,7 +20,14 @@ const offen = computed(
 
 <template>
   <main class="begehung-shell">
-    <MobileKopf titel="Kontrolle" zurueck @zurueck="$emit('zurueck')" />
+    <MobileKopf
+      titel="Kontrolle"
+      navigation
+      zurueck
+      beenden-aktiv
+      @zurueck="$emit('zurueck')"
+      @start="$emit('zurueck')"
+    />
     <section class="context-card">
       <p class="eyebrow">Vor dem Abschluss</p>
       <h1>Begehung kontrollieren</h1>

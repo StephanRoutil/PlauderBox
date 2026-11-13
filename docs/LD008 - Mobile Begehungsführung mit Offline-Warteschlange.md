@@ -21,7 +21,9 @@ Die produktiven mobilen Fachtypen und Ablaufregeln liegen ausschliesslich in `sr
 
 Online wird eine neue Aufnahme durch `auswertungsDienst.ts` bewusst über `/api/v1/transkribieren` ausgewertet. Offline bleibt sie als `wartet_auf_auswertung` erhalten. Das `online`-Ereignis und der App-Start bearbeiten die Warteschlange in Erfassungsreihenfolge. Nach bestätigter strukturierter Antwort werden Transkript und Vorschläge übernommen und nur der Audio-Blob entfernt; Bilder und kontrollierbare Felder bleiben lokal. Bei Fehler bleibt Audio erhalten und die UI bietet eine manuelle Wiederholung. Aus der Kontrolle öffnet `EintragErfassen.vue` auch ausgewertete Punkte mit vollständiger Mutation von Bildern, Audio, Zuordnung und Textfeldern; vorhandene Auswertungstexte bleiben dabei erhalten.
 
-Einträge lassen sich auch vollständig ohne Audio manuell erfassen. Bei Audio steht die rote Auswertungsaktion unmittelbar nach dem Diktatbereich; der typisierte Zustand aus `verwendeAuswertungsWarteschlange.ts` sperrt die Aktion während des Laufs und zeigt die aktive KI-Auswertung an. Offline vorgemerkte Aufnahmen können zusätzlich in Offline-Hinweis, Kontrolle und Abschluss mit einer Aktion verarbeitet werden, ohne die aktuelle Ansicht zuerst zu verlassen. Die zuletzt bei einem neuen Eintrag gewählte gültige Protokollpunktart wird innerhalb derselben Begehung als Standard für den nächsten neuen Eintrag verwendet.
+Einträge lassen sich auch vollständig ohne Audio manuell erfassen. Bei Audio steht die rote Auswertungsaktion unmittelbar nach dem Diktatbereich; der typisierte Zustand aus `verwendeAuswertungsWarteschlange.ts` sperrt die Aktion während des Laufs. `KiAuswertungsFortschritt.vue` bleibt während der gesamten Anfrage ansichtsunabhängig als feste Statusanzeige mit Spinner, animiertem unbestimmtem Balken und Text sichtbar. Offline vorgemerkte Aufnahmen können zusätzlich in Offline-Hinweis, Kontrolle und Abschluss mit einer Aktion verarbeitet werden, ohne die aktuelle Ansicht zuerst zu verlassen. Die zuletzt bei einem neuen Eintrag gewählte gültige Protokollpunktart wird innerhalb derselben Begehung als Standard für den nächsten neuen Eintrag verwendet.
+
+`MobileKopf.vue` zeigt nach Beginn der Begehung die drei beschrifteten Kurznavigationen `‹ Back`, `Start` und `Beenden`. Die einzelnen Ansichten binden diese an Rücksprung, aktive Begehungsübersicht und Kontrolle; das aktuelle oder nicht verfügbare Ziel bleibt sichtbar deaktiviert. `EintragErfassen.vue` sichert beim Sprung zu Start oder Kontrolle zuerst den aktuellen Entwurf und wechselt nur nach erfolgreichem lokalem Commit.
 
 `EintragErfassen.vue` trennt die Bildquellen: `Foto aufnehmen` verwendet einen Datei-Input mit `capture="environment"`; `Aus Galerie wählen` verwendet einen eigenen Mehrfach-Datei-Input ohne `capture`. Beide Wege übernehmen Bilder über dieselbe Validierung und dieselbe atomare IndexedDB-Speicherung.
 
@@ -44,6 +46,8 @@ Freigabe-Tokens stehen technisch im Pfad des lesenden Vertrags. ASP.NET-Hosting-
 - `src/PlauderBox.UI.Client/src/App.vue`
 - `src/PlauderBox.UI.Client/src/components/AktiveBegehung.vue`
 - `src/PlauderBox.UI.Client/src/components/EintragErfassen.vue`
+- `src/PlauderBox.UI.Client/src/components/KiAuswertungsFortschritt.vue`
+- `src/PlauderBox.UI.Client/src/components/MobileKopf.vue`
 - `src/PlauderBox.UI.Client/src/components/OfflineHinweis.vue`
 - `src/PlauderBox.UI.Client/src/components/EintragAuswertung.vue`
 - `src/PlauderBox.UI.Client/src/components/BegehungKontrolle.vue`

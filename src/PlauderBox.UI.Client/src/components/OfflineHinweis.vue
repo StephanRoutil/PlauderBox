@@ -4,12 +4,18 @@ withDefaults(defineProps<{ anzahlAusstehend: number; online?: boolean; auswertun
   online: false,
   auswertungLaeuft: false,
 })
-defineEmits<{ neu: []; kontrolle: []; auswerten: [] }>()
+defineEmits<{ neu: []; start: []; kontrolle: []; auswerten: [] }>()
 </script>
 
 <template>
   <main class="begehung-shell">
-    <MobileKopf />
+    <MobileKopf
+      navigation
+      zurueck
+      @zurueck="$emit('start')"
+      @start="$emit('start')"
+      @beenden="$emit('kontrolle')"
+    />
     <section class="context-card offline-card">
       <span class="offline-icon" aria-hidden="true">⌁</span>
       <p class="eyebrow">Lokal gesichert</p>

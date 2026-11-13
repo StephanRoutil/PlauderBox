@@ -6,6 +6,7 @@ import BegehungKontrolle from '@/components/BegehungKontrolle.vue'
 import BegehungStart from '@/components/BegehungStart.vue'
 import EintragAuswertung from '@/components/EintragAuswertung.vue'
 import EintragErfassen from '@/components/EintragErfassen.vue'
+import KiAuswertungsFortschritt from '@/components/KiAuswertungsFortschritt.vue'
 import OfflineHinweis from '@/components/OfflineHinweis.vue'
 import QrCodeStart from '@/components/QrCodeStart.vue'
 import { verwendeBegehung } from '@/composables/verwendeBegehung'
@@ -123,6 +124,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
+  <KiAuswertungsFortschritt v-if="auswertungszustand.art === 'laeuft'" />
   <QrCodeStart
     v-if="ansicht === 'scanner'"
     :externe-meldung="scannerMeldung"
@@ -174,6 +176,7 @@ onBeforeUnmount(() => {
     :auswertung-laeuft="auswertungszustand.art === 'laeuft'"
     @gespeichert="speichereErfassung"
     @abbrechen="ansicht = 'aktiv'"
+    @kontrolle="(eintrag) => speichereEintrag(eintrag, 'kontrolle')"
   />
   <OfflineHinweis
     v-else-if="ansicht === 'offline'"
@@ -181,6 +184,7 @@ onBeforeUnmount(() => {
     :online="online"
     :auswertung-laeuft="auswertungszustand.art === 'laeuft'"
     @neu="neuerEintrag"
+    @start="ansicht = 'aktiv'"
     @kontrolle="geheZurKontrolle"
     @auswerten="verarbeiteWarteschlange"
   />
@@ -214,6 +218,7 @@ onBeforeUnmount(() => {
     :anzahl-ausstehend="anzahlAusstehend"
     :auswertung-laeuft="auswertungszustand.art === 'laeuft'"
     @zurueck="geheZurKontrolle"
+    @start="ansicht = 'aktiv'"
     @uebergeben="uebergibAnHappyHour"
     @freigabe-erneuern="beginneFreigabeErneuerung"
     @neu-starten="verwirfBegehungUndScanneNeu"

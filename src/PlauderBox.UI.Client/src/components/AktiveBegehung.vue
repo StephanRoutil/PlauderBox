@@ -17,7 +17,7 @@ const aktuellerEintrag = computed(
 
 <template>
   <main class="begehung-shell">
-    <MobileKopf />
+    <MobileKopf navigation start-aktiv @beenden="$emit('kontrolle')" />
     <section class="context-card">
       <div class="view-title-row">
         <div>

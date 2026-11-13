@@ -35,6 +35,7 @@ const props = withDefaults(
 const emit = defineEmits<{
   zwischenspeichern: [eintrag: BegehungEintrag]
   gespeichert: [eintrag: BegehungEintrag]
+  kontrolle: [eintrag: BegehungEintrag]
   abbrechen: []
 }>()
 
@@ -201,11 +202,28 @@ function eintragSpeichern(): void {
   entwurf.value.aktualisiertAm = new Date().toISOString()
   emit('gespeichert', kopiereEintrag(entwurf.value))
 }
+
+async function geheZuStart(): Promise<void> {
+  if (await zwischenspeichern()) emit('abbrechen')
+}
+
+async function geheZuKontrolle(): Promise<void> {
+  if (!(await zwischenspeichern())) return
+  entwurf.value.aktualisiertAm = new Date().toISOString()
+  emit('kontrolle', kopiereEintrag(entwurf.value))
+}
 </script>
 
 <template>
   <main class="begehung-shell">
-    <MobileKopf titel="Neuer Eintrag" zurueck @zurueck="emit('abbrechen')" />
+    <MobileKopf
+      titel="Neuer Eintrag"
+      navigation
+      zurueck
+      @zurueck="emit('abbrechen')"
+      @start="geheZuStart"
+      @beenden="geheZuKontrolle"
+    />
     <section class="context-card capture-card">
       <section class="capture-block assignment-block">
         <p class="eyebrow">Zuordnung</p>

@@ -11,7 +11,7 @@ const props = withDefaults(defineProps<{
   anzahlAusstehend?: number
   auswertungLaeuft?: boolean
 }>(), { anzahlAusstehend: 0, auswertungLaeuft: false })
-defineEmits<{ zurueck: []; uebergeben: []; freigabeErneuern: []; neuStarten: []; auswerten: [] }>()
+defineEmits<{ zurueck: []; start: []; uebergeben: []; freigabeErneuern: []; neuStarten: []; auswerten: [] }>()
 
 const bildSicherungLaeuft = ref(false)
 const bildSicherungsMeldung = ref('')
@@ -36,7 +36,14 @@ async function alleBilderSichern(): Promise<void> {
 
 <template>
   <main class="begehung-shell">
-    <MobileKopf titel="Abschluss" zurueck @zurueck="$emit('zurueck')" />
+    <MobileKopf
+      titel="Abschluss"
+      navigation
+      zurueck
+      beenden-aktiv
+      @zurueck="$emit('zurueck')"
+      @start="$emit('start')"
+    />
     <section class="context-card completion-card">
       <span class="completion-icon" aria-hidden="true">✓</span>
       <p class="eyebrow">Kontrolle abgeschlossen</p>

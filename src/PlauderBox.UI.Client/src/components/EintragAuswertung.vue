@@ -26,7 +26,14 @@ function wert(): BegehungEintrag {
 
 <template>
   <main class="begehung-shell">
-    <MobileKopf titel="Auswertung" zurueck @zurueck="emit('zurueck')" />
+    <MobileKopf
+      titel="Auswertung"
+      navigation
+      zurueck
+      @zurueck="emit('zurueck')"
+      @start="emit('speichern', wert())"
+      @beenden="emit('kontrolle', wert())"
+    />
     <section class="context-card">
       <p class="eyebrow">Übermittelter Text</p>
       <h1>Eintrag kontrollieren</h1>

@@ -6,6 +6,8 @@ import BegehungAbschluss from './BegehungAbschluss.vue'
 import BegehungKontrolle from './BegehungKontrolle.vue'
 import BegehungStart from './BegehungStart.vue'
 import EintragErfassen from './EintragErfassen.vue'
+import KiAuswertungsFortschritt from './KiAuswertungsFortschritt.vue'
+import MobileKopf from './MobileKopf.vue'
 import OfflineHinweis from './OfflineHinweis.vue'
 import QrCodeStart from './QrCodeStart.vue'
 import type { AudioRekorder } from '@/services/audioRekorder'
@@ -106,6 +108,43 @@ beforeEach(() => {
 })
 
 describe('mobile Komponenten', () => {
+  it('zeigt die Begehungsnavigation als drei beschriftete Headerbuttons', async () => {
+    const wrapper = mount(MobileKopf, { props: { navigation: true, zurueck: true } })
+    const tasten = wrapper.findAll('button')
+
+    expect(tasten.map((taste) => taste.text())).toEqual(['‹ Back', 'Start', 'Beenden'])
+    await tasten[0]!.trigger('click')
+    await tasten[1]!.trigger('click')
+    await tasten[2]!.trigger('click')
+
+    expect(wrapper.emitted('zurueck')).toHaveLength(1)
+    expect(wrapper.emitted('start')).toHaveLength(1)
+    expect(wrapper.emitted('beenden')).toHaveLength(1)
+  })
+
+  it('kennzeichnet aktive Headerziele und verhindert deren erneute Auslösung', async () => {
+    const wrapper = mount(MobileKopf, {
+      props: { navigation: true, zurueck: false, startAktiv: true, beendenAktiv: true },
+    })
+    const tasten = wrapper.findAll('button')
+
+    expect(tasten.every((taste) => taste.attributes('disabled') !== undefined)).toBe(true)
+    await Promise.all(tasten.map((taste) => taste.trigger('click')))
+    expect(wrapper.emitted('zurueck')).toBeUndefined()
+    expect(wrapper.emitted('start')).toBeUndefined()
+    expect(wrapper.emitted('beenden')).toBeUndefined()
+  })
+
+  it('zeigt während der KI-Anfrage eine sichtbare unbestimmte Fortschrittsanzeige', () => {
+    const wrapper = mount(KiAuswertungsFortschritt)
+
+    expect(wrapper.get('[role="status"]').attributes('aria-live')).toBe('assertive')
+    expect(wrapper.text()).toContain('KI-Auswertung läuft')
+    expect(wrapper.text()).toContain('Audio wird übertragen und ausgewertet')
+    expect(wrapper.find('.spinner').exists()).toBe(true)
+    expect(wrapper.find('.ki-fortschritt__balken').exists()).toBe(true)
+  })
+
   it('zeigt den laufenden Startzustand und sperrt die Startaktion', () => {
     const wrapper = mount(BegehungStart, { props: { kontext: protokoll, startLaeuft: true, startMeldung: '' } })
     const taste = wrapper.get('button.mobile-primary')
