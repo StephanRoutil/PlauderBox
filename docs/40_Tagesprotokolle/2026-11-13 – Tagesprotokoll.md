@@ -174,6 +174,8 @@ Version `1.1.3` korrigiert die Pflichtfeldmeldung beim einzelnen Eintrag. Die KI
 
 Das erste Quality-Gate fand zwei Restlücken: einen vorbereiteten lokalen Punkt ohne Art und den fehlenden separaten Audio-Verhaltenstest. Nach Freigabe bleibt bei vorbereiteten Punkten HappyHour führend; der Dialog öffnet den vorhandenen Erneuerungsscanner und kehrt nach der Kontextzusammenführung mit erhaltenen lokalen Daten zur Erfassung zurück. Ein zusätzlicher synthetischer Audiotest weist nach, dass `Diktat auswerten` ohne Art denselben Dialog öffnet und keine Auswertung startet. Das vom Product Owner überarbeitete `public/icon.svg` wird als dauerhafte Buildquelle für Header und PWA verwendet.
 
+Die Nachprüfung zeigte, dass die erneuerte HappyHour-Art im bereits vorhandenen vorbereiteten Eintrag noch nicht gesetzt wurde. Die zentrale Zusammenführung übernimmt nun ID und Art des vorbereiteten Punkts aus dem aktualisierten HappyHour-Kontext, während lokale Texte, Audio und Bilder erhalten bleiben. Ein zusammenhängender Ablaufstest belegt Art `null` vor der Erneuerung, die korrigierte Art danach, das Rückkehrziel `erfassen` sowie den Medien- und Texterhalt.
+
 ## Tagesgesamtzeit
 
 Nicht zuverlässig bestimmbar.

@@ -371,8 +371,46 @@ describe('HappyHour-Übergabe', () => {
     expect(ablauf.uebergabezustand.value.art).toBe('bereit')
   })
 
-  it('erneuert nur die Freigabe desselben Protokolls und behält lokale Daten', async () => {
+  it('erneuert die Freigabe, übernimmt die HappyHour-Art und behält lokale Daten', async () => {
     const lokal = begehung('lokal_abgeschlossen')
+    const vorbereiteterEintrag = erstelleEintrag(() => '00000000-0000-4000-8000-000000000088', 77)
+    vorbereiteterEintrag.vorbereiteterProtokollpunktId = 88
+    vorbereiteterEintrag.protokollpunktArtId = null
+    vorbereiteterEintrag.gruppe = 'Lokale Gruppe'
+    vorbereiteterEintrag.thema = 'Lokal korrigiertes Thema'
+    vorbereiteterEintrag.inhalt = 'Lokaler Inhalt bleibt erhalten.'
+    vorbereiteterEintrag.audio = {
+      dateiname: 'lokal.webm',
+      medientyp: 'audio/webm',
+      groesse: 5,
+      dauerSekunden: 2,
+      audio: new Blob(['audio'], { type: 'audio/webm' }),
+    }
+    const bild = new Blob(['bild'], { type: 'image/jpeg' })
+    vorbereiteterEintrag.bilder.push({
+      id: '00000000-0000-4000-8000-000000000089',
+      dateiname: 'lokal.jpg',
+      medientyp: 'image/jpeg',
+      groesse: bild.size,
+      erstelltAm: vorbereiteterEintrag.erstelltAm,
+      bild,
+    })
+    lokal.eintraege.push(vorbereiteterEintrag)
+    lokal.aktuellerEintragId = vorbereiteterEintrag.id
+    const aktualisierterKontext = kontext(17)
+    aktualisierterKontext.protokollpunkte = [
+      {
+        id: 88,
+        guid: vorbereiteterEintrag.id,
+        protokollpunktArtId: 1,
+        projektAnsprechpartnerId: 77,
+        gruppe: 'HappyHour-Gruppe',
+        reihenfolge: 1,
+        thema: 'HappyHour-Thema',
+        inhalt: 'HappyHour-Inhalt',
+        rechtsverweis: null,
+      },
+    ]
     const begehungRef = ref<LokaleBegehung | null>(lokal)
     const ansicht = ref<
       | 'abschluss'
@@ -391,18 +429,24 @@ describe('HappyHour-Übergabe', () => {
       begehung: begehungRef,
       ansicht,
       scannerMeldung: ref(''),
-      kontextLaden: vi.fn(async () => kontext(17)),
+      kontextLaden: vi.fn(async () => aktualisierterKontext),
       speichern,
       uebergeben: vi.fn(async () => undefined),
     })
 
-    ablauf.beginneFreigabeErneuerung('auswertung')
+    ablauf.beginneFreigabeErneuerung('erfassen')
 
     await ablauf.verarbeiteErneuerteFreigabe(`plauderbox://begehung?freigabe=${'B'.repeat(32)}`)
 
     expect(begehungRef.value?.freigabeToken).toBe('B'.repeat(32))
-    expect(toRaw(begehungRef.value?.eintraege)).toStrictEqual(lokal.eintraege)
-    expect(ansicht.value).toBe('auswertung')
+    const zusammengefuehrt = begehungRef.value?.eintraege.find((eintrag) => eintrag.id === vorbereiteterEintrag.id)
+    expect(zusammengefuehrt?.protokollpunktArtId).toBe(1)
+    expect(zusammengefuehrt?.gruppe).toBe('Lokale Gruppe')
+    expect(zusammengefuehrt?.thema).toBe('Lokal korrigiertes Thema')
+    expect(zusammengefuehrt?.inhalt).toBe('Lokaler Inhalt bleibt erhalten.')
+    expect(zusammengefuehrt?.audio?.audio).toBe(vorbereiteterEintrag.audio.audio)
+    expect(zusammengefuehrt?.bilder[0]?.bild).toBe(bild)
+    expect(ansicht.value).toBe('erfassen')
     expect(speichern).toHaveBeenCalledTimes(1)
   })
 })

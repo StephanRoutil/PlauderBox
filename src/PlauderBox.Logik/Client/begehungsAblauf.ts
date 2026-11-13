@@ -199,6 +199,7 @@ export function fuehreHappyHourKontextZusammen(
       nachGuid.get(punkt.guid.toLocaleLowerCase("en-US"));
     if (vorhanden) {
       vorhanden.vorbereiteterProtokollpunktId = punkt.id;
+      vorhanden.protokollpunktArtId = punkt.protokollpunktArtId ?? null;
       continue;
     }
     eintraege.push(
