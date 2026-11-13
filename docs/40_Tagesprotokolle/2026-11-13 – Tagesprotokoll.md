@@ -132,6 +132,16 @@ Version `1.1.1` ergänzt das Quality-Gate vor dem ersten lokalen Start. Der gela
 
 **Bestanden:** vollständiger `tests/Pruefe-Prototyp.ps1` mit Docker-Buildkontext, Lint, TypeScript, 115 Frontendtests, Vue-Produktionsbuild, Playwright-Offlinefall, .NET-Release-Build ohne Warnungen, 14 Integrationstests, 9 Vertragstests, Offline-App-Shell und Token-Logschutz. **Nicht geprüft:** Dockerbuild, Bereitstellung und reale Mobilprüfung von Version `1.1.1`. **Nicht anwendbar:** HappyHour-Code- oder Datenbankänderung; das Gate verwendet den bestehenden Kontextvertrag. **Nächster Schritt:** Commit erstellen und Version `1.1.1` zuerst auf Delphi01 bereitstellen.
 
+## Session – Version 1.1.1 auf Delphi01 und Olymp01 bereitstellen
+
+- **Startzeit:** nicht zuverlässig bestimmbar
+- **Endzeit:** nicht zuverlässig bestimmbar
+- **Dauer:** nicht zuverlässig bestimmbar
+
+Der Quality-Agent gab Commit `a24e374` ohne P1-, P2- oder P3-Befund frei und wiederholte den vollständigen Pflichtprüflauf erfolgreich. Dasselbe Commit wurde auf Delphi01 als `plauderbox:delphi01-test-a24e374` (`sha256:cc0124a78d67…`) und auf Olymp01 als `plauderbox:olymp01-live-1.1.1-a24e374` (`sha256:d2a3435ada80…`) gebaut und aktiviert. Delphi01 verwendet weiterhin `https://test.siwako.ch`, Olymp01 weiterhin `https://happyhour.siwako.ch`.
+
+**Bestanden:** beide Containerstarts, Status, ausgelieferte Version `1.1.1`, HTTP 410 der synthetischen HappyHour-Negativfälle und fehlerfreie Startprotokolle. Auf Olymp01 bestanden zusätzlich öffentliche HTTPS-Prüfung und Sicherheitsheader; die Schlüsseldatei blieb mit `1000:1000` und Modus `600` geschützt. Nur die PlauderBox-App-Container wurden ersetzt; n8n, FileBox und beide PostgreSQL-Container liefen weiter. Der erste Olymp-Aktivierungslauf wurde wegen einer fehlerhaften internen Prüf-IP automatisch auf 1.1.0 zurückgestellt, der korrigierte zweite Lauf bestand. **Nicht geprüft:** reale Mobilbedienung des Verteiler-Quality-Gates. **Nicht anwendbar:** Änderung an HappyHour, Caddy, DNS, Firewall oder Datenbanken.
+
 ## Tagesgesamtzeit
 
 Nicht zuverlässig bestimmbar.

@@ -43,6 +43,14 @@ Der erste Aktivierungsversuch wurde automatisch zurückgerollt, weil eine mit `s
 
 Intern und öffentlich bestanden `/api/v1/status`, `/api/v1/ki-schluesselstatus`, Frontendversion `1.1.0`, Sicherheitsheader und der synthetische HappyHour-Negativtest. n8n, FileBox und beide PostgreSQL-Container liefen unverändert weiter. Temporäre Quellarchive und Schlüsselkopien wurden nach der Bereitstellung entfernt.
 
+## Version 1.1.1 mit Verteiler-Quality-Gate am 13.11.2026
+
+Nach unabhängiger QS-Freigabe ohne P1-, P2- oder P3-Befund wurde Commit `a24e374` als Image `plauderbox:olymp01-live-1.1.1-a24e374` mit der Image-ID `sha256:d2a3435ada8035c69daf8b017857657a0365f1e625866ec39af7017e771e60c8` aktiviert. Die aktive Konfiguration verwendet weiterhin `https://happyhour.siwako.ch`; Caddy, DNS, Firewall und die übrigen Dienste wurden nicht verändert.
+
+Der erste Aktivierungslauf wurde wegen einer fehlerhaften internen Prüf-IP automatisch auf Version `1.1.0` zurückgestellt. Nach Korrektur der Prüfung auf das Netz `plauderbox_proxy` bestand der zweite Lauf. Die Rückfall-Compose-Datei liegt unter `/srv/backup/plauderbox/20261113-v1.1.1-a24e374/compose.yaml.before`.
+
+Intern und öffentlich bestanden Status, Frontendversion `1.1.1`, TLS, Sicherheitsheader und HTTP 410 für einen synthetischen unbekannten Freigabetoken. Die Schlüsseldatei blieb unverändert bei Eigentümer `1000:1000` und Modus `600`. Nur `plauderbox-app-1` wurde ersetzt; n8n, FileBox und beide PostgreSQL-Container liefen weiter. Die reale Mobilprüfung des neuen Verteiler-Quality-Gates bleibt offen.
+
 ## Umgesetzter Stand am 11.11.2026
 
 Das Image `plauderbox:olymp01-live-20261111-r4` läuft auf Olymp01 ohne Hostport. PlauderBox und der bestehende Caddy sind als einzige Container im Netz `plauderbox_proxy`; der Standardweg des PlauderBox-Containers führt über das getrennte Egress-Netz. Caddy erhielt nach validierter Konfigurationsänderung wegen der bewusst deaktivierten Admin-Schnittstelle einen gezielten Neustart. n8n, FileBox und beide Datenbanken wurden nicht neu gestartet.

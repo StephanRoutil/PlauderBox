@@ -61,6 +61,15 @@ Live-Infrastruktur und produktive technische Anbindung an `happyhour.siwako.ch` 
 - n8n, FileBox und beide PostgreSQL-Container liefen unverändert weiter. Temporäre Quell- und Schlüsselkopien wurden entfernt.
 - **Nicht geprüft:** realer produktiver QR-, Audio-, Punkt- und Bild-End-to-End-Lauf auf dem Mobilgerät.
 
+### Version 1.1.1
+
+- Der Quality-Agent erteilte für Commit `a24e374` ohne P1-, P2- oder P3-Befund die Freigabe. Der vollständige Prüflauf bestand mit 115 Frontendtests, Playwright-Offlinefall, .NET-Build ohne Warnungen, 14 Integrations- und 9 Vertragstests sowie Offline-App-Shell und Token-Logschutz.
+- Das Image `plauderbox:olymp01-live-1.1.1-a24e374`, ID `sha256:d2a3435ada80…`, wurde aktiviert. Der erste Versuch wurde wegen einer fehlerhaften internen Prüf-IP automatisch auf 1.1.0 zurückgestellt; der korrigierte Lauf gegen das Netz `plauderbox_proxy` bestand.
+- Intern und öffentlich lieferten Status und Root HTTP 200; das Frontend-Asset enthält Version `1.1.1`. Der synthetische produktive HappyHour-Freigabeabruf ergab HTTP 410.
+- HSTS, CSP, Referrer-Policy und MIME-Schutz sind vorhanden. Die produktive HappyHour-Basisadresse lautet weiterhin `https://happyhour.siwako.ch`.
+- Nur `plauderbox-app-1` wurde ersetzt. n8n, FileBox und beide PostgreSQL-Container liefen unverändert weiter. Die Schlüsseldatei blieb bei Eigentümer `1000:1000` und Modus `600`.
+- **Nicht geprüft:** reale mobile Bedienung des neuen Verteiler-Quality-Gates.
+
 ## Verknüpfungen
 
 - [[E012 - Olymp01 als Live-System und Delphi01 als Testsystem betreiben]]
