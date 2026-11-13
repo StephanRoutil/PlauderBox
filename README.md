@@ -18,6 +18,10 @@ Die fachliche Grundlage liegt in [HappyHour US011](../../HappyHour/docs/20_Suppo
 
 PlauderBox erstellt beziehungsweise aktualisiert ausschliesslich die freigegebenen Protokollpunkte und Bilder. Korrekturlesen und Protokollversand bleiben bewusste Schritte in HappyHour; PlauderBox versendet kein Protokoll.
 
+## Version
+
+Der Quellstand ist seit dem 13.11.2026 als **PlauderBox 1.0.0** festgelegt. Der Versionsentscheid und die bewusst offenen Folgearbeiten stehen in [E014](<docs/E014 - PlauderBox Version 1.0 festlegen.md>). Eine Versionsfreigabe des Quellcodes bedeutet nicht automatisch, dass dieser Stand bereits auf Delphi01 oder Olymp01 bereitgestellt wurde.
+
 ## Start und Prüfung
 
 ```powershell
