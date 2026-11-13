@@ -7,7 +7,7 @@ datum: 2026-11-13
 
 # LD002 – PlauderBox-Testumgebung Delphi01
 
-> **Gültigkeitsvermerk vom 13.11.2026:** Die Testumgebung läuft mit dem Usability-Korrekturstand `ec65e60` und verbindet sich direkt mit `https://test.siwako.ch`. Kontrollierte Protokollpunkte und Bilder werden gemäss [[LD009 - Kontrollierte Protokollpunkte an HappyHour übergeben]] und [[LD010 - Begehungsbilder kontrolliert an HappyHour übertragen]] geschrieben. HappyHour-Abschluss und Versand bleiben ausgeschlossen.
+> **Gültigkeitsvermerk vom 13.11.2026:** Die Testumgebung läuft mit Version `1.1.0` aus Commit `59ae459` und verbindet sich direkt mit `https://test.siwako.ch`. Kontrollierte Protokollpunkte und Bilder werden gemäss [[LD009 - Kontrollierte Protokollpunkte an HappyHour übergeben]] und [[LD010 - Begehungsbilder kontrolliert an HappyHour übertragen]] geschrieben. HappyHour-Abschluss und Versand bleiben ausgeschlossen.
 
 ## Gültiger Stand
 
@@ -17,10 +17,10 @@ PlauderBox läuft als getrennte Testumgebung auf Delphi01. FileBox und der zentr
 
 | Bestandteil | Stand |
 |---|---|
-| Quellstand | Commit `ec65e600699eb19b070b04bd8a4d6e9a8044a684` |
-| Anwendungsimage | `plauderbox:delphi01-test-ec65e60` |
-| Image-ID | `sha256:5ffe84fd1c593751d8bda2614cdd3d31d11f88c7996c083c25746d286ef634cd` |
-| Rückfallimage | vorheriger Stand `plauderbox:delphi01-test-20261110-full` |
+| Quellstand | Commit `59ae459` / Tag `v1.1.0` |
+| Anwendungsimage | `plauderbox:delphi01-test-59ae459` |
+| Image-ID | `sha256:5cade7d1d5ef606910a1628b9ee2d6749e6f3a0ee492b269517b1cf14e0d88fe` |
+| Rückfallimage | vorheriger Stand `plauderbox:delphi01-test-e20a221` |
 | Laufende Ablage | `/home/zeus/plauderbox-test-vorbereitung` |
 | Anwendungslistener | `127.0.0.1:5187` auf Delphi01 |
 | Interner HTTPS-Zugriff | `https://192.168.68.8` |
@@ -30,16 +30,18 @@ PlauderBox läuft als getrennte Testumgebung auf Delphi01. FileBox und der zentr
 | HTTPS | eigener Caddy-Container mit interner CA |
 | Persistenz | keine serverseitige Datenbank; Begehung, Bilder, Audio und Warteschlange liegen im app-eigenen IndexedDB-Speicher des Mobilgeräts |
 
-Die OpenAI-Testschlüsseldatei wurde nach ausdrücklicher Freigabe ausschliesslich unter `secrets/openai.json` auf Delphi01 abgelegt. Verzeichnisberechtigung `700`, Dateiberechtigung `600`. Schlüsselwerte wurden weder ausgegeben noch in Git oder Image aufgenommen.
+Die OpenAI-Testschlüsseldatei wurde nach ausdrücklicher Freigabe ausschliesslich unter `secrets/openai.json` auf Delphi01 abgelegt. Sie enthält den serverseitigen Schlüssel und das Ablaufdatum `GueltigBis`; Verzeichnisberechtigung `700`, Dateiberechtigung `600`. Schlüsselwerte wurden weder ausgegeben noch in Git oder Image aufgenommen. Übertragene temporäre Schlüsselkopien wurden nach erfolgreicher Prüfung entfernt.
 
 ## Erfolgreiche Prüfungen
 
 - TypeScript-, Vue-, .NET-, Vertrags-, Offline-App-Shell-, Tokenlog- und Docker-Buildkontextprüfungen lokal bestanden.
-- Vollständiges Linux-Docker-Image aus Commit `ec65e60` einschliesslich der TypeScript-Logikschicht erfolgreich gebaut; der aktuelle Stand ist `plauderbox:delphi01-test-ec65e60`, ID `sha256:5ffe84fd1c59…`.
+- Vollständiges Linux-Docker-Image aus Commit `59ae459` einschliesslich der TypeScript-Logikschicht erfolgreich gebaut; der aktuelle Stand ist `plauderbox:delphi01-test-59ae459`, ID `sha256:5cade7d1d5ef…`.
 - Anwendungscontainer aus `/home/zeus/plauderbox-test-vorbereitung` in `Production` erfolgreich ersetzt; der bestehende HTTPS-Container blieb unverändert. Der unmittelbar vorherige Anwendungsstand bleibt bis zur Mobilabnahme als Rückfallimage erhalten.
 - Anwendung bindet nur an Delphi01-Loopback.
 - Root, PWA-Manifest, Service Worker sowie die gebauten JavaScript- und CSS-Assets liefern über internes HTTPS Status 200; das Manifest besitzt den korrekten MIME-Typ.
 - `/api/v1/status` meldet die KI-Anbindung als bereit.
+- `/api/v1/status` enthält weiterhin ausschliesslich `kiBereit`. `/api/v1/ki-schluesselstatus` bestätigt `kiBereit=true`, `kiAbgelaufen=false`, das Ablaufdatum `2027-11-11` und aktuell keine Vorwarnung.
+- Das ausgelieferte Frontend-Asset enthält die gebaute Version `1.1.0`; der Containerstart enthält keine unbehandelte Ausnahme oder Fehlermeldung.
 - Delphi01 erreicht `https://test.siwako.ch` direkt. Ein synthetischer ungültiger HappyHour-Freigabe-Token liefert über die PlauderBox-API erwartungsgemäss Status 410.
 - Ein markierter Dummy-Token erscheint nicht im Containerlog.
 - Download des öffentlichen Caddy-Stammzertifikats liefert HTTP 200.
