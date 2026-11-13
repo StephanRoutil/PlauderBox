@@ -162,6 +162,42 @@ public sealed class ServergrenzeTests
     }
 
     [Fact]
+    public async Task KiSchluesselstatusWarntOhneGeheimnisdaten()
+    {
+        string ablaufdatum = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(20).ToString(
+            "yyyy-MM-dd",
+            System.Globalization.CultureInfo.InvariantCulture);
+        await using IntegrationstestFabrik fabrik = new(kiGueltigBis: ablaufdatum);
+        using HttpClient client = fabrik.CreateClient();
+
+        using HttpResponseMessage antwort = await client.GetAsync("/api/v1/ki-schluesselstatus");
+        string inhalt = await antwort.Content.ReadAsStringAsync();
+        using JsonDocument json = JsonDocument.Parse(inhalt);
+
+        Assert.True(antwort.IsSuccessStatusCode);
+        Assert.True(json.RootElement.GetProperty("kiBereit").GetBoolean());
+        Assert.Equal(ablaufdatum, json.RootElement.GetProperty("kiGueltigBis").GetString());
+        Assert.Contains("Bitte rechtzeitig erneuern", json.RootElement.GetProperty("kiMeldung").GetString(), StringComparison.Ordinal);
+        Assert.DoesNotContain("synthetischer-testschluessel", inhalt, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task AbgelaufenerKiSchluesselWirdNachFreigabeVorBodyGesperrt()
+    {
+        await using IntegrationstestFabrik fabrik = new(kiGueltigBis: "2020-01-01");
+        using HttpClient client = fabrik.CreateClient();
+        using HttpRequestMessage anfrage = new(HttpMethod.Post, "/api/v1/transkribieren");
+        anfrage.Headers.Add("X-PlauderBox-Freigabe", Testdaten.GueltigeFreigabe);
+        anfrage.Content = new StringContent("kein Formular", Encoding.UTF8, "text/plain");
+
+        using HttpResponseMessage antwort = await client.SendAsync(anfrage);
+        string inhalt = await antwort.Content.ReadAsStringAsync();
+
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, antwort.StatusCode);
+        Assert.Contains("KI-Schlüssel ist am 01.01.2020 abgelaufen", inhalt, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task SicherheitsheaderSindGesetzt()
     {
         await using IntegrationstestFabrik fabrik = new();

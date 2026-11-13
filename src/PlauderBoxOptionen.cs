@@ -14,12 +14,14 @@ public sealed class PlauderBoxOptionen
     public int TranskriptionenJeFreigabe { get; init; } = 20;
     public int BilderJeFreigabe { get; init; } = 500;
     public int MaximaleProtokollpunkteJeUebergabe { get; init; } = 200;
+    public int KiSchluesselWarnungTage { get; init; } = 30;
     public TimeSpan RatenlimitFenster { get; init; } = TimeSpan.FromHours(1);
     public TimeSpan OpenAiZeitlimit { get; init; } = TimeSpan.FromSeconds(120);
     public string Url { get; init; } = "http://127.0.0.1:5187";
     public string Modell { get; init; } = "gpt-transcribe";
     public string Strukturmodell { get; init; } = "gpt-6-luna";
     public string? ApiKey { get; init; }
+    public DateOnly? KiSchluesselGueltigBis { get; init; }
     public string? KiKonfigurationsfehler { get; init; }
     public string? ErlaubterUrsprung { get; init; }
     public string? ErlaubtesProxyNetz { get; init; }
@@ -27,7 +29,7 @@ public sealed class PlauderBoxOptionen
 
     public static PlauderBoxOptionen Lade(IConfiguration konfiguration)
     {
-        (string? apiKey, string? fehler) = LadeApiKey(konfiguration);
+        (string? apiKey, DateOnly? gueltigBis, string? fehler) = LadeApiKey(konfiguration);
         Uri? happyHourBasisadresse = Uri.TryCreate(
             konfiguration["PlauderBox:HappyHour:Basisadresse"]?.TrimEnd('/') + "/",
             UriKind.Absolute,
@@ -46,12 +48,14 @@ public sealed class PlauderBoxOptionen
             TranskriptionenJeFreigabe = LeseInt(konfiguration, "TranskriptionenJeFreigabe", 20, 1, 1_000_000),
             BilderJeFreigabe = LeseInt(konfiguration, "BilderJeFreigabe", 500, 1, 1_000_000),
             MaximaleProtokollpunkteJeUebergabe = LeseInt(konfiguration, "MaximaleProtokollpunkteJeUebergabe", 200, 1, 10_000),
+            KiSchluesselWarnungTage = LeseInt(konfiguration, "KiSchluesselWarnungTage", 30, 1, 365),
             RatenlimitFenster = TimeSpan.FromSeconds(LeseInt(konfiguration, "RatenlimitFensterSekunden", 3600, 1, 86_400)),
             OpenAiZeitlimit = TimeSpan.FromSeconds(LeseInt(konfiguration, "OpenAiZeitlimitSekunden", 120, 1, 86_400)),
             Url = konfiguration["PlauderBox:Url"] ?? "http://127.0.0.1:5187",
             Modell = konfiguration["PlauderBox:KI:Modell"] ?? "gpt-transcribe",
             Strukturmodell = konfiguration["PlauderBox:KI:Strukturmodell"] ?? "gpt-6-luna",
             ApiKey = apiKey,
+            KiSchluesselGueltigBis = gueltigBis,
             KiKonfigurationsfehler = fehler,
             ErlaubterUrsprung = konfiguration["PlauderBox:ErlaubterUrsprung"]?.TrimEnd('/'),
             ErlaubtesProxyNetz = konfiguration["PlauderBox:ErlaubtesProxyNetz"],
@@ -86,25 +90,46 @@ public sealed class PlauderBoxOptionen
         return wert;
     }
 
-    private static (string? Schluessel, string? Fehler) LadeApiKey(IConfiguration konfiguration)
+    private static (string? Schluessel, DateOnly? GueltigBis, string? Fehler) LadeApiKey(IConfiguration konfiguration)
     {
         string? direkt = konfiguration["PlauderBox:KI:ApiKey"];
-        if (!string.IsNullOrWhiteSpace(direkt)) return (direkt.Trim(), null);
+        if (!string.IsNullOrWhiteSpace(direkt))
+            return (direkt.Trim(), LeseAblaufdatum(konfiguration["PlauderBox:KI:GueltigBis"]), null);
 
         string? datei = konfiguration["PlauderBox:KI:Schluesseldatei"];
         if (string.IsNullOrWhiteSpace(datei))
-            return (null, "Kein serverseitiger OpenAI-Schlüssel konfiguriert.");
+            return (null, null, "Kein serverseitiger OpenAI-Schlüssel konfiguriert.");
         try
         {
             using JsonDocument json = JsonDocument.Parse(File.ReadAllText(datei));
             string? schluessel = json.RootElement.GetProperty("OpenAI").GetString();
+            DateOnly? gueltigBis = json.RootElement.TryGetProperty("GueltigBis", out JsonElement datum)
+                ? LeseAblaufdatum(datum.GetString())
+                : null;
             return string.IsNullOrWhiteSpace(schluessel)
-                ? (null, "Die konfigurierte Schlüsseldatei enthält keinen OpenAI-Schlüssel.")
-                : (schluessel.Trim(), null);
+                ? (null, null, "Die konfigurierte Schlüsseldatei enthält keinen OpenAI-Schlüssel.")
+                : (schluessel.Trim(), gueltigBis, null);
+        }
+        catch (FormatException ausnahme)
+        {
+            return (null, null, ausnahme.Message);
         }
         catch (Exception)
         {
-            return (null, "Die serverseitige OpenAI-Schlüsseldatei konnte nicht gelesen werden.");
+            return (null, null, "Die serverseitige OpenAI-Schlüsseldatei konnte nicht gelesen werden.");
         }
+    }
+
+    private static DateOnly? LeseAblaufdatum(string? rohwert)
+    {
+        if (string.IsNullOrWhiteSpace(rohwert)) return null;
+        if (DateOnly.TryParseExact(
+                rohwert.Trim(),
+                "yyyy-MM-dd",
+                CultureInfo.InvariantCulture,
+                DateTimeStyles.None,
+                out DateOnly datum))
+            return datum;
+        throw new FormatException("Das KI-Schlüssel-Ablaufdatum muss als JJJJ-MM-TT angegeben werden.");
     }
 }

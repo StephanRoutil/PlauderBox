@@ -48,6 +48,7 @@ builder.Services.AddScoped<ITranskriptionsdienst>(services => new OpenAiTranskri
 builder.Services.AddMemoryCache();
 builder.Services.AddProblemDetails();
 builder.Services.AddSingleton<Freigabekontingent>();
+builder.Services.AddSingleton<KiSchluesselGueltigkeit>();
 builder.Services.AddRateLimiter(ratenlimit =>
 {
     ratenlimit.RejectionStatusCode = StatusCodes.Status429TooManyRequests;

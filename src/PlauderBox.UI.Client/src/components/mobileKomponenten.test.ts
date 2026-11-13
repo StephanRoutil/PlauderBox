@@ -11,6 +11,7 @@ import OfflineHinweis from './OfflineHinweis.vue'
 import PlauderBoxMarke from './PlauderBoxMarke.vue'
 import QrCodeStart from './QrCodeStart.vue'
 import VorgangsFortschritt from './VorgangsFortschritt.vue'
+import KiSchluesselHinweis from './KiSchluesselHinweis.vue'
 import type { AudioRekorder } from '@/services/audioRekorder'
 import type { BegehungEintrag, HappyHourProtokollKontext, LokaleBegehung } from '@/services/begehungsSpeicher'
 
@@ -114,7 +115,7 @@ describe('mobile Komponenten', () => {
 
     expect(wrapper.get('img').attributes('src')).toBe('/icon.svg')
     expect(wrapper.text()).toContain('PlauderBox')
-    expect(wrapper.text()).toContain('v1.0.4')
+    expect(wrapper.text()).toContain('v1.1.0')
   })
 
   it('zeigt die Begehungsnavigation als drei beschriftete Headerbuttons', async () => {
@@ -166,6 +167,22 @@ describe('mobile Komponenten', () => {
     expect(wrapper.text()).toContain('Protokollpunkte und Bilder werden übertragen')
     expect(wrapper.find('.spinner').exists()).toBe(true)
     expect(wrapper.find('.vorgangs-fortschritt__balken').exists()).toBe(true)
+  })
+
+  it('zeigt die KI-Ablaufwarnung und den laufenden Status zugänglich an', () => {
+    const laufend = mount(KiSchluesselHinweis, { props: { zustand: { art: 'laeuft' } } })
+    expect(laufend.get('[role="status"]').text()).toContain('KI-Status wird geprüft')
+    expect(laufend.find('.spinner').exists()).toBe(true)
+
+    const warnung = mount(KiSchluesselHinweis, {
+      props: {
+        zustand: {
+          art: 'warnung',
+          meldung: 'Der PlauderBox-KI-Schlüssel läuft am 11.11.2027 ab. Bitte rechtzeitig erneuern.',
+        },
+      },
+    })
+    expect(warnung.get('[role="alert"]').text()).toContain('11.11.2027')
   })
 
   it('zeigt den laufenden Startzustand und sperrt die Startaktion', () => {

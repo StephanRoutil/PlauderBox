@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted } from 'vue'
+import { onBeforeUnmount, onMounted, ref } from 'vue'
 import AktiveBegehung from '@/components/AktiveBegehung.vue'
 import BegehungAbschluss from '@/components/BegehungAbschluss.vue'
 import BegehungKontrolle from '@/components/BegehungKontrolle.vue'
@@ -9,6 +9,7 @@ import EintragErfassen from '@/components/EintragErfassen.vue'
 import OfflineHinweis from '@/components/OfflineHinweis.vue'
 import QrCodeStart from '@/components/QrCodeStart.vue'
 import VorgangsFortschritt from '@/components/VorgangsFortschritt.vue'
+import KiSchluesselHinweis from '@/components/KiSchluesselHinweis.vue'
 import { verwendeBegehung } from '@/composables/verwendeBegehung'
 import { verwendeAuswertungsWarteschlange } from '@/composables/verwendeAuswertungsWarteschlange'
 import { verwendeHappyHourUebergabe } from '@/composables/verwendeHappyHourUebergabe'
@@ -24,8 +25,13 @@ import {
 import { sendeAudioZurAuswertung } from '@/services/auswertungsDienst'
 import { ladeLegacyEintrag, verwerfeLegacyDaten } from '@/services/legacyWiederherstellung'
 import { uebergebeProtokollpunkte } from '@/services/happyHourProtokollpunktUebergabe'
+import {
+  ladeKiSchluesselStatus,
+  type KiSchluesselStatusZustand,
+} from '@/services/kiSchluesselStatus'
 
 const appZustand = verwendeAppZustand(() => navigator.onLine)
+const kiSchluesselStatus = ref<KiSchluesselStatusZustand>({ art: 'laeuft' })
 let freigabeErneuern = (_rueckkehr: typeof appZustand.ansicht.value): void => undefined
 
 const auswertungsAblauf = verwendeAuswertungsWarteschlange({
@@ -120,7 +126,10 @@ const {
 onMounted(async () => {
   window.addEventListener('online', verbindungAktualisiert)
   window.addEventListener('offline', verbindungAktualisiert)
-  await initialisiere()
+  const statusPruefung = ladeKiSchluesselStatus().then((status) => {
+    kiSchluesselStatus.value = status
+  })
+  await Promise.all([initialisiere(), statusPruefung])
 })
 onBeforeUnmount(() => {
   window.removeEventListener('online', verbindungAktualisiert)
@@ -129,6 +138,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
+  <KiSchluesselHinweis :zustand="kiSchluesselStatus" />
   <VorgangsFortschritt v-if="auswertungszustand.art === 'laeuft'" />
   <VorgangsFortschritt
     v-else-if="uebergabezustand.art === 'laeuft' && uebergabezustand.vorgang === 'uebergabe'"

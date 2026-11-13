@@ -10,15 +10,21 @@ namespace PlauderBox.Integrationstests;
 internal sealed class IntegrationstestFabrik : WebApplicationFactory<Program>
 {
     private readonly IProtokollpunktStrukturierer _strukturierer;
+    private readonly string? _kiGueltigBis;
 
-    public IntegrationstestFabrik(IProtokollpunktStrukturierer? strukturierer = null)
+    public IntegrationstestFabrik(
+        IProtokollpunktStrukturierer? strukturierer = null,
+        string? kiGueltigBis = null)
     {
         _strukturierer = strukturierer ?? new StrukturiererAttrappe();
+        _kiGueltigBis = kiGueltigBis;
     }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseSetting("PlauderBox:KI:ApiKey", "synthetischer-testschluessel");
+        if (_kiGueltigBis is not null)
+            builder.UseSetting("PlauderBox:KI:GueltigBis", _kiGueltigBis);
         builder.UseSetting("PlauderBox:ErlaubterUrsprung", "https://plauderbox.test");
         builder.UseSetting("PlauderBox:ErlaubtesProxyNetz", "172.22.0.0/24");
         builder.UseSetting("PlauderBox:HappyHour:Basisadresse", "https://happyhour.test/");

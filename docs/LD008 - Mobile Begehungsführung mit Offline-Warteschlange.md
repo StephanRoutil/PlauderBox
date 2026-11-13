@@ -35,6 +35,8 @@ Die Erfassung zeigt kein separates Feld `Traktandum`. `Gruppe` wird als einziges
 
 `PlauderBoxMarke.vue` bildet die gemeinsame Marke für Scanner, Begehungsstart und alle weiteren App-Kopfzeilen. Sie verwendet dasselbe `/icon.svg` wie das PWA-Manifest und zeigt die beim Vite-Build aus `package.json` eingebettete dreiteilige Version. `tests/Pruefe-Prototyp.ps1` verlangt zusätzlich, dass diese Frontendversion mit der Version in `PlauderBox.UI.csproj` übereinstimmt.
 
+`kiSchluesselStatus.ts` fragt beim App-Start den begrenzten Vertrag `/api/v1/ki-schluesselstatus` ab. `KiSchluesselHinweis.vue` zeigt währenddessen einen Status mit Spinner, ab 30 Tagen vor dem konfigurierten Ablaufdatum eine Warnung und nach Ablauf eine Sperrmeldung. Die bestehende allgemeine Statusroute bleibt auf `kiBereit` beschränkt. Serverseitig liest `PlauderBoxOptionen` das Datum `GueltigBis` im Format `JJJJ-MM-TT`; `KiSchluesselGueltigkeit` bildet Bereitschaft, Vorwarnung und Ablauf an einer testbaren Stelle ab. Der Transkriptionsendpunkt prüft diesen Zustand nach bestätigter HappyHour-Freigabe und vor dem Audio-Body. Schlüsselwert, Schlüsseldatei und Modellnamen sind nicht Teil des Clientvertrags.
+
 `EintragErfassen.vue` trennt die Bildquellen: `Foto aufnehmen` verwendet einen Datei-Input mit `capture="environment"`; `Aus Galerie wählen` verwendet einen eigenen Mehrfach-Datei-Input ohne `capture`. Beide Wege übernehmen Bilder über dieselbe Validierung und dieselbe atomare IndexedDB-Speicherung.
 
 `bildSicherung.ts` erzeugt beim Abschluss aus allen Begehungseinträgen einzelne `File`-Objekte mit lesbaren Namen. `BegehungAbschluss.vue` startet mit einer Benutzeraktion direkt die einzelnen Browserdownloads und öffnet keinen Android-Teilen- oder Diensteauswahldialog. Es wird kein ZIP erstellt. Die Sicherungsaktion verändert weder interne Bild-Blobs noch Begehungsstatus oder HappyHour-Daten.
@@ -57,6 +59,7 @@ Freigabe-Tokens stehen technisch im Pfad des lesenden Vertrags. ASP.NET-Hosting-
 - `src/PlauderBox.UI.Client/src/components/AktiveBegehung.vue`
 - `src/PlauderBox.UI.Client/src/components/EintragErfassen.vue`
 - `src/PlauderBox.UI.Client/src/components/VorgangsFortschritt.vue`
+- `src/PlauderBox.UI.Client/src/components/KiSchluesselHinweis.vue`
 - `src/PlauderBox.UI.Client/src/components/MobileKopf.vue`
 - `src/PlauderBox.UI.Client/src/components/PlauderBoxMarke.vue`
 - `src/PlauderBox.UI.Client/src/components/OfflineHinweis.vue`
@@ -66,11 +69,15 @@ Freigabe-Tokens stehen technisch im Pfad des lesenden Vertrags. ASP.NET-Hosting-
 - `src/PlauderBox.UI.Client/src/services/begehungsSpeicher.ts`
 - `src/PlauderBox.UI.Client/src/services/eintragErfassungsAblauf.ts`
 - `src/PlauderBox.UI.Client/src/services/auswertungsDienst.ts`
+- `src/PlauderBox.UI.Client/src/services/kiSchluesselStatus.ts`
 - `src/PlauderBox.UI.Client/src/services/legacyWiederherstellung.ts`
 - `src/PlauderBox.UI.Client/src/services/bildSicherung.ts`
 - `src/PlauderBox.Logik/Client/begehungsAblauf.ts`
 - `src/PlauderBox.Logik/ErfassungsId.cs`
 - `src/PlauderBox.Logik/RundgangsfreigabeToken.cs`
+- `src/PlauderBoxOptionen.cs`
+- `src/Sicherheit/KiSchluesselGueltigkeit.cs`
+- `src/Endpunkte/TranskriptionsEndpunkte.cs`
 - `src/PlauderBox.UI.Client/public/service-worker.js`
 
 ## Bekannte Grenzen

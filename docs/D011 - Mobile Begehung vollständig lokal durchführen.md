@@ -42,6 +42,7 @@ Als Mitarbeiter möchte ich eine freigegebene Begehung auf dem Mobilgerät start
 - **AK26:** Wird eine Audioauswertung wegen einer abgelaufenen oder widerrufenen Rundgangsfreigabe abgewiesen, bleiben Audio und Eintrag lokal erhalten. Die App führt unmittelbar zur Erneuerung für dasselbe Protokoll und kehrt danach zur vorherigen Ansicht zurück, damit die Auswertung erneut ausgelöst werden kann.
 - **AK27:** Die Kontrolle kennzeichnet jeden nicht ausgewerteten, fehlgeschlagenen oder unvollständigen Eintrag einzeln mit der konkreten Ursache. Eine sichtbare Aktion öffnet genau diesen Eintrag zur Korrektur.
 - **AK28:** Ein vollständig manuell erfasster Eintrag ohne Audio gilt nach der bewussten Übernahme als ausgewertet und blockiert den Begehungsabschluss nicht. Einträge mit Audio bleiben bis zur bestätigten KI-Auswertung ausstehend.
+- **AK29:** Der serverseitige KI-Schlüssel besitzt ein Ablaufdatum. Ab 30 Tagen vor Ablauf zeigt die App eine verständliche Warnung; nach Ablauf sperrt der Server die KI-Auswertung mit dem konkreten Datum. Prüfung und Meldung dürfen weder Schlüsselwert noch internen Dateipfad offenlegen. Während der Statusabfrage ist eine sichtbare Arbeitsanzeige vorhanden.
 
 ## Abgrenzung und offene Integrationsgrenzen
 
@@ -60,5 +61,6 @@ Als Mitarbeiter möchte ich eine freigegebene Begehung auf dem Mobilgerät start
 - [[D012 - Kontrollierte Protokollpunkte an HappyHour übergeben]]
 - [[E009 - Begehungsbilder einzeln mit einer Aktion extern sichern]]
 - [[E011 - Rundgangsfreigabe für eine lokale Begehung sicher erneuern]]
+- [[E015 - Ablaufdatum des KI-Schlüssels überwachen]]
 - [HappyHour US011 – Protokollpunkte während eines Gebäuderundgangs mobil erfassen können](../../../HappyHour/docs/20_Support%20und%20Services/S04_KI-Helfer/F002_Sprachgestützte%20Protokollerfassung/02_User%20Storys/US011%20%E2%80%93%20Protokollpunkte%20w%C3%A4hrend%20eines%20Geb%C3%A4uderundgangs%20mobil%20erfassen%20k%C3%B6nnen.md)
 - [HappyHour UC004 – Vorbereiteten Gebäuderundgang mobil erfassen und an HappyHour übergeben](../../../HappyHour/docs/20_Support%20und%20Services/S04_KI-Helfer/F002_Sprachgestützte%20Protokollerfassung/02_User%20Storys/01_Anwendungsf%C3%A4lle/UC004%20%E2%80%93%20Vorbereiteten%20Geb%C3%A4uderundgang%20mobil%20erfassen%20und%20an%20HappyHour%20%C3%BCbergeben.md)

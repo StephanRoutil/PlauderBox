@@ -13,10 +13,21 @@ public static class TranskriptionsEndpunkte
 
     private static void MappeTranskriptionsEndpunkte(WebApplication app, string praefix)
     {
-        app.MapGet($"{praefix}/status", (PlauderBoxOptionen optionen) => Results.Ok(new
+        app.MapGet($"{praefix}/status", (PlauderBoxOptionen optionen, KiSchluesselGueltigkeit gueltigkeit) => Results.Ok(new
         {
-            kiBereit = !string.IsNullOrWhiteSpace(optionen.ApiKey)
+            kiBereit = gueltigkeit.Ermittle(optionen, HeutigesDatum()).IstBereit
         }));
+        app.MapGet($"{praefix}/ki-schluesselstatus", (PlauderBoxOptionen optionen, KiSchluesselGueltigkeit gueltigkeit) =>
+        {
+            KiSchluesselStatus status = gueltigkeit.Ermittle(optionen, HeutigesDatum());
+            return Results.Ok(new
+            {
+                kiBereit = status.IstBereit,
+                kiAbgelaufen = status.IstAbgelaufen,
+                kiGueltigBis = status.GueltigBis?.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture),
+                kiMeldung = status.Meldung
+            });
+        });
 
         app.MapPost($"{praefix}/transkribieren", TranskribiereAsync)
             .DisableAntiforgery()
@@ -29,6 +40,7 @@ public static class TranskriptionsEndpunkte
         IProtokollpunktStrukturierer strukturierer,
         ITranskriptionsdienst transkriptionsdienst,
         Freigabekontingent freigabekontingent,
+        KiSchluesselGueltigkeit gueltigkeit,
         PlauderBoxOptionen optionen,
         CancellationToken token)
     {
@@ -44,6 +56,11 @@ public static class TranskriptionsEndpunkte
         return HappyHourFehlerabbildung.FuehreAsync(async () =>
         {
             await freigabeQuelle.LadeAsync(freigabe.Wert, token);
+            KiSchluesselStatus kiStatus = gueltigkeit.Ermittle(optionen, HeutigesDatum());
+            if (!kiStatus.IstBereit)
+                return Problem(
+                    kiStatus.Meldung ?? "Die KI-Anbindung ist lokal noch nicht konfiguriert.",
+                    StatusCodes.Status503ServiceUnavailable);
             if (!freigabekontingent.Reserviere(
                     "transkription",
                     freigabe.Wert,
@@ -178,4 +195,6 @@ public static class TranskriptionsEndpunkte
             detail: meldung,
             statusCode: status);
     }
+
+    private static DateOnly HeutigesDatum() => DateOnly.FromDateTime(DateTime.UtcNow);
 }

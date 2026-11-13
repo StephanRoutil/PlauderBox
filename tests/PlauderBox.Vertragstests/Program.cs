@@ -222,6 +222,7 @@ static async Task PruefeServerstrukturAsync()
     Pruefe(optionen.TranskriptionenJeFreigabe == 20, "Transkriptionskontingent wurde verändert.");
     Pruefe(optionen.BilderJeFreigabe == 500, "Bildkontingent wurde verändert.");
     Pruefe(optionen.MaximaleProtokollpunkteJeUebergabe == 200, "Punktgrenze wurde verändert.");
+    Pruefe(optionen.KiSchluesselWarnungTage == 30, "Vorwarnfrist für den KI-Schlüssel wurde verändert.");
 
     Dictionary<string, string?> konfigurierteGrenzen = new()
     {
@@ -242,6 +243,36 @@ static async Task PruefeServerstrukturAsync()
     await PruefeAusnahmeAsync<InvalidOperationException>(() => Task.FromResult(
         PlauderBoxOptionen.Lade(new ConfigurationBuilder().AddInMemoryCollection(
             new Dictionary<string, string?> { ["PlauderBox:Grenzen:BilderJeFreigabe"] = "0" }).Build())));
+
+    KiSchluesselGueltigkeit schluesselGueltigkeit = new();
+    PlauderBoxOptionen schluesselOptionen = new()
+    {
+        ApiKey = "synthetischer-testschluessel",
+        KiSchluesselGueltigBis = new DateOnly(2027, 11, 11),
+        KiSchluesselWarnungTage = 30
+    };
+    KiSchluesselStatus ohneWarnung = schluesselGueltigkeit.Ermittle(schluesselOptionen, new DateOnly(2027, 10, 11));
+    KiSchluesselStatus mitWarnung = schluesselGueltigkeit.Ermittle(schluesselOptionen, new DateOnly(2027, 10, 12));
+    KiSchluesselStatus abgelaufen = schluesselGueltigkeit.Ermittle(schluesselOptionen, new DateOnly(2027, 11, 12));
+    Pruefe(ohneWarnung.IstBereit && ohneWarnung.Meldung is null, "KI-Schlüssel warnt zu früh.");
+    Pruefe(mitWarnung.IstBereit && mitWarnung.Meldung?.Contains("11.11.2027", StringComparison.Ordinal) == true, "KI-Schlüssel warnt nicht 30 Tage vorher.");
+    Pruefe(!abgelaufen.IstBereit && abgelaufen.IstAbgelaufen, "Abgelaufener KI-Schlüssel bleibt einsatzbereit.");
+
+    string schluesseldatei = Path.GetTempFileName();
+    try
+    {
+        await File.WriteAllTextAsync(
+            schluesseldatei,
+            "{\"OpenAI\":\"synthetischer-testschluessel\",\"GueltigBis\":\"2027-11-11\"}");
+        PlauderBoxOptionen dateiOptionen = PlauderBoxOptionen.Lade(
+            new ConfigurationBuilder().AddInMemoryCollection(
+                new Dictionary<string, string?> { ["PlauderBox:KI:Schluesseldatei"] = schluesseldatei }).Build());
+        Pruefe(dateiOptionen.KiSchluesselGueltigBis == new DateOnly(2027, 11, 11), "Ablaufdatum wurde nicht aus der Schlüsseldatei gelesen.");
+    }
+    finally
+    {
+        File.Delete(schluesseldatei);
+    }
 
     Pruefe(Ipv4Netz.Enthaelt(IPAddress.Parse("172.22.0.7"), "172.22.0.0/24"), "Adresse im Proxy-Netz wurde abgewiesen.");
     Pruefe(!Ipv4Netz.Enthaelt(IPAddress.Parse("172.23.0.7"), "172.22.0.0/24"), "Fremde Adresse wurde dem Proxy-Netz zugeordnet.");

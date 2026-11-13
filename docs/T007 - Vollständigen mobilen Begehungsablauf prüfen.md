@@ -13,24 +13,27 @@ anforderung: D011
 ## Automatisierte Prüfungen
 
 - TypeScript-Typecheck für produktive Vue-Dateien.
-- Vitest: 109 Tests in 14 Dateien bestanden. Geprüft werden zusätzlich die normalisierte Zuständigkeit `Wer`, Verteilergrenzfälle, Legacy-Import und -Löschung, IndexedDB-Roundtrip, getrennte Kamera-/Galerieauswahl, Bildablehnungen, die einmalige Einzelbildsicherung sowie die verlustfreie Zusammenführung eines erneuerten HappyHour-Kontexts.
+- Vitest: 113 Tests in 15 Dateien bestanden. Geprüft werden zusätzlich die normalisierte Zuständigkeit `Wer`, Verteilergrenzfälle, Legacy-Import und -Löschung, IndexedDB-Roundtrip, getrennte Kamera-/Galerieauswahl, Bildablehnungen, die einmalige Einzelbildsicherung, die verlustfreie Zusammenführung eines erneuerten HappyHour-Kontexts sowie Warn-, Ablauf- und Verbindungsfehlerzustand des KI-Schlüssels.
 - Die Bildsicherung prüft Dateinamen und Einzeldateien sowie direkte Einzel-Downloads ohne Teilen-Dialog und ohne ZIP, einschliesslich 82 Bildern aus einer Benutzeraktion. Der mobile UI-Vertrag prüft getrennte Kamera- und Galerie-Eingaben.
 - Verhaltenstests prüfen zusätzlich die vollständig manuelle Erfassung ohne Audio, den sichtbaren KI-Laufzustand, die Ein-Klick-Auswertung ausstehender Offline-Aufnahmen, das bestätigte Leeren beider internen Datenspeicher und den Standardwert der Protokollpunktart für den nächsten neuen Eintrag.
 - Ein Regressionstest führt vier lokal bekannte HappyHour-Punkte, vier später hinzugekommene HappyHour-Punkte und einen lokalen, noch nicht übertragenen Punkt mit Bild zusammen. Er erwartet neun sichtbare Einträge, acht HappyHour-Zuordnungen, unveränderten Bild-Blob und eine erneut mögliche Übergabe. Ein zweiter Test ordnet einen inzwischen bestätigten lokalen Punkt über seine GUID ohne Duplikat zu. Wiederanlauf und lokaler Commit entfernen zusätzlich veraltete Übertragungsmarkierungen.
 - Komponententests prüfen die drei beschrifteten Headerbuttons samt Ereignissen und deaktivierten Zielen sowie die ansichtsunabhängige KI-Fortschrittsanzeige mit zugänglichem Status, Spinner und animiertem unbestimmtem Balken.
 - Weitere Verhaltenstests halten den typisierten Zustand während einer noch nicht bestätigten HappyHour-Übergabe auf `laeuft`, prüfen den dazugehörigen Statustext mit Spinner und Balken und stellen sicher, dass die Erfassung nur noch zwei CBO-Felder enthält und kein `Traktandum` mehr anzeigt.
-- Ein Komponententest verlangt im gemeinsamen Kopf dasselbe `/icon.svg` wie im PWA-Manifest und die gebaute Version `v1.0.4`. Der Gesamtprüflauf gleicht zusätzlich die Frontendversion aus `package.json` mit der Serverversion in `PlauderBox.UI.csproj` ab.
+- Ein Komponententest verlangt im gemeinsamen Kopf dasselbe `/icon.svg` wie im PWA-Manifest und die gebaute Version `v1.1.0`. Der Gesamtprüflauf gleicht zusätzlich die Frontendversion aus `package.json` mit der Serverversion in `PlauderBox.UI.csproj` ab.
+- Ein Komponententest verlangt während der KI-Statusabfrage einen Spinner und für die Vorwarnung eine zugängliche Meldung. Vertragstests prüfen die 30-Tage-Grenze, das einschliesslich gültige Ablaufdatum und das Lesen von `GueltigBis` aus einer synthetischen Schlüsseldatei. Integrationstests prüfen den geheimnisfreien Statusvertrag und die Sperre eines abgelaufenen Schlüssels nach gültiger HappyHour-Freigabe, aber vor dem Audio-Body.
 - Ein Verhaltenstest setzt einen manuellen Eintrag ohne Audio auf `ausgewertet`, entfernt einen früheren Fehler und weist zugleich nach, dass ein Audioeintrag ausstehend bleibt. Der Komponententest prüft den tatsächlich emittierten manuellen Status.
 - Ein Komponententest kennzeichnet einen konkret fehlgeschlagenen und unvollständigen Eintrag, zeigt die Korrekturaktion und weist nach, dass genau dessen stabile ID zum Bearbeiten ausgelöst wird.
 - Ein Diensttest ordnet HTTP 410 eindeutig einer ungültigen Freigabe zu. Ein Ablaufstest weist nach, dass der Audio-Blob erhalten bleibt, der Erneuerungsscanner mit Rückkehrziel geöffnet wird und die neue Freigabe nach erfolgreichem Commit zur vorherigen Ansicht zurückführt.
 - Bestehende Tests für QR-Freigabe, HappyHour-Grenze und früheren lokalen Speicher bleiben Bestandteil des Laufs.
-- Vue-Produktionsbuild mit 293 transformierten Modulen einschliesslich Manifest, Service Worker und App-Icon: bestanden.
+- Vue-Produktionsbuild mit 296 transformierten Modulen einschliesslich Manifest, Service Worker und App-Icon: bestanden.
 - Docker-Buildkontextprüfung: Der Frontend-Stage kopiert `src/PlauderBox.Logik/Client` vor `pnpm run build` an den vom TypeScript-/Vite-Alias `@logik` erwarteten Pfad; `.dockerignore` schliesst ihn nicht aus: bestanden.
 - .NET-Release-Build der Dreischichten-Solution einschliesslich Vertragstestprojekt: bestanden, 0 Warnungen und 0 Fehler.
 - .NET-Vertragstests: tatsächlich serverrelevante Erfassungs-ID, redigiertes Token-Wertobjekt, fester HappyHour-Providerpfad und striktes KI-Schema ohne `Ort`: bestanden. Die mobilen Fachregeln werden nicht parallel in C# kopiert, sondern über den produktiven TypeScript-Pfad getestet.
 - Endpoint-/Logtest: ungültige Freigabe, nicht konfigurierte HappyHour-Verbindung und fehlende Erfassungs-ID liefern die erwarteten Fehlerzustände; ein markierter Freigabe-Token erscheint weder in Standard- noch Fehlerausgabe: bestanden.
 - Offline-App-Shell-Test: das gebaute gehashte JavaScript und CSS werden vorab gecacht; Navigation liefert bei abgewiesenem Netzwerk den gecachten App-Shell: bestanden.
 - Isolierter Loopback-Lauf des Release-Builds: App-Start, Manifest und Service Worker liefern Status 200; das Manifest wird als `application/manifest+json` ausgeliefert.
+
+> **Automatisierter Stand vom 13.11.2026:** Version `1.1.0` besteht den vollständigen `tests/Pruefe-Prototyp.ps1`: Docker-Buildkontext, Lint, TypeScript, 113 Frontendtests in 15 Dateien, Produktionsbuild, Playwright-Offlinefall, .NET-Release-Build ohne Warnungen, 14 Integrationstests, 9 Vertragstests, Offline-App-Shell und Token-Logschutz. Die neue Ablaufprüfung ist damit lokal bestanden; Dockerbuild und Delphi01-Bereitstellung sind noch nicht geprüft.
 
 ## Delphi01-Bereitstellungsnachweis
 
@@ -75,6 +78,7 @@ Dieser Bereitstellungsnachweis bestätigt den Serverbetrieb, nicht die vollstän
 10. Für ein bestehendes Protokoll mit lokal noch nicht übertragenem Punkt weitere Punkte direkt in HappyHour ergänzen, die Freigabe erneut bewusst bestätigen und den Code einlesen. Alle HappyHour-Punkte und der lokale Punkt müssen sichtbar sein; bei der anschliessenden Übergabe darf der lokale Punkt nicht ignoriert oder dupliziert werden.
 11. Während einer Audioauswertung zwischen Erfassung und Übersicht wechseln und prüfen, dass die KI-Fortschrittsanzeige bis zum Ergebnis sichtbar bleibt. Danach `‹ Back`, `Start` und `Beenden` in Erfassung, Offline-Hinweis, Kontrolle und Abschluss auf einem schmalen Mobilgerät bedienen.
 12. Die Übergabe an HappyHour starten und die Fortschrittsanzeige bis zur Bestätigung von Punkten und Bildern beobachten. In der Erfassung prüfen, dass nur `Gruppe` und kein zusätzliches CBO-Feld `Traktandum` vorhanden ist; anschliessend die Gruppierung und Traktandenliste im HappyHour-PDF kontrollieren.
+13. Mit einem synthetischen, bald ablaufenden Testdatum die sichtbare Warnung und mit einem abgelaufenen Testdatum die klare Sperrmeldung prüfen. Der produktive Schlüsselwert darf dabei weder im Browser noch in Logs erscheinen.
 
 ## Bewertung
 

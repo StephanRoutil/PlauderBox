@@ -102,6 +102,16 @@ Ein bewusst übernommener manueller Eintrag ohne Audio behielt fälschlich den S
 
 **Bestanden:** vollständiger `tests/Pruefe-Prototyp.ps1` mit Versionsabgleich, Lint, TypeScript, 109 Frontendtests, Vue-Produktionsbuild, Offline-Browsertest, .NET-Release-Build, 12 Integrationstests, 9 Vertragstests, Offline-App-Shell und Token-Logschutz. Commit `e20a221` und Tag `v1.0.4` wurden nach `origin` übertragen. Version `1.0.4` läuft auf Delphi01 als Image `plauderbox:delphi01-test-e20a221` (`sha256:c68d9f0f3129…`); HTTPS, eingebettete Version, KI-Status und Containerlog sind geprüft. **Nicht geprüft:** realer Abschluss eines manuellen Eintrags auf dem Mobilgerät. **Nächster Schritt:** manuellen Eintrag ohne Audio übernehmen und die Begehung abschliessen.
 
+## Session – Ablaufdatum des KI-Schlüssels überwachen
+
+- **Startzeit:** nicht zuverlässig bestimmbar
+- **Endzeit:** nicht zuverlässig bestimmbar
+- **Dauer:** nicht zuverlässig bestimmbar
+
+Die geschützte Schlüsseldatei wurde um `GueltigBis` ergänzt. Version `1.1.0` liest das Datum streng als `JJJJ-MM-TT`, warnt ab 30 Tagen vor Ablauf sichtbar und sperrt nach Ablauf weitere KI-Auswertungen mit einer verständlichen Meldung. Die bestehende allgemeine Statusroute bleibt auf `kiBereit` begrenzt; ein eigener Statusvertrag gibt nur Bereitschaft, Ablaufstatus, Datum und Meldung aus. Die HappyHour-Freigabe wird weiterhin vor Ablaufprüfung und Audio-Body geprüft. Schlüsselwert, Dateipfad und Modellnamen werden nicht an den Browser ausgegeben.
+
+**Bestanden:** vollständiger `tests/Pruefe-Prototyp.ps1` mit Docker-Buildkontext, Lint, TypeScript, 113 Frontendtests, Vue-Produktionsbuild, Playwright-Offlinefall, .NET-Release-Build ohne Warnungen, 14 Integrationstests, 9 Vertragstests, Offline-App-Shell und Token-Logschutz. **Nicht geprüft:** Dockerbuild und Delphi01-Bereitstellung. **Nächster Schritt:** Version committen und erst danach auf Delphi01 bereitstellen.
+
 ## Tagesgesamtzeit
 
 Nicht zuverlässig bestimmbar.

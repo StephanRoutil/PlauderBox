@@ -1708,6 +1708,43 @@ button,
   min-height: 44px;
 }
 
+.ki-schluessel-hinweis {
+  position: fixed;
+  z-index: 120;
+  right: 12px;
+  bottom: 12px;
+  left: 12px;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 10px;
+  align-items: center;
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 12px 14px;
+  border: 1px solid #e4b45e;
+  border-radius: 13px;
+  box-shadow: 0 8px 26px rgb(42 31 20 / 18%);
+  color: #684612;
+  background: #fff4d9;
+  font-size: 12px;
+  line-height: 1.4;
+}
+.ki-schluessel-hinweis strong,
+.ki-schluessel-hinweis span:not(.spinner) {
+  grid-column: 2;
+}
+.ki-schluessel-hinweis .spinner {
+  grid-row: 1 / span 2;
+  width: 20px;
+  height: 20px;
+}
+.ki-schluessel-hinweis--gesperrt,
+.ki-schluessel-hinweis--nicht_pruefbar {
+  border-color: #df9c91;
+  color: #843c30;
+  background: #fbe8e4;
+}
+
 @media (max-width: 390px) {
   .audio-guide {
     grid-template-columns: 1fr 92px;
