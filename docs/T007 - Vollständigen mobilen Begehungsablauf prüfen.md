@@ -36,6 +36,8 @@ anforderung: D011
 
 > **Aktualisierung vom 13.11.2026:** Die sichtbare KI-Fortschrittsanzeige und Headernavigation aus Commit `6484eea` laufen als Image `plauderbox:delphi01-test-6484eea`, ID `sha256:bb6523332992…`, in `Production`. Internes HTTPS und das neue Asset `index-DYXhrjaZ.js` liefern HTTP 200; das ausgelieferte Asset enthält `KI-Auswertung läuft` und `Beenden`. KI-Status, synthetischer HappyHour-Negativtest und Containerlog sind unauffällig. Das Image `plauderbox:delphi01-test-c319d81` bleibt als Rückfallstand erhalten. Reale Sicht- und Touchprüfung auf dem Mobilgerät bleibt offen.
 
+> **Aktualisierung vom 13.11.2026:** Die HappyHour-Fortschrittsanzeige und Formularbereinigung aus Commit `b68849b` laufen als Image `plauderbox:delphi01-test-b68849b`, ID `sha256:6bed5a898586…`, in `Production`. Internes HTTPS und das neue Asset `index-Bv-FsQhN.js` liefern HTTP 200. Das Asset enthält den Übergabestatus für Punkte und Bilder; der frühere Auswahltext `Kein Traktandum gewählt` ist nicht mehr enthalten. KI-Status, synthetischer HappyHour-Negativtest und Containerlog sind unauffällig. Das Image `plauderbox:delphi01-test-6484eea` bleibt als Rückfallstand erhalten. Reale Mobil- und PDF-Kontrolle bleibt offen.
+
 - Vollständiger Linux-Dockerbuild auf Delphi01 einschliesslich `src/PlauderBox.Logik/Client`: bestanden. Die Fotoerweiterung läuft als Image `sha256:f7f1d60381dd…`; der unmittelbar vorherige Stand ist als `plauderbox:delphi01-test-before-fotosicherung` markiert.
 - Anwendungs- und HTTPS-Container aus `/home/zeus/plauderbox-test-vorbereitung` gestartet: bestanden.
 - Root, Manifest, Service Worker und die gehashten JavaScript-/CSS-Assets liefern über internes HTTPS Status 200; Manifest-MIME-Typ korrekt: bestanden.

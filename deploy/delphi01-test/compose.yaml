@@ -1,6 +1,6 @@
 services:
   app:
-    image: plauderbox:delphi01-test-6484eea
+    image: plauderbox:delphi01-test-b68849b
     network_mode: host
     user: "1000:1000"
     restart: unless-stopped

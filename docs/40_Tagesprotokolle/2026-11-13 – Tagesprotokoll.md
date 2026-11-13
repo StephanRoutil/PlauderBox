@@ -60,7 +60,7 @@ Die während der KI-Anfrage nur in der Erfassungsansicht vorhandene Textmeldung 
 
 Die globale Fortschrittskomponente wird nun sowohl für die KI-Auswertung als auch für die vollständige HappyHour-Übergabe verwendet. Während Punkte und Bilder übertragen werden, zeigt sie Spinner, animierten unbestimmten Balken und den Hinweis, die App geöffnet zu lassen. Das doppelte CBO-Feld `Traktandum` wurde aus der Erfassung entfernt. `Gruppe` ist damit das einzige fachliche Gruppierungsfeld für die zusammengefasste Protokollansicht und die Traktandenliste im HappyHour-PDF. Die frühere lokale Eigenschaft bleibt leer als reine Abwärtskompatibilität für bestehende IndexedDB-Daten erhalten und wird nicht übertragen.
 
-**Bestanden:** vollständiger `tests/Pruefe-Prototyp.ps1` mit Lint, TypeScript, 104 Frontendtests, Vue-Produktionsbuild, Offline-Browsertest, .NET-Release-Build, 12 Integrationstests, 9 Vertragstests, Offline-App-Shell und Token-Logschutz. **Nicht geprüft:** Delphi01-Bereitstellung und reale PDF-Kontrolle in HappyHour.
+**Bestanden:** vollständiger `tests/Pruefe-Prototyp.ps1` mit Lint, TypeScript, 104 Frontendtests, Vue-Produktionsbuild, Offline-Browsertest, .NET-Release-Build, 12 Integrationstests, 9 Vertragstests, Offline-App-Shell und Token-Logschutz. Commit `b68849b` wurde nach `origin/main` übertragen und auf Delphi01 als Image `plauderbox:delphi01-test-b68849b` (`sha256:6bed5a898586…`) bereitgestellt. HTTPS, neues Asset, HappyHour-Fortschritt, fehlendes Traktandum-CBO, KI-Status, direkte HappyHour-Testverbindung und Containerlog sind geprüft; der vorherige Stand bleibt als Rückfallimage erhalten. **Nicht geprüft:** reale Mobil- und PDF-Kontrolle in HappyHour.
 
 ## Tagesgesamtzeit
 
