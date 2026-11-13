@@ -314,17 +314,27 @@ export function eindeutigeVerteileroptionen(
 
 export type BegehungsstartPruefung =
   | Readonly<{ gueltig: true }>
-  | Readonly<{ gueltig: false; meldung: string }>;
+  | Readonly<{ gueltig: false; meldung: string; probleme: readonly string[] }>;
 
 export function pruefeBegehungsstart(
   protokoll: HappyHourProtokollKontext,
 ): BegehungsstartPruefung {
-  if (eindeutigeVerteileroptionen(protokoll).length > 0)
-    return { gueltig: true };
+  const probleme: string[] = [];
+  if (eindeutigeVerteileroptionen(protokoll).length === 0) {
+    probleme.push("Verteiler fehlt: In HappyHour muss mindestens eine gültige Person im Verteiler erfasst sein.");
+  }
+  const gueltigeProtokollpunktarten = (protokoll.protokollpunktArten ?? []).filter(
+    (art) => Number.isInteger(art.id) && art.id > 0 && art.bezeichnung.trim().length > 0,
+  );
+  if (gueltigeProtokollpunktarten.length === 0) {
+    probleme.push("Art des Protokollpunkts fehlt: In HappyHour muss mindestens eine Protokollpunktart vorhanden sein.");
+  }
+  if (probleme.length === 0) return { gueltig: true };
   return {
     gueltig: false,
     meldung:
-      "Das Protokoll besitzt keinen gültigen Verteiler. Bitte in HappyHour mindestens eine Person im Verteiler erfassen, eine neue Rundgangsfreigabe erstellen und den QR-Code erneut scannen.",
+      "Die Begehung kann noch nicht gestartet werden. Bitte die fehlenden Angaben in HappyHour ergänzen, die PlauderBox-Freigabe aktualisieren und den QR-Code erneut scannen.",
+    probleme,
   };
 }
 

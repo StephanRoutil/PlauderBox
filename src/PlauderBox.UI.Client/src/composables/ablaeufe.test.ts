@@ -52,7 +52,7 @@ function kontext(protokollId = 17): HappyHourProtokollKontext {
       },
     ],
     protokollpunkte: [],
-    protokollpunktArten: [],
+    protokollpunktArten: [{ id: 1, bezeichnung: 'Feststellung' }],
   }
 }
 
@@ -108,9 +108,29 @@ describe('Begehungsablauf', () => {
 
     expect(ablauf.ansicht.value).toBe('start')
     expect(ablauf.startBlockiert.value).toBe(true)
-    expect(ablauf.startMeldung.value).toContain('keinen gültigen Verteiler')
+    expect(ablauf.startProbleme.value).toContain(
+      'Verteiler fehlt: In HappyHour muss mindestens eine gültige Person im Verteiler erfasst sein.',
+    )
     expect(abhaengigkeiten.speichern).not.toHaveBeenCalled()
     expect(ablauf.begehung.value).toBeNull()
+  })
+
+  it('blockiert den Start ohne gültige Protokollpunktart und nennt den fehlenden Eintrag', async () => {
+    const ohneArt = kontext()
+    ohneArt.protokollpunktArten = []
+    const abhaengigkeiten = begehungsAbhaengigkeiten({
+      kontextLaden: vi.fn(async () => ohneArt),
+    })
+    const ablauf = verwendeBegehung(abhaengigkeiten)
+
+    await ablauf.verarbeiteQrCode(`plauderbox://begehung?freigabe=${token}`)
+    await ablauf.starteBegehung()
+
+    expect(ablauf.startBlockiert.value).toBe(true)
+    expect(ablauf.startProbleme.value).toContain(
+      'Art des Protokollpunkts fehlt: In HappyHour muss mindestens eine Protokollpunktart vorhanden sein.',
+    )
+    expect(abhaengigkeiten.speichern).not.toHaveBeenCalled()
   })
 
   it('bereitet eine unterbrochene Auswertung beim Wiederanlauf erneut vor', async () => {

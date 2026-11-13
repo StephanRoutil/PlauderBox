@@ -23,7 +23,7 @@ export type { AppAnsicht } from './verwendeAppZustand'
 export type Begehungsstartzustand =
   | { art: 'bereit' }
   | { art: 'laeuft' }
-  | { art: 'blockiert'; meldung: string }
+  | { art: 'blockiert'; meldung: string; probleme: readonly string[] }
   | { art: 'fehler'; meldung: string }
 
 export interface BegehungsAbhaengigkeiten {
@@ -63,6 +63,7 @@ export function verwendeBegehung(
   )
   const startLaeuft = computed(() => startzustand.value.art === 'laeuft')
   const startBlockiert = computed(() => startzustand.value.art === 'blockiert')
+  const startProbleme = computed(() => (startzustand.value.art === 'blockiert' ? startzustand.value.probleme : []))
   const startMeldung = computed(() =>
     startzustand.value.art === 'blockiert' || startzustand.value.art === 'fehler'
       ? startzustand.value.meldung
@@ -88,7 +89,7 @@ export function verwendeBegehung(
       const startpruefung = pruefeBegehungsstart(protokollKontext.value)
       startzustand.value = startpruefung.gueltig
         ? { art: 'bereit' }
-        : { art: 'blockiert', meldung: startpruefung.meldung }
+        : { art: 'blockiert', meldung: startpruefung.meldung, probleme: startpruefung.probleme }
       ansicht.value = 'start'
     } catch (fehler: unknown) {
       ansicht.value = 'scanner'
@@ -105,7 +106,11 @@ export function verwendeBegehung(
     if (speicherblockiert.value || !protokollKontext.value || startzustand.value.art === 'laeuft') return
     const startpruefung = pruefeBegehungsstart(protokollKontext.value)
     if (!startpruefung.gueltig) {
-      startzustand.value = { art: 'blockiert', meldung: startpruefung.meldung }
+      startzustand.value = {
+        art: 'blockiert',
+        meldung: startpruefung.meldung,
+        probleme: startpruefung.probleme,
+      }
       return
     }
     startzustand.value = { art: 'laeuft' }
@@ -325,6 +330,7 @@ export function verwendeBegehung(
     starteBegehung,
     startLaeuft,
     startBlockiert,
+    startProbleme,
     startMeldung,
     speicherblockiert,
     verbindungAktualisiert,

@@ -1,19 +1,42 @@
 <script setup lang="ts">
+import { nextTick, onMounted, ref, watch } from 'vue'
 import type { HappyHourProtokollKontext } from '@/services/happyHourProtokollKontext'
 import PlauderBoxMarke from './PlauderBoxMarke.vue'
 
-withDefaults(defineProps<{
+const eigenschaften = withDefaults(defineProps<{
   kontext: HappyHourProtokollKontext
   startLaeuft: boolean
   startBlockiert?: boolean
   startMeldung: string
-}>(), { startBlockiert: false })
+  startProbleme?: readonly string[]
+}>(), { startBlockiert: false, startProbleme: () => [] })
 
 const emit = defineEmits<{
   zurueck: []
   starten: []
   speicherLeeren: []
 }>()
+
+const dialogSichtbar = ref(eigenschaften.startBlockiert)
+const dialogTitel = ref<HTMLElement | null>(null)
+
+async function zeigeStartdialog(): Promise<void> {
+  dialogSichtbar.value = true
+  await nextTick()
+  dialogTitel.value?.focus()
+}
+
+onMounted(() => {
+  if (eigenschaften.startBlockiert) void zeigeStartdialog()
+})
+
+watch(
+  () => eigenschaften.startBlockiert,
+  (blockiert) => {
+    if (blockiert) void zeigeStartdialog()
+    else dialogSichtbar.value = false
+  },
+)
 
 function formatiereDatum(wert: string): string {
   const aspNetTreffer = /\/Date\((\d+)(?:[+-]\d+)?\)\//.exec(wert)
@@ -23,6 +46,30 @@ function formatiereDatum(wert: string): string {
 </script>
 
 <template>
+  <div
+    v-if="startBlockiert && dialogSichtbar"
+    class="startvoraussetzungen-dialog"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="startvoraussetzungen-titel"
+    aria-describedby="startvoraussetzungen-beschreibung"
+  >
+    <section class="startvoraussetzungen-dialog__inhalt">
+      <p class="eyebrow">Start nicht möglich</p>
+      <h2 id="startvoraussetzungen-titel" ref="dialogTitel" tabindex="-1">Angaben in HappyHour ergänzen</h2>
+      <p id="startvoraussetzungen-beschreibung">
+        Für diese Begehung fehlen folgende Voraussetzungen:
+      </p>
+      <ul class="startvoraussetzungen-dialog__liste">
+        <li v-for="problem in startProbleme" :key="problem">{{ problem }}</li>
+      </ul>
+      <p>
+        Danach in HappyHour die aktive PlauderBox-Freigabe aktualisieren und den QR-Code erneut scannen. Ein Widerruf ist nicht erforderlich.
+      </p>
+      <button class="mobile-primary" type="button" @click="emit('zurueck')">Anderen QR-Code scannen</button>
+      <button class="mobile-secondary" type="button" @click="dialogSichtbar = false">Hinweis schliessen</button>
+    </section>
+  </div>
   <main class="begehung-shell">
     <header class="mobile-start-header">
       <button class="back-button" type="button" aria-label="Zurück zum QR-Code-Scanner" @click="emit('zurueck')">

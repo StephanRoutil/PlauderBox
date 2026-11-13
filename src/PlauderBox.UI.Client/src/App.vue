@@ -107,6 +107,7 @@ const {
   startLaeuft,
   startBlockiert,
   startMeldung,
+  startProbleme,
   speicherblockiert,
   verbindungAktualisiert,
   verarbeiteQrCode,
@@ -175,6 +176,7 @@ onBeforeUnmount(() => {
     :start-laeuft="startLaeuft"
     :start-blockiert="startBlockiert"
     :start-meldung="startMeldung"
+    :start-probleme="startProbleme"
     @zurueck="ansicht = 'scanner'"
     @starten="starteBegehung"
     @speicher-leeren="leereInternenSpeicher"

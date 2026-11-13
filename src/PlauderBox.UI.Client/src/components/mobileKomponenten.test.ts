@@ -115,7 +115,7 @@ describe('mobile Komponenten', () => {
 
     expect(wrapper.get('img').attributes('src')).toBe('/icon.svg')
     expect(wrapper.text()).toContain('PlauderBox')
-    expect(wrapper.text()).toContain('v1.1.1')
+    expect(wrapper.text()).toContain('v1.1.2')
   })
 
   it('zeigt die Begehungsnavigation als drei beschriftete Headerbuttons', async () => {
@@ -201,21 +201,29 @@ describe('mobile Komponenten', () => {
     expect(wrapper.emitted('starten')).toHaveLength(1)
   })
 
-  it('sperrt den Start ohne Verteiler und führt zum erneuten QR-Scan zurück', async () => {
-    const ohneVerteiler = { ...protokoll, verteiler: [] }
+  it('öffnet bei fehlenden Startvoraussetzungen einen Dialog und führt zum erneuten QR-Scan zurück', async () => {
+    const unvollstaendig = { ...protokoll, verteiler: [], protokollpunktArten: [] }
     const wrapper = mount(BegehungStart, {
       props: {
-        kontext: ohneVerteiler,
+        kontext: unvollstaendig,
         startLaeuft: false,
         startBlockiert: true,
-        startMeldung: 'Das Protokoll besitzt keinen gültigen Verteiler.',
+        startMeldung: 'Die Begehung kann noch nicht gestartet werden.',
+        startProbleme: [
+          'Verteiler fehlt: In HappyHour muss mindestens eine gültige Person im Verteiler erfasst sein.',
+          'Art des Protokollpunkts fehlt: In HappyHour muss mindestens eine Protokollpunktart vorhanden sein.',
+        ],
       },
     })
 
-    expect(wrapper.get('[role="alert"]').text()).toContain('keinen gültigen Verteiler')
-    expect(wrapper.get('button.mobile-primary').attributes('disabled')).toBeDefined()
-    expect(wrapper.get('button.mobile-primary').text()).toBe('Start nicht möglich')
-    const erneutScannen = wrapper.findAll('button').find((taste) => taste.text() === 'Anderen QR-Code scannen')
+    const dialog = wrapper.get('[role="dialog"]')
+    expect(dialog.attributes('aria-modal')).toBe('true')
+    expect(dialog.text()).toContain('Verteiler fehlt')
+    expect(dialog.text()).toContain('Art des Protokollpunkts fehlt')
+    expect(dialog.text()).toContain('Ein Widerruf ist nicht erforderlich')
+    const gesperrterStart = wrapper.findAll('button').find((taste) => taste.text() === 'Start nicht möglich')
+    expect(gesperrterStart?.attributes('disabled')).toBeDefined()
+    const erneutScannen = dialog.findAll('button').find((taste) => taste.text() === 'Anderen QR-Code scannen')
     await erneutScannen!.trigger('click')
     expect(wrapper.emitted('zurueck')).toHaveLength(1)
   })

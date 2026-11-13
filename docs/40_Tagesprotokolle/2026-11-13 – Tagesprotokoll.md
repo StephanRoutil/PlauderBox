@@ -150,6 +150,16 @@ Der Quality-Agent gab Commit `a24e374` ohne P1-, P2- oder P3-Befund frei und wie
 
 Der Product Owner bestätigte die reale Mobilprüfung der Sperre als bestanden: Ein HappyHour-Protokoll ohne gültigen Verteiler kann in PlauderBox nicht als Begehung gestartet werden. **Bestanden:** sichtbare fachliche Sperre vor dem Begehungsstart. **Nicht geprüft:** erneuter Start nach Ergänzung des Verteilers und Einlesen einer neu ausgestellten Freigabe. Es wurden keine Anwendungs-, Server- oder Konfigurationsänderungen vorgenommen.
 
+## Session – Startvoraussetzungen vollständig und als Dialog anzeigen
+
+- **Startzeit:** nicht zuverlässig bestimmbar
+- **Endzeit:** nicht zuverlässig bestimmbar
+- **Dauer:** nicht zuverlässig bestimmbar
+
+Version `1.1.2` erweitert das Start-Quality-Gate um die zwingend benötigte Protokollpunktart. Fehlt der Verteiler, die Protokollpunktart oder beides, bleibt der Start vor dem ersten lokalen Commit gesperrt. Ein sofort eingeblendeter modaler Dialog nennt jeden fehlenden Eintrag, fokussiert die Überschrift und erklärt, dass die aktive HappyHour-Freigabe nach der Korrektur aktualisiert und der QR-Code erneut gescannt werden muss. Bestehender lokaler Speicher bleibt unangetastet.
+
+**Bestanden:** vollständiger `tests/Pruefe-Prototyp.ps1` mit Lint, TypeScript, 116 Frontendtests, Vue-Produktionsbuild, Playwright-Offlinefall, .NET-Release-Build ohne Warnungen, 14 Integrationstests, 9 Vertragstests, Offline-App-Shell und Token-Logschutz. **Nicht geprüft:** Dockerbuild, Bereitstellung und reale Mobilprüfung von Version `1.1.2`. **Nicht anwendbar:** neue Paketabhängigkeit oder Datenmigration.
+
 ## Tagesgesamtzeit
 
 Nicht zuverlässig bestimmbar.
