@@ -30,6 +30,8 @@ anforderung: D011
 
 > **Aktualisierung vom 13.11.2026:** Der Usability-Korrekturstand aus Commit `ec65e60` läuft als Image `plauderbox:delphi01-test-ec65e60`, ID `sha256:5ffe84fd1c59…`, in `Production`. Root und das neue Asset `index-DftIBvEC.js` werden über internes HTTPS ausgeliefert, `/api/v1/status` meldet die KI als bereit und ein synthetischer ungültiger Freigabecode liefert über die direkte Verbindung zu `https://test.siwako.ch` HTTP 410. Die reale Mobilgeräteabnahme bleibt offen.
 
+> **Aktualisierung vom 13.11.2026:** Der Zusammenführungs-Fix aus Commit `c319d81` läuft als Image `plauderbox:delphi01-test-c319d81`, ID `sha256:f270beee943a…`, in `Production`. Internes HTTPS und das neue Asset `index-C3z7irNw.js` liefern HTTP 200, `/api/v1/status` meldet die KI als bereit, der synthetische HappyHour-Negativtest liefert über die direkte Verbindung zu `https://test.siwako.ch` HTTP 410 und das Containerlog enthält keine Startfehler. Das vorherige Image `plauderbox:delphi01-test-ec65e60` bleibt als Rückfallstand erhalten. Der reale Zusammenführungsfall mit Protokoll 240 bleibt bis zum HappyHour-Publish und Mobiltest offen.
+
 - Vollständiger Linux-Dockerbuild auf Delphi01 einschliesslich `src/PlauderBox.Logik/Client`: bestanden. Die Fotoerweiterung läuft als Image `sha256:f7f1d60381dd…`; der unmittelbar vorherige Stand ist als `plauderbox:delphi01-test-before-fotosicherung` markiert.
 - Anwendungs- und HTTPS-Container aus `/home/zeus/plauderbox-test-vorbereitung` gestartet: bestanden.
 - Root, Manifest, Service Worker und die gehashten JavaScript-/CSS-Assets liefern über internes HTTPS Status 200; Manifest-MIME-Typ korrekt: bestanden.
