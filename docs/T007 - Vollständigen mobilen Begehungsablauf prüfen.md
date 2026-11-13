@@ -2,7 +2,7 @@
 typ: test
 id: T007
 status: automatisiert-bestanden-mobiltest-offen
-datum: 2026-11-10
+datum: 2026-11-13
 anforderung: D011
 ---
 
@@ -13,8 +13,9 @@ anforderung: D011
 ## Automatisierte Prüfungen
 
 - TypeScript-Typecheck für produktive Vue-Dateien.
-- Vitest: 59 Tests in 9 Dateien bestanden. Geprüft werden zusätzlich die normalisierte Zuständigkeit `Wer`, Verteilergrenzfälle, Legacy-Import, IndexedDB-Roundtrip, getrennte Kamera-/Galerieauswahl, Bildablehnungen und die einmalige Einzelbildsicherung.
-- Die Bildsicherung prüft Dateinamen und Einzeldateien, genau einen Share-Aufruf für alle Bilder sowie den Fallback auf alle Einzel-Downloads ohne ZIP. Der mobile UI-Vertrag prüft getrennte Kamera- und Galerie-Eingaben.
+- Vitest: 95 Tests in 14 Dateien bestanden. Geprüft werden zusätzlich die normalisierte Zuständigkeit `Wer`, Verteilergrenzfälle, Legacy-Import und -Löschung, IndexedDB-Roundtrip, getrennte Kamera-/Galerieauswahl, Bildablehnungen und die einmalige Einzelbildsicherung.
+- Die Bildsicherung prüft Dateinamen und Einzeldateien sowie direkte Einzel-Downloads ohne Teilen-Dialog und ohne ZIP, einschliesslich 82 Bildern aus einer Benutzeraktion. Der mobile UI-Vertrag prüft getrennte Kamera- und Galerie-Eingaben.
+- Verhaltenstests prüfen zusätzlich die vollständig manuelle Erfassung ohne Audio, den sichtbaren KI-Laufzustand, die Ein-Klick-Auswertung ausstehender Offline-Aufnahmen, das bestätigte Leeren beider internen Datenspeicher und den Standardwert der Protokollpunktart für den nächsten neuen Eintrag.
 - Bestehende Tests für QR-Freigabe, HappyHour-Grenze und früheren lokalen Speicher bleiben Bestandteil des Laufs.
 - Vue-Produktionsbuild mit 39 transformierten Modulen einschliesslich Manifest, Service Worker und App-Icon: bestanden.
 - Docker-Buildkontextprüfung: Der Frontend-Stage kopiert `src/PlauderBox.Logik/Client` vor `pnpm run build` an den vom TypeScript-/Vite-Alias `@logik` erwarteten Pfad; `.dockerignore` schliesst ihn nicht aus: bestanden.
@@ -45,8 +46,10 @@ Dieser Bereitstellungsnachweis bestätigt den Serverbetrieb, nicht die vollstän
 4. Serverfehler und manuelle Wiederholung prüfen.
 5. PWA installieren und App-Hülle ohne Netz neu öffnen.
 6. Fokus, Touchziele und schmale Ansichten auf repräsentativen Geräten prüfen.
-7. Kamera und Galerie getrennt prüfen; danach einen Rundgang mit vielen Bildern über genau eine Sicherungsaktion an Android übergeben und die einzelnen Dateien im gewählten Ziel kontrollieren.
+7. Kamera und Galerie getrennt prüfen; danach einen Rundgang mit vielen Bildern über genau eine Sicherungsaktion direkt herunterladen und die Einzeldateien im Android-Downloadbereich kontrollieren.
+8. Manuelles Leeren aus Scanner, Startansicht und aktiver Begehung prüfen; danach muss die App zum Scanner zurückkehren und darf keine frühere Begehung wiederherstellen.
+9. Einen Punkt ohne Audio manuell erfassen, eine laufende KI-Auswertung beobachten, den Protokollpunktart-Standard am Folgepunkt prüfen und mehrere offline erfasste Aufnahmen aus der Kontrolle mit einer Aktion auswerten.
 
 ## Bewertung
 
-Der dokumentierte Gesamtlauf ist lokal vollständig grün. Dies ist ausdrücklich keine reale Geräteabnahme. Q2 bleibt für den Absturzfall zwischen erfolgreicher externer KI-Antwort und lokalem Commit sowie bis zum realen Offline-Wiederanlauftest offen. Es besteht noch keine serverpersistente Idempotenz beziehungsweise kein serverpersistenter Duplikatschutz für Transkriptionsaufträge: Die stabile `erfassungsId` wird validiert, aber nicht serverseitig persistent gespeichert. Q4 bleibt bis zur repräsentativen Mobilgeräteabnahme von Kamera, Galerie, Web Share und Mehrfachdownloads offen. Die Protokollpunktübergabe ist in T008 nachgewiesen; die lokal umgesetzte Bildübergabe wird bis zur realen Abnahme in T009 als teilweise bestanden geführt.
+Der dokumentierte Gesamtlauf ist lokal vollständig grün. Dies ist ausdrücklich keine reale Geräteabnahme. Q2 bleibt für den Absturzfall zwischen erfolgreicher externer KI-Antwort und lokalem Commit sowie bis zum realen Offline-Wiederanlauftest offen. Es besteht noch keine serverpersistente Idempotenz beziehungsweise kein serverpersistenter Duplikatschutz für Transkriptionsaufträge: Die stabile `erfassungsId` wird validiert, aber nicht serverseitig persistent gespeichert. Q4 bleibt bis zur repräsentativen Mobilgeräteabnahme von Kamera, Galerie und direkten Mehrfachdownloads offen. Die Protokollpunktübergabe ist in T008 nachgewiesen; die lokal umgesetzte Bildübergabe wird bis zur realen Abnahme in T009 als teilweise bestanden geführt.

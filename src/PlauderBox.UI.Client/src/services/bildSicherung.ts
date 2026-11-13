@@ -1,16 +1,11 @@
 import type { LokaleBegehung, LokalesBild } from './begehungsSpeicher'
 import { istUnterstuetzterBildtyp, maximaleBildgroesse, unterstuetzteBildtypen } from '@logik/clientPruefungen'
 
-export type BildSicherungsart = 'geteilt' | 'heruntergeladen' | 'keine_bilder'
+export type BildSicherungsart = 'heruntergeladen' | 'keine_bilder'
 export interface BildSicherungsErgebnis {
   art: BildSicherungsart
   anzahl: number
 }
-export interface BildTeiler {
-  canShare?: (daten?: ShareData) => boolean
-  share?: (daten?: ShareData) => Promise<void>
-}
-
 type BildDownloader = (datei: File) => void
 
 const bildendungen = new Map(unterstuetzteBildtypen.map((bildtyp) => [bildtyp, standardendung(bildtyp)]))
@@ -73,28 +68,10 @@ export function sammleBegehungsbilder(begehung: LokaleBegehung): File[] {
 
 export async function sichereBegehungsbilder(
   begehung: LokaleBegehung,
-  teiler: BildTeiler = navigator,
   downloader: BildDownloader = ladeBildHerunter,
 ): Promise<BildSicherungsErgebnis> {
   const dateien = sammleBegehungsbilder(begehung)
   if (!dateien.length) return { art: 'keine_bilder', anzahl: 0 }
-
-  const teilenDaten: ShareData = {
-    files: dateien,
-    title: `PlauderBox ${begehung.protokoll.projekt.nummer} ${begehung.protokoll.typ} ${begehung.protokoll.protokollNummer}`,
-    text: `${dateien.length} Bilder aus der PlauderBox-Begehung`,
-  }
-  let kannGemeinsamTeilen = false
-  try {
-    kannGemeinsamTeilen = Boolean(teiler.share && teiler.canShare?.({ files: dateien }))
-  } catch {
-    kannGemeinsamTeilen = false
-  }
-  if (kannGemeinsamTeilen && teiler.share) {
-    await teiler.share(teilenDaten)
-    return { art: 'geteilt', anzahl: dateien.length }
-  }
-
   for (const datei of dateien) downloader(datei)
   return { art: 'heruntergeladen', anzahl: dateien.length }
 }

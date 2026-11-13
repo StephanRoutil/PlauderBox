@@ -3,8 +3,15 @@ import { computed, ref } from 'vue'
 import MobileKopf from './MobileKopf.vue'
 import type { LokaleBegehung } from '@/services/begehungsSpeicher'
 import { sichereBegehungsbilder } from '@/services/bildSicherung'
-const props = defineProps<{ begehung: LokaleBegehung; online: boolean; uebergabeLaeuft: boolean; meldung: string }>()
-defineEmits<{ zurueck: []; uebergeben: []; freigabeErneuern: []; neuStarten: [] }>()
+const props = withDefaults(defineProps<{
+  begehung: LokaleBegehung
+  online: boolean
+  uebergabeLaeuft: boolean
+  meldung: string
+  anzahlAusstehend?: number
+  auswertungLaeuft?: boolean
+}>(), { anzahlAusstehend: 0, auswertungLaeuft: false })
+defineEmits<{ zurueck: []; uebergeben: []; freigabeErneuern: []; neuStarten: []; auswerten: [] }>()
 
 const bildSicherungLaeuft = ref(false)
 const bildSicherungsMeldung = ref('')
@@ -15,10 +22,7 @@ async function alleBilderSichern(): Promise<void> {
   bildSicherungsMeldung.value = ''
   try {
     const ergebnis = await sichereBegehungsbilder(props.begehung)
-    bildSicherungsMeldung.value =
-      ergebnis.art === 'geteilt'
-        ? `${ergebnis.anzahl} einzelne Bilder wurden dem Speichern-Dialog übergeben.`
-        : `${ergebnis.anzahl} einzelne Bild-Downloads wurden gestartet. Falls der Browser fragt, bitte mehrere Downloads einmalig erlauben.`
+    bildSicherungsMeldung.value = `${ergebnis.anzahl} einzelne Bild-Downloads wurden gestartet. Falls der Browser fragt, bitte mehrere Downloads einmalig erlauben.`
   } catch (fehler: unknown) {
     bildSicherungsMeldung.value =
       fehler instanceof DOMException && fehler.name === 'AbortError'
@@ -48,9 +52,20 @@ async function alleBilderSichern(): Promise<void> {
       <p>
         {{ begehung.eintraege.length }} kontrollierte Einträge sind weiterhin sicher im internen App-Speicher vorhanden.
       </p>
+      <section v-if="anzahlAusstehend > 0" class="warning-box">
+        <p>{{ anzahlAusstehend }} Einträge warten noch auf die KI-Auswertung.</p>
+        <button
+          class="mobile-secondary"
+          type="button"
+          :disabled="!online || auswertungLaeuft"
+          @click="$emit('auswerten')"
+        >
+          {{ auswertungLaeuft ? 'Auswertung läuft …' : online ? 'Alle ausstehenden Einträge auswerten' : 'Warte auf Verbindung' }}
+        </button>
+      </section>
       <section v-if="bildAnzahl" class="image-backup-card">
         <h2>{{ bildAnzahl }} Bilder zusätzlich sichern</h2>
-        <p>Alle Bilder werden mit einer einzigen Aktion als einzelne Dateien übergeben. Es wird kein ZIP erstellt.</p>
+        <p>Alle Bilder werden mit einer Aktion direkt als einzelne Dateien heruntergeladen. Es wird kein ZIP erstellt.</p>
         <button class="mobile-secondary" type="button" :disabled="bildSicherungLaeuft" @click="alleBilderSichern">
           {{ bildSicherungLaeuft ? 'Bilder werden vorbereitet …' : `Alle ${bildAnzahl} Bilder sichern` }}
         </button>

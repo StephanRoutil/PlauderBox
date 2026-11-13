@@ -34,6 +34,19 @@ interface LegacyPunkt {
 
 const datenbankname = 'PlauderBoxInternerSpeicher'
 
+export function verwerfeLegacyDaten(): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const anfrage = indexedDB.deleteDatabase(datenbankname)
+    anfrage.addEventListener('success', () => resolve())
+    anfrage.addEventListener('error', () =>
+      reject(anfrage.error ?? new Error('Der alte interne App-Speicher konnte nicht geleert werden.')),
+    )
+    anfrage.addEventListener('blocked', () =>
+      reject(new Error('Der alte interne App-Speicher wird noch von einem anderen Fenster verwendet.')),
+    )
+  })
+}
+
 function bildeLegacyImportId(
   punkt: LegacyPunkt | undefined,
   aufnahme: LegacyAufnahme | undefined,

@@ -3,6 +3,7 @@ import {
   bereiteWiederanlaufVor,
   BegehungSpeicherfehler,
   committeEintrag,
+  ermittleStandardProtokollpunktArtId,
   erstelleBegehung,
   erstelleEintragFuerProtokoll,
   normalisiereEintragProjektAnsprechpartner,
@@ -38,6 +39,7 @@ export interface BegehungsAbhaengigkeiten {
   nachVerwerfen: () => void
   unlesbareDatenSichern: () => Promise<{ dateien: number }>
   unlesbareDatenVerwerfen: () => Promise<void>
+  speicherVollstaendigLeeren: () => Promise<void>
 }
 
 export function verwendeBegehung(
@@ -118,7 +120,11 @@ export function verwendeBegehung(
 
   async function neuerEintrag(): Promise<void> {
     if (!begehung.value) return
-    const eintrag = erstelleEintragFuerProtokoll(begehung.value.protokoll)
+    const eintrag = erstelleEintragFuerProtokoll(
+      begehung.value.protokoll,
+      undefined,
+      ermittleStandardProtokollpunktArtId(begehung.value),
+    )
     begehung.value.eintraege.push(eintrag)
     begehung.value.aktuellerEintragId = eintrag.id
     begehung.value.status = 'aktiv'
@@ -250,6 +256,30 @@ export function verwendeBegehung(
       'Die unlesbaren lokalen Daten wurden bewusst verworfen. Eine neue Begehung kann gestartet werden.'
   }
 
+  async function leereInternenSpeicher(): Promise<void> {
+    if (
+      !abhaengigkeiten.bestaetigen(
+        'Den internen App-Speicher mit allen lokalen Begehungen, Bildern und Aufnahmen endgültig leeren?',
+      )
+    )
+      return
+    try {
+      await abhaengigkeiten.speicherVollstaendigLeeren()
+      begehung.value = null
+      legacyEintrag.value = null
+      protokollKontext.value = null
+      aktiveFreigabeToken.value = ''
+      speicherblockiert.value = false
+      startzustand.value = { art: 'bereit' }
+      ansicht.value = 'scanner'
+      scannerMeldung.value = 'Der interne App-Speicher wurde vollständig geleert.'
+      abhaengigkeiten.nachVerwerfen()
+    } catch {
+      scannerMeldung.value =
+        'Der interne App-Speicher konnte nicht vollständig geleert werden. Bitte andere PlauderBox-Fenster schliessen und erneut versuchen.'
+    }
+  }
+
   return {
     aktiveFreigabeToken,
     aktuellerEintrag,
@@ -258,6 +288,7 @@ export function verwendeBegehung(
     geheZurKontrolle,
     initialisiere,
     loescheEintrag,
+    leereInternenSpeicher,
     neuerEintrag,
     oeffneEintrag,
     online,

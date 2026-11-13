@@ -158,23 +158,9 @@ describe('einmalige Sicherung aller Begehungsbilder', () => {
     ])
   })
 
-  it('übergibt alle einzelnen Bilder mit genau einem Share-Aufruf', async () => {
-    const geteilteDaten: ShareData[] = []
-    const share = vi.fn(async (daten?: ShareData) => {
-      if (daten) geteilteDaten.push(daten)
-    })
+  it('startet alle Einzelbild-Downloads direkt ohne Teilen-Dialog', async () => {
     const downloader = vi.fn()
-    const ergebnis = await sichereBegehungsbilder(begehung(), { canShare: () => true, share }, downloader)
-
-    expect(ergebnis).toEqual({ art: 'geteilt', anzahl: 3 })
-    expect(share).toHaveBeenCalledTimes(1)
-    expect(geteilteDaten[0]?.files).toHaveLength(3)
-    expect(downloader).not.toHaveBeenCalled()
-  })
-
-  it('startet bei fehlender Share-Unterstützung alle Einzel-Downloads aus einer Aktion', async () => {
-    const downloader = vi.fn()
-    const ergebnis = await sichereBegehungsbilder(begehung(), { canShare: () => false }, downloader)
+    const ergebnis = await sichereBegehungsbilder(begehung(), downloader)
 
     expect(ergebnis).toEqual({ art: 'heruntergeladen', anzahl: 3 })
     expect(downloader).toHaveBeenCalledTimes(3)
@@ -185,34 +171,17 @@ describe('einmalige Sicherung aller Begehungsbilder', () => {
     ).toBe(true)
   })
 
-  it('übergibt auch 82 Bilder mit genau einem Share-Aufruf', async () => {
+  it('startet auch bei 82 Bildern alle Downloads aus einer Benutzeraktion', async () => {
     const grosserRundgang = begehung()
     grosserRundgang.eintraege[0]!.bilder = Array.from({ length: 82 }, (_, index) =>
       bild(`bild-${index + 1}`, `kamera-${index + 1}.jpg`, `bild-${index + 1}`),
     )
     grosserRundgang.eintraege[1]!.bilder = []
-    const canShare = vi.fn(() => true)
-    const share = vi.fn(async (_daten?: ShareData) => undefined)
-
-    const ergebnis = await sichereBegehungsbilder(grosserRundgang, { canShare, share }, vi.fn())
-
-    expect(ergebnis).toEqual({ art: 'geteilt', anzahl: 82 })
-    expect(canShare).toHaveBeenCalledTimes(1)
-    expect(share).toHaveBeenCalledTimes(1)
-  })
-
-  it('verwendet bei einer fehlerhaften Share-Fähigkeitsprüfung den Einzeldatei-Fallback', async () => {
     const downloader = vi.fn()
-    const ergebnis = await sichereBegehungsbilder(
-      begehung(),
-      {
-        canShare: () => {
-          throw new Error('nicht unterstützt')
-        },
-      },
-      downloader,
-    )
-    expect(ergebnis).toEqual({ art: 'heruntergeladen', anzahl: 3 })
-    expect(downloader).toHaveBeenCalledTimes(3)
+
+    const ergebnis = await sichereBegehungsbilder(grosserRundgang, downloader)
+
+    expect(ergebnis).toEqual({ art: 'heruntergeladen', anzahl: 82 })
+    expect(downloader).toHaveBeenCalledTimes(82)
   })
 })

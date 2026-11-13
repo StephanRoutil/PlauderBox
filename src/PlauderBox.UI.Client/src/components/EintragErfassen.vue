@@ -21,6 +21,7 @@ const props = withDefaults(
     eintrag: BegehungEintrag
     protokoll: HappyHourProtokollKontext
     online: boolean
+    auswertungLaeuft?: boolean
     speichern: (eintrag: BegehungEintrag) => Promise<void>
     audioRekorder?: AudioRekorder
     bestaetigen?: (meldung: string) => boolean
@@ -28,6 +29,7 @@ const props = withDefaults(
   {
     audioRekorder: () => new BrowserAudioRekorder(),
     bestaetigen: (meldung: string) => window.confirm(meldung),
+    auswertungLaeuft: false,
   },
 )
 const emit = defineEmits<{
@@ -67,6 +69,13 @@ const zeit = computed(
     `${String(Math.floor(dauerSekunden.value / 60)).padStart(2, '0')}:${String(dauerSekunden.value % 60).padStart(2, '0')}`,
 )
 const verteileroptionen = computed(() => eindeutigeVerteileroptionen(props.protokoll))
+const aktionGesperrt = computed(
+  () =>
+    aufnahmeLaeuft.value ||
+    speicherstatus.value === 'speichert' ||
+    props.auswertungLaeuft ||
+    Boolean(entwurf.value.audio && speicherstatus.value !== 'gespeichert'),
+)
 
 function aktualisiereBildUrls(): void {
   Object.values(bildUrls.value).forEach(URL.revokeObjectURL)
@@ -186,7 +195,7 @@ function eintragSpeichern(): void {
     return
   }
   if (!entwurf.value.audio && !entwurf.value.thema.trim() && !entwurf.value.inhalt.trim()) {
-    meldung.value = 'Bitte zuerst eine Aufnahme erstellen oder den vorhandenen Eintrag bearbeiten.'
+    meldung.value = 'Bitte eine Audioaufnahme erstellen oder Thema beziehungsweise Inhalt manuell erfassen.'
     return
   }
   entwurf.value.aktualisiertAm = new Date().toISOString()
@@ -302,6 +311,22 @@ function eintragSpeichern(): void {
         </div>
       </section>
 
+      <button
+        v-if="entwurf.audio"
+        class="mobile-primary"
+        type="button"
+        :disabled="aktionGesperrt"
+        @click="eintragSpeichern"
+      >
+        {{ props.auswertungLaeuft ? 'KI-Auswertung läuft …' : online ? 'Diktat auswerten' : 'Lokal sichern' }}
+      </button>
+      <p v-if="props.auswertungLaeuft" class="saved-banner" role="status" aria-live="polite">
+        ⏳ Die KI wertet das Diktat aus. Bitte einen Moment warten.
+      </p>
+      <button v-if="entwurf.audio" class="mobile-secondary" type="button" :disabled="props.auswertungLaeuft" @click="verwerfeAufnahme">
+        Aufnahme verwerfen
+      </button>
+
       <section class="capture-block review-form">
         <p class="eyebrow">Kontrollierter Inhalt</p>
         <h2>Eintrag ergänzen oder korrigieren</h2>
@@ -319,6 +344,15 @@ function eintragSpeichern(): void {
           ><span>Rechtsverweis <small>optional</small></span
           ><input v-model.trim="entwurf.rechtsverweis" maxlength="250" @change="zwischenspeichern"
         /></label>
+        <button
+          v-if="!entwurf.audio"
+          class="mobile-primary"
+          type="button"
+          :disabled="aktionGesperrt"
+          @click="eintragSpeichern"
+        >
+          Manuellen Eintrag übernehmen
+        </button>
       </section>
 
       <div v-if="entwurf.audio && speicherstatus === 'gespeichert'" class="saved-banner">
@@ -327,17 +361,6 @@ function eintragSpeichern(): void {
       <div v-else-if="speicherstatus === 'speichert'" class="saved-banner">
         Aufnahme und Bilder werden intern gespeichert …
       </div>
-      <button
-        class="mobile-primary"
-        type="button"
-        :disabled="aufnahmeLaeuft || speicherstatus !== 'gespeichert'"
-        @click="eintragSpeichern"
-      >
-        {{ entwurf.audio ? (online ? 'Diktat auswerten' : 'Lokal sichern') : 'Änderungen übernehmen' }}
-      </button>
-      <button v-if="entwurf.audio" class="mobile-secondary" type="button" @click="verwerfeAufnahme">
-        Aufnahme verwerfen
-      </button>
       <p v-if="meldung" class="scan-status scan-status--error" role="alert">{{ meldung }}</p>
       <button v-if="speicherstatus === 'fehler'" class="mobile-secondary" type="button" @click="zwischenspeichern">
         Lokale Sicherung erneut versuchen

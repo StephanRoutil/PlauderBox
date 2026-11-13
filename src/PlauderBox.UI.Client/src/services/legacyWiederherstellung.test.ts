@@ -1,6 +1,6 @@
 import { IDBFactory } from 'fake-indexeddb'
 import { beforeEach, describe, expect, it } from 'vitest'
-import { ladeLegacyEintrag } from './legacyWiederherstellung'
+import { ladeLegacyEintrag, verwerfeLegacyDaten } from './legacyWiederherstellung'
 import {
   erstelleBegehung,
   ladeBegehung,
@@ -117,6 +117,24 @@ const protokoll: HappyHourProtokollKontext = {
 
 describe('Legacy-Wiederherstellung', () => {
   beforeEach(() => Object.defineProperty(globalThis, 'indexedDB', { configurable: true, value: new IDBFactory() }))
+
+  it('entfernt den früheren internen App-Speicher vollständig', async () => {
+    const audio = new Blob(['audio'], { type: 'audio/webm' })
+    await speichereLegacyDaten({
+      id: 'zu-loeschen',
+      erstelltAm: '2026-11-10T00:00:00Z',
+      dateiname: 'alt.webm',
+      medientyp: 'audio/webm',
+      groesse: audio.size,
+      dauerSekunden: 1,
+      status: 'noch_nicht_uebertragen',
+      audio,
+    })
+
+    await verwerfeLegacyDaten()
+
+    expect(await ladeLegacyEintrag()).toBeNull()
+  })
 
   it('liest ältere Aufnahme, Bilder und Felder als sicheren neuen Eintrag ohne Legacy-Löschung', async () => {
     const audio = new Blob(['audio'], { type: 'audio/webm' })

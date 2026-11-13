@@ -8,6 +8,7 @@ import {
   committeFreigabeErneuerung,
   committeHappyHourUebergabe,
   eindeutigeVerteileroptionen,
+  ermittleStandardProtokollpunktArtId,
   erstelleBegehung,
   erstelleEintrag,
   erstelleEintragFuerProtokoll,
@@ -360,6 +361,19 @@ describe('Begehungsspeicher und Fachzustände', () => {
     }
     const eintrag = erstelleEintragFuerProtokoll(kontext)
     expect(eintrag.projektAnsprechpartnerId).toBe(77)
+  })
+
+  it('verwendet die zuletzt bewusst gewählte Protokollpunktart als Standard für den nächsten neuen Eintrag', () => {
+    const rundgang = erstelleBegehung(protokoll)
+    const erster = erstelleEintragFuerProtokoll(protokoll)
+    erster.protokollpunktArtId = 1
+    rundgang.eintraege.push(erster)
+
+    const standard = ermittleStandardProtokollpunktArtId(rundgang)
+    const naechster = erstelleEintragFuerProtokoll(protokoll, undefined, standard)
+
+    expect(standard).toBe(1)
+    expect(naechster.protokollpunktArtId).toBe(1)
   })
 
   it('setzt ohne genau einen Protokollschreiber keinen Standard und behält gültige Kandidaten', () => {

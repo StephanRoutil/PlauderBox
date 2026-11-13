@@ -65,6 +65,7 @@ function begehungsAbhaengigkeiten(ueberschreiben: Record<string, unknown> = {}) 
     nachVerwerfen: vi.fn(),
     unlesbareDatenSichern: vi.fn(async () => ({ dateien: 1, art: 'heruntergeladen' as const })),
     unlesbareDatenVerwerfen: vi.fn(async () => undefined),
+    speicherVollstaendigLeeren: vi.fn(async () => undefined),
     ...ueberschreiben,
   }
 }
@@ -139,6 +140,25 @@ describe('Begehungsablauf', () => {
     expect(abhaengigkeiten.kontextLaden).not.toHaveBeenCalled()
     expect(speichern).not.toHaveBeenCalled()
     expect(ablauf.scannerMeldung.value).toContain('gesichert oder verworfen')
+  })
+
+  it('leert den vollständigen lokalen Speicher nur nach Bestätigung und kehrt zum Scanner zurück', async () => {
+    const gespeichert = begehung()
+    const speicherVollstaendigLeeren = vi.fn(async () => undefined)
+    const ablauf = verwendeBegehung(
+      begehungsAbhaengigkeiten({
+        begehungLaden: vi.fn(async () => gespeichert),
+        speicherVollstaendigLeeren,
+      }),
+    )
+    await ablauf.initialisiere()
+
+    await ablauf.leereInternenSpeicher()
+
+    expect(speicherVollstaendigLeeren).toHaveBeenCalledTimes(1)
+    expect(ablauf.begehung.value).toBeNull()
+    expect(ablauf.ansicht.value).toBe('scanner')
+    expect(ablauf.scannerMeldung.value).toBe('Der interne App-Speicher wurde vollständig geleert.')
   })
 })
 

@@ -28,8 +28,13 @@ Als Mitarbeiter möchte ich eine freigegebene Begehung auf dem Mobilgerät start
 - **AK12:** Ältere Daten aus `PlauderBoxInternerSpeicher` werden erkannt und nach bewusstem Einlesen eines neuen Kontexts zur sicheren Übernahme angeboten. Ein stabiler Importbezeichner wird atomar mit der neuen Begehung markiert, damit derselbe Altbestand bei späteren Starts nicht erneut angeboten oder doppelt ausgewertet wird. Der Altbestand wird dabei nicht ungefragt gelöscht.
 - **AK13:** Nach lokalem Abschluss kann der Mitarbeiter zurück zur Kontrolle oder die lokale Begehung nach Umfangsbestätigung verwerfen und einen neuen Code scannen.
 - **AK14:** Die Bilderfassung bietet getrennt `Foto aufnehmen` mit rückseitiger Kamera und `Aus Galerie wählen` ohne Kamerazwang; aus der Galerie können mehrere Bilder gemeinsam gewählt werden.
-- **AK15:** Am Abschluss kann der Mitarbeiter alle vorhandenen Bilder mit genau einer bewussten Aktion als einzelne Bilddateien extern sichern. Es wird kein ZIP erzeugt und keine Einzelbestätigung pro Bild verlangt. Die interne Kopie bleibt unverändert erhalten.
+- **AK15:** Am Abschluss kann der Mitarbeiter alle vorhandenen Bilder mit genau einer bewussten Aktion direkt als einzelne Dateien herunterladen. Der Android-Teilen-Dialog wird nicht geöffnet. Es wird kein ZIP erzeugt und keine Einzelbestätigung pro Bild verlangt. Die interne Kopie bleibt unverändert erhalten.
 - **AK16:** Ist die zeitlich begrenzte Rundgangsfreigabe vor der Übergabe nicht mehr gültig, kann der Mitarbeiter am Abschluss eine neue Freigabe für exakt dasselbe HappyHour-Protokoll scannen. Ein Code für ein anderes Protokoll wird abgelehnt. Token, Einträge und Bilder werden erst nach erfolgreichem lokalem Commit als neuer kanonischer Zustand übernommen; bei jedem Fehler bleibt der bisherige lokale Stand unverändert.
+- **AK17:** Der Mitarbeiter kann den aktuellen und den früheren internen PlauderBox-Datenspeicher nach einer eindeutigen Bestätigung vollständig leeren. Die Funktion ist bereits am QR-Einstieg, in der Startansicht und während der aktiven Begehung erreichbar; der Offline-App-Cache bleibt erhalten.
+- **AK18:** Ein Eintrag kann vollständig manuell ohne Audioaufnahme erfasst und gespeichert werden.
+- **AK19:** Bei einem Eintrag mit Audio steht `Diktat auswerten` unmittelbar nach dem Diktatbereich. Während der KI-Auswertung sind Aktion und Zustand sichtbar als laufend gekennzeichnet.
+- **AK20:** Die bei einem neuen Eintrag zuletzt bewusst gewählte HappyHour-Protokollpunktart wird als Standard für den nächsten neuen Eintrag derselben Begehung verwendet. Vorbereitete Punkte ändern diesen Standard nicht.
+- **AK21:** Ausstehende Offline-Aufnahmen können in Offline-Hinweis, Kontrolle und Abschluss mit einer Aktion ausgewertet werden, ohne die jeweilige Ansicht zuerst verlassen zu müssen. Ohne Verbindung bleibt die Aktion gesperrt und verständlich bezeichnet.
 
 ## Abgrenzung und offene Integrationsgrenzen
 

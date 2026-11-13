@@ -2,8 +2,13 @@
 import { computed } from 'vue'
 import MobileKopf from './MobileKopf.vue'
 import { gruppiereEintraege, istEintragUnvollstaendig, type LokaleBegehung } from '@/services/begehungsSpeicher'
-const props = defineProps<{ begehung: LokaleBegehung }>()
-defineEmits<{ zurueck: []; bearbeiten: [id: string]; abschliessen: [] }>()
+const props = withDefaults(defineProps<{
+  begehung: LokaleBegehung
+  online?: boolean
+  anzahlAusstehend?: number
+  auswertungLaeuft?: boolean
+}>(), { online: false, anzahlAusstehend: 0, auswertungLaeuft: false })
+defineEmits<{ zurueck: []; bearbeiten: [id: string]; abschliessen: []; auswerten: [] }>()
 const gruppen = computed(() => gruppiereEintraege(props.begehung.eintraege))
 const bilder = computed(() => props.begehung.eintraege.reduce((summe, eintrag) => summe + eintrag.bilder.length, 0))
 const offen = computed(
@@ -33,6 +38,15 @@ const offen = computed(
       <p v-if="offen" class="warning-box">
         Noch {{ offen }} Einträge sind nicht ausgewertet oder unvollständig. Du kannst sie öffnen und korrigieren.
       </p>
+      <button
+        v-if="anzahlAusstehend > 0"
+        class="mobile-primary"
+        type="button"
+        :disabled="!online || auswertungLaeuft"
+        @click="$emit('auswerten')"
+      >
+        {{ auswertungLaeuft ? 'Auswertung läuft …' : online ? 'Alle ausstehenden Einträge auswerten' : 'Warte auf Verbindung' }}
+      </button>
       <section class="entry-accordion">
         <details v-for="gruppe in gruppen" :key="gruppe.gruppe" open>
           <summary>

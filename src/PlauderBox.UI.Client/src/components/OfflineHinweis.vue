@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import MobileKopf from './MobileKopf.vue'
-defineProps<{ anzahlAusstehend: number }>()
-defineEmits<{ neu: []; kontrolle: [] }>()
+withDefaults(defineProps<{ anzahlAusstehend: number; online?: boolean; auswertungLaeuft?: boolean }>(), {
+  online: false,
+  auswertungLaeuft: false,
+})
+defineEmits<{ neu: []; kontrolle: []; auswerten: [] }>()
 </script>
 
 <template>
@@ -17,6 +20,15 @@ defineEmits<{ neu: []; kontrolle: [] }>()
         zurück ist.
       </p>
       <p v-else>Die lokalen Änderungen sind gespeichert. Es wartet keine Audioaufnahme auf eine Auswertung.</p>
+      <button
+        v-if="anzahlAusstehend > 0"
+        class="mobile-primary"
+        type="button"
+        :disabled="!online || auswertungLaeuft"
+        @click="$emit('auswerten')"
+      >
+        {{ auswertungLaeuft ? 'Auswertung läuft …' : online ? 'Alle ausstehenden Einträge auswerten' : 'Warte auf Verbindung' }}
+      </button>
       <button class="mobile-primary" type="button" @click="$emit('neu')">Neuer Eintrag</button>
       <button class="mobile-secondary" type="button" @click="$emit('kontrolle')">Gehe zu Kontrolle</button>
     </section>

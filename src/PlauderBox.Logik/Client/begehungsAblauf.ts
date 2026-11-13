@@ -179,10 +179,35 @@ export function erstelleEintrag(
 export function erstelleEintragFuerProtokoll(
   protokoll: HappyHourProtokollKontext,
   neueId: () => string = () => crypto.randomUUID(),
+  protokollpunktArtId: number | null = null,
 ): BegehungEintrag {
-  return erstelleEintrag(
+  const eintrag = erstelleEintrag(
     neueId,
     normalisiereProjektAnsprechpartnerId(protokoll, null),
+  );
+  eintrag.protokollpunktArtId = protokoll.protokollpunktArten?.some(
+    (art) => art.id === protokollpunktArtId,
+  )
+    ? protokollpunktArtId
+    : null;
+  return eintrag;
+}
+
+export function ermittleStandardProtokollpunktArtId(
+  begehung: LokaleBegehung,
+): number | null {
+  const gueltigeArten = new Set(
+    (begehung.protokoll.protokollpunktArten ?? []).map((art) => art.id),
+  );
+  return (
+    [...begehung.eintraege]
+      .reverse()
+      .find(
+        (eintrag) =>
+          eintrag.vorbereiteterProtokollpunktId === null &&
+          eintrag.protokollpunktArtId !== null &&
+          gueltigeArten.has(eintrag.protokollpunktArtId),
+      )?.protokollpunktArtId ?? null
   );
 }
 

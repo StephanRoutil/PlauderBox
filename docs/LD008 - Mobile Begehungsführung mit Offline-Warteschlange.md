@@ -21,9 +21,13 @@ Die produktiven mobilen Fachtypen und Ablaufregeln liegen ausschliesslich in `sr
 
 Online wird eine neue Aufnahme durch `auswertungsDienst.ts` bewusst über `/api/v1/transkribieren` ausgewertet. Offline bleibt sie als `wartet_auf_auswertung` erhalten. Das `online`-Ereignis und der App-Start bearbeiten die Warteschlange in Erfassungsreihenfolge. Nach bestätigter strukturierter Antwort werden Transkript und Vorschläge übernommen und nur der Audio-Blob entfernt; Bilder und kontrollierbare Felder bleiben lokal. Bei Fehler bleibt Audio erhalten und die UI bietet eine manuelle Wiederholung. Aus der Kontrolle öffnet `EintragErfassen.vue` auch ausgewertete Punkte mit vollständiger Mutation von Bildern, Audio, Zuordnung und Textfeldern; vorhandene Auswertungstexte bleiben dabei erhalten.
 
+Einträge lassen sich auch vollständig ohne Audio manuell erfassen. Bei Audio steht die rote Auswertungsaktion unmittelbar nach dem Diktatbereich; der typisierte Zustand aus `verwendeAuswertungsWarteschlange.ts` sperrt die Aktion während des Laufs und zeigt die aktive KI-Auswertung an. Offline vorgemerkte Aufnahmen können zusätzlich in Offline-Hinweis, Kontrolle und Abschluss mit einer Aktion verarbeitet werden, ohne die aktuelle Ansicht zuerst zu verlassen. Die zuletzt bei einem neuen Eintrag gewählte gültige Protokollpunktart wird innerhalb derselben Begehung als Standard für den nächsten neuen Eintrag verwendet.
+
 `EintragErfassen.vue` trennt die Bildquellen: `Foto aufnehmen` verwendet einen Datei-Input mit `capture="environment"`; `Aus Galerie wählen` verwendet einen eigenen Mehrfach-Datei-Input ohne `capture`. Beide Wege übernehmen Bilder über dieselbe Validierung und dieselbe atomare IndexedDB-Speicherung.
 
-`bildSicherung.ts` erzeugt beim Abschluss aus allen Begehungseinträgen einzelne `File`-Objekte mit lesbaren Namen. `BegehungAbschluss.vue` löst mit einer Benutzeraktion entweder genau einen Web-Share-Aufruf für alle Bilder oder, falls `navigator.canShare` die konkrete Dateimenge ablehnt, die einzelnen Browserdownloads aus. Es wird kein ZIP erstellt. Die Sicherungsaktion verändert weder interne Bild-Blobs noch Begehungsstatus oder HappyHour-Daten.
+`bildSicherung.ts` erzeugt beim Abschluss aus allen Begehungseinträgen einzelne `File`-Objekte mit lesbaren Namen. `BegehungAbschluss.vue` startet mit einer Benutzeraktion direkt die einzelnen Browserdownloads und öffnet keinen Android-Teilen- oder Diensteauswahldialog. Es wird kein ZIP erstellt. Die Sicherungsaktion verändert weder interne Bild-Blobs noch Begehungsstatus oder HappyHour-Daten.
+
+`verwendeBegehung.ts` bietet einen bestätigungspflichtigen manuellen Löschweg, der sowohl `PlauderBoxBegehungsspeicher` als auch den alten `PlauderBoxInternerSpeicher` entfernt und danach zum Scanner zurückkehrt. Er ist am Scanner, in der Startansicht und während der aktiven Begehung erreichbar. Der Service-Worker-Cache wird nicht gelöscht, damit die PWA weiterhin offline starten kann.
 
 Die PWA-Dateien `manifest.webmanifest`, `icon.svg` und `service-worker.js` stellen die App-Hülle für Offline-Neustarts bereit. Der Vite-Build schreibt die tatsächlich erzeugten gehashten JS-/CSS-Dateien in den Precache. Ein automatisierter Offline-Test führt den gebauten Service Worker mit abgewiesenem Netzwerk aus und verlangt die gecachte Navigation. Die tatsächliche Installierbarkeit bleibt auf den Zielgeräten zu prüfen.
 
@@ -57,7 +61,7 @@ Freigabe-Tokens stehen technisch im Pfad des lesenden Vertrags. ASP.NET-Hosting-
 - Die aktuelle Auswertung besitzt noch keinen serverseitig persistenten Idempotenzspeicher. Die stabile `erfassungsId` wird serverseitig validiert; der Client entfernt Audio erst nach bestätigter Antwort und wiederholt erfolgreiche Zustände nicht. Ein Absturz zwischen externer Antwort und lokalem Commit kann dennoch eine erneute KI-Auswertung verursachen. Ohne entschiedene Serverpersistenz bleibt Q2 hierfür offen.
 - Der Service Worker kann im automatisierten Test nicht die Bedingungen realer Android-/iOS-Browser und Speicherräumung belegen.
 - Die Protokollpunktübergabe ist gemäss LD009 umgesetzt. Die Bildzuordnung nach `tblDokument` ist gemäss LD010 lokal umgesetzt; die reale mobile Abnahme bleibt offen. Der Abschluss ist weiterhin kein fachlicher HappyHour-Abschluss oder Versand.
-- Share-Ziele und Browserdownloads können die endgültige Ablage in einer Android-Galerie nicht garantieren. Die Oberfläche bezeichnet die Aktion deshalb als externe Sicherung und nicht als bestätigte Galerieablage.
+- Browserdownloads können die endgültige Ablage in einer Android-Galerie nicht garantieren. Die Dateien werden ohne Diensteauswahl in den Downloadbereich geschrieben; eine garantierte Galerieablage erfordert eine native Android-Anwendung.
 
 ## Nachweis
 

@@ -21,7 +21,7 @@ import {
   verwerfeUnlesbareDaten,
 } from '@/services/begehungsSpeicher'
 import { sendeAudioZurAuswertung } from '@/services/auswertungsDienst'
-import { ladeLegacyEintrag } from '@/services/legacyWiederherstellung'
+import { ladeLegacyEintrag, verwerfeLegacyDaten } from '@/services/legacyWiederherstellung'
 import { uebergebeProtokollpunkte } from '@/services/happyHourProtokollpunktUebergabe'
 
 const appZustand = verwendeAppZustand(() => navigator.onLine)
@@ -58,6 +58,10 @@ const begehungsAblauf = verwendeBegehung(
     },
     unlesbareDatenSichern: sichereUnlesbareDaten,
     unlesbareDatenVerwerfen: verwerfeUnlesbareDaten,
+    speicherVollstaendigLeeren: async () => {
+      await verwerfeUnlesbareDaten()
+      await verwerfeLegacyDaten()
+    },
   },
   appZustand,
 )
@@ -78,6 +82,7 @@ const {
   geheZurKontrolle,
   initialisiere,
   loescheEintrag,
+  leereInternenSpeicher,
   neuerEintrag,
   oeffneEintrag,
   online,
@@ -97,7 +102,7 @@ const {
   verwerfeBlockierteDaten,
   verwirfBegehungUndScanneNeu,
 } = begehungsAblauf
-const { anzahlAusstehend, werteEintragAus } = auswertungsAblauf
+const { anzahlAusstehend, auswertungszustand, verarbeiteWarteschlange, werteEintragAus } = auswertungsAblauf
 const {
   beginneFreigabeErneuerung,
   uebergabeLaeuft,
@@ -125,6 +130,7 @@ onBeforeUnmount(() => {
     @erkannt="verarbeiteQrCode"
     @daten-sichern="sichereBlockierteDaten"
     @daten-verwerfen="verwerfeBlockierteDaten"
+    @speicher-leeren="leereInternenSpeicher"
   />
   <QrCodeStart
     v-else-if="ansicht === 'freigabe_erneuern'"
@@ -147,6 +153,7 @@ onBeforeUnmount(() => {
     :start-meldung="startMeldung"
     @zurueck="ansicht = 'scanner'"
     @starten="starteBegehung"
+    @speicher-leeren="leereInternenSpeicher"
   />
   <AktiveBegehung
     v-else-if="ansicht === 'aktiv' && begehung"
@@ -156,6 +163,7 @@ onBeforeUnmount(() => {
     @bearbeiten="oeffneEintrag"
     @loeschen="loescheEintrag"
     @kontrolle="geheZurKontrolle"
+    @speicher-leeren="leereInternenSpeicher"
   />
   <EintragErfassen
     v-else-if="ansicht === 'erfassen' && aktuellerEintrag && begehung"
@@ -163,14 +171,18 @@ onBeforeUnmount(() => {
     :protokoll="begehung.protokoll"
     :online="online"
     :speichern="speichereZwischenstand"
+    :auswertung-laeuft="auswertungszustand.art === 'laeuft'"
     @gespeichert="speichereErfassung"
     @abbrechen="ansicht = 'aktiv'"
   />
   <OfflineHinweis
     v-else-if="ansicht === 'offline'"
     :anzahl-ausstehend="anzahlAusstehend"
+    :online="online"
+    :auswertung-laeuft="auswertungszustand.art === 'laeuft'"
     @neu="neuerEintrag"
     @kontrolle="geheZurKontrolle"
+    @auswerten="verarbeiteWarteschlange"
   />
   <EintragAuswertung
     v-else-if="ansicht === 'auswertung' && aktuellerEintrag"
@@ -185,9 +197,13 @@ onBeforeUnmount(() => {
   <BegehungKontrolle
     v-else-if="ansicht === 'kontrolle' && begehung"
     :begehung="begehung"
+    :online="online"
+    :anzahl-ausstehend="anzahlAusstehend"
+    :auswertung-laeuft="auswertungszustand.art === 'laeuft'"
     @zurueck="ansicht = 'aktiv'"
     @bearbeiten="oeffneEintrag"
     @abschliessen="schliesseBegehungAb"
+    @auswerten="verarbeiteWarteschlange"
   />
   <BegehungAbschluss
     v-else-if="ansicht === 'abschluss' && begehung"
@@ -195,9 +211,12 @@ onBeforeUnmount(() => {
     :online="online"
     :uebergabe-laeuft="uebergabeLaeuft"
     :meldung="uebergabeMeldung"
+    :anzahl-ausstehend="anzahlAusstehend"
+    :auswertung-laeuft="auswertungszustand.art === 'laeuft'"
     @zurueck="geheZurKontrolle"
     @uebergeben="uebergibAnHappyHour"
     @freigabe-erneuern="beginneFreigabeErneuerung"
     @neu-starten="verwirfBegehungUndScanneNeu"
+    @auswerten="verarbeiteWarteschlange"
   />
 </template>

@@ -3,6 +3,7 @@
 import { flushPromises, mount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import BegehungAbschluss from './BegehungAbschluss.vue'
+import BegehungKontrolle from './BegehungKontrolle.vue'
 import BegehungStart from './BegehungStart.vue'
 import EintragErfassen from './EintragErfassen.vue'
 import OfflineHinweis from './OfflineHinweis.vue'
@@ -125,8 +126,8 @@ describe('mobile Komponenten', () => {
     const wrapper = mount(OfflineHinweis, { props: { anzahlAusstehend: 1 } })
     expect(wrapper.text()).toContain('1 Eintrag wurde')
     const tasten = wrapper.findAll('button')
-    await tasten[0]!.trigger('click')
-    await tasten[1]!.trigger('click')
+    await tasten.find((taste) => taste.text() === 'Neuer Eintrag')!.trigger('click')
+    await tasten.find((taste) => taste.text() === 'Gehe zu Kontrolle')!.trigger('click')
     expect(wrapper.emitted('neu')).toHaveLength(1)
     expect(wrapper.emitted('kontrolle')).toHaveLength(1)
   })
@@ -134,6 +135,15 @@ describe('mobile Komponenten', () => {
   it('behauptet ohne Audio keine wartende Auswertung', () => {
     const wrapper = mount(OfflineHinweis, { props: { anzahlAusstehend: 0 } })
     expect(wrapper.text()).toContain('Es wartet keine Audioaufnahme auf eine Auswertung.')
+  })
+
+  it('wertet ausstehende Offline-Aufnahmen mit einer Aktion aus, sobald die Verbindung zurück ist', async () => {
+    const wrapper = mount(OfflineHinweis, {
+      props: { anzahlAusstehend: 2, online: true, auswertungLaeuft: false },
+    })
+    const taste = wrapper.findAll('button').find((knopf) => knopf.text().includes('Alle ausstehenden'))
+    await taste!.trigger('click')
+    expect(wrapper.emitted('auswerten')).toHaveLength(1)
   })
 
   it('sperrt die HappyHour-Übergabe offline und zeigt den Hinweis', () => {
@@ -155,6 +165,26 @@ describe('mobile Komponenten', () => {
     expect(wrapper.emitted('freigabeErneuern')).toHaveLength(1)
   })
 
+  it('startet aus der Kontrolle alle ausstehenden Auswertungen ohne Ansichtswechsel', async () => {
+    const rundgang = erstelleBegehung()
+    rundgang.eintraege[0]!.status = 'wartet_auf_auswertung'
+    rundgang.eintraege[0]!.audio = {
+      dateiname: 'synthetisch.webm',
+      medientyp: 'audio/webm',
+      groesse: 1,
+      dauerSekunden: 1,
+      audio: new Blob(['x'], { type: 'audio/webm' }),
+    }
+    const wrapper = mount(BegehungKontrolle, {
+      props: { begehung: rundgang, online: true, anzahlAusstehend: 1, auswertungLaeuft: false },
+    })
+
+    const taste = wrapper.findAll('button').find((knopf) => knopf.text().includes('Alle ausstehenden'))
+    await taste!.trigger('click')
+
+    expect(wrapper.emitted('auswerten')).toHaveLength(1)
+  })
+
   it('zeigt fehlende Protokollpunktart als zugänglichen Fehler', async () => {
     const wrapper = mount(EintragErfassen, {
       props: { eintrag: erstelleEintrag(), protokoll, online: true, speichern: vi.fn(), audioRekorder },
@@ -170,6 +200,46 @@ describe('mobile Komponenten', () => {
     expect(wrapper.text()).toContain('Foto aufnehmen')
     expect(wrapper.text()).toContain('Aus Galerie wählen')
     expect(wrapper.findAll('select')[2]!.findAll('option')).toHaveLength(2)
+  })
+
+  it('übernimmt einen vollständig manuell erfassten Eintrag ohne Audio', async () => {
+    const eintrag = erstelleEintrag()
+    eintrag.protokollpunktArtId = 5
+    eintrag.thema = 'Manueller Punkt'
+    eintrag.inhalt = 'Ohne Diktat erfasst'
+    const wrapper = mount(EintragErfassen, {
+      props: { eintrag, protokoll, online: true, speichern: vi.fn(async () => undefined), audioRekorder },
+    })
+
+    const taste = wrapper.findAll('button').find((knopf) => knopf.text() === 'Manuellen Eintrag übernehmen')
+    await taste!.trigger('click')
+
+    expect(wrapper.emitted('gespeichert')).toHaveLength(1)
+  })
+
+  it('zeigt die laufende KI-Auswertung und sperrt den Diktatknopf direkt unter dem Aufnahmebereich', () => {
+    const eintrag = erstelleEintrag()
+    eintrag.audio = {
+      dateiname: 'synthetisch.webm',
+      medientyp: 'audio/webm',
+      groesse: 1,
+      dauerSekunden: 1,
+      audio: new Blob(['x'], { type: 'audio/webm' }),
+    }
+    const wrapper = mount(EintragErfassen, {
+      props: {
+        eintrag,
+        protokoll,
+        online: true,
+        auswertungLaeuft: true,
+        speichern: vi.fn(async () => undefined),
+        audioRekorder,
+      },
+    })
+
+    const auswerten = wrapper.findAll('button').find((knopf) => knopf.text().includes('KI-Auswertung läuft'))
+    expect(auswerten?.attributes('disabled')).toBeDefined()
+    expect(wrapper.text()).toContain('Die KI wertet das Diktat aus')
   })
 
   it('verwendet für das Löschen eines Bildes den übergebenen Bestätigungsdialog', async () => {
@@ -220,6 +290,17 @@ describe('mobile Komponenten', () => {
     await wrapper.get('form.manual-code').trigger('submit')
 
     expect(wrapper.emitted('erkannt')).toEqual([['plauderbox://begehung?freigabe=synthetisch']])
+  })
+
+  it('bietet das manuelle Leeren des internen Speichers bereits am QR-Einstieg an', async () => {
+    const scanner: import('@/services/qrCodeScanner').QrCodeScanner = {
+      starten: vi.fn(async () => undefined),
+      stoppen: vi.fn(),
+    }
+    const wrapper = mount(QrCodeStart, { props: { scanner } })
+    const taste = wrapper.findAll('button').find((knopf) => knopf.text() === 'Internen App-Speicher leeren')
+    await taste!.trigger('click')
+    expect(wrapper.emitted('speicherLeeren')).toHaveLength(1)
   })
 
   it('blockiert den Start bei unlesbaren Daten und bietet Sicherung sowie bewusstes Verwerfen an', async () => {

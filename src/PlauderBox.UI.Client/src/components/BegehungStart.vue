@@ -10,6 +10,7 @@ defineProps<{
 const emit = defineEmits<{
   zurueck: []
   starten: []
+  speicherLeeren: []
 }>()
 
 function formatiereDatum(wert: string): string {
@@ -119,6 +120,9 @@ function formatiereDatum(wert: string): string {
         {{ startLaeuft ? 'Begehung wird gestartet …' : 'Begehung starten' }}
       </button>
       <p class="scan-hint">Die Begehung und alle neuen Einträge werden im internen App-Speicher gesichert.</p>
+      <button class="danger-button" type="button" :disabled="startLaeuft" @click="emit('speicherLeeren')">
+        Internen App-Speicher leeren
+      </button>
     </section>
   </main>
 </template>

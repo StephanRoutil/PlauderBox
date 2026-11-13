@@ -34,6 +34,7 @@ export type {
 export {
   bereiteWiederanlaufVor,
   eindeutigeVerteileroptionen,
+  ermittleStandardProtokollpunktArtId,
   ermittleStandardProjektAnsprechpartnerId,
   erstelleBegehung,
   erstelleEintrag,

@@ -23,6 +23,7 @@ const emit = defineEmits<{
   zurueck: []
   datenSichern: []
   datenVerwerfen: []
+  speicherLeeren: []
 }>()
 const manuellerCode = ref('')
 
@@ -122,6 +123,9 @@ function uebernehmeManuellenCode(): void {
       </section>
       <button v-if="eigenschaften.erneuerung" class="mobile-secondary" type="button" @click="geheZurueck">
         Zurück zum Abschluss
+      </button>
+      <button v-else class="danger-button" type="button" @click="emit('speicherLeeren')">
+        Internen App-Speicher leeren
       </button>
 
       <p class="scan-hint">

@@ -4,7 +4,7 @@ import MobileKopf from './MobileKopf.vue'
 import { gruppiereEintraege, type LokaleBegehung } from '@/services/begehungsSpeicher'
 
 const props = defineProps<{ begehung: LokaleBegehung; online: boolean }>()
-defineEmits<{ neu: []; bearbeiten: [id: string]; loeschen: [id: string]; kontrolle: [] }>()
+defineEmits<{ neu: []; bearbeiten: [id: string]; loeschen: [id: string]; kontrolle: []; speicherLeeren: [] }>()
 
 const gruppen = computed(() => gruppiereEintraege(props.begehung.eintraege))
 const aktuellerEintrag = computed(
@@ -79,6 +79,9 @@ const aktuellerEintrag = computed(
 
       <button class="mobile-secondary" type="button" @click="$emit('kontrolle')">
         Begehung beenden / zur Kontrolle
+      </button>
+      <button class="danger-button" type="button" @click="$emit('speicherLeeren')">
+        Internen App-Speicher leeren
       </button>
     </section>
   </main>

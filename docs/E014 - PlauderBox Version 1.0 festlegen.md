@@ -25,6 +25,8 @@ Die Versionsnummer wird zentral für die .NET-Projekte in `Directory.Build.props
 
 Version 1.0.0 bezeichnet den Quellstand. Die Bereitstellung dieses Stands auf Delphi01 und Olymp01 bleibt der eigene Betriebsauftrag S45 aus [[D014 - Befunde aus dem Code-Review beheben]].
 
+Der Bereitstellungsversuch auf Olymp01 wurde am 13.11.2026 nach einer fehlgeschlagenen internen Statusprüfung automatisch zurückgerollt. Vor einem erneuten Rollout wurden in der Mobilgeräteprüfung zusätzliche Usabilitymängel festgestellt. Das veröffentlichte Tag `v1.0.0` bleibt als unveränderlicher Quellstand erhalten; eine korrigierte Folgeversion wird erst nach erfolgreicher Geräteabnahme festgelegt und bereitgestellt.
+
 Der teilweise offene Schutzpfad S34 sowie die offenen Reviewpunkte S40 bis S44 und S46 bleiben transparent dokumentiert. Sie verhindern gemäss diesem Versionsentscheid die Festlegung der Version nicht, werden aber nicht fälschlich als erledigt bezeichnet. S07 ist wegen `varchar(MAX)` fachlich nicht anwendbar. Die reale Geräteabnahme und der persistente Duplikatschutz bleiben ebenfalls offen.
 
 ## Nachweis
