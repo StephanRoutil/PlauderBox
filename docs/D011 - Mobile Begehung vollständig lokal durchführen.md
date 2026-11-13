@@ -39,6 +39,7 @@ Als Mitarbeiter möchte ich eine freigegebene Begehung auf dem Mobilgerät start
 - **AK23:** Während einer gestarteten Begehung zeigt der Kopfbereich die drei kleinen, beschrifteten Navigationsbuttons `‹ Back`, `Start` und `Beenden`. `Start` führt zur aktiven Begehungsübersicht, `Beenden` zur Kontrolle und `Back` zur unmittelbar vorherigen Ansicht. Das bereits aktive oder nicht verfügbare Ziel ist sichtbar deaktiviert. Beim Navigieren aus der Erfassung wird ein geänderter Zwischenstand vor dem Ansichtswechsel lokal gesichert.
 - **AK24:** Während der vollständigen Übergabe an HappyHour bleibt eine deutlich sichtbare Fortschrittsanzeige mit Spinner, unbestimmtem Balken und Statustext eingeblendet. Sie endet erst, nachdem Protokollpunkte und Bilder bestätigt wurden oder ein verständlicher Fehler angezeigt wird.
 - **AK25:** Die installierte PWA und jede App-Kopfzeile verwenden dasselbe PlauderBox-Icon. Jede Kopfzeile zeigt zusätzlich die tatsächlich gebaute dreiteilige Version an.
+- **AK26:** Wird eine Audioauswertung wegen einer abgelaufenen oder widerrufenen Rundgangsfreigabe abgewiesen, bleiben Audio und Eintrag lokal erhalten. Die App führt unmittelbar zur Erneuerung für dasselbe Protokoll und kehrt danach zur vorherigen Ansicht zurück, damit die Auswertung erneut ausgelöst werden kann.
 
 ## Abgrenzung und offene Integrationsgrenzen
 

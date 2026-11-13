@@ -114,7 +114,7 @@ describe('mobile Komponenten', () => {
 
     expect(wrapper.get('img').attributes('src')).toBe('/icon.svg')
     expect(wrapper.text()).toContain('PlauderBox')
-    expect(wrapper.text()).toContain('v1.0.1')
+    expect(wrapper.text()).toContain('v1.0.2')
   })
 
   it('zeigt die Begehungsnavigation als drei beschriftete Headerbuttons', async () => {

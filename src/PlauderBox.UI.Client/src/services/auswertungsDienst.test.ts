@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { sendeAudioZurAuswertung } from './auswertungsDienst'
+import { AuswertungsdienstFehler, sendeAudioZurAuswertung } from './auswertungsDienst'
 import { verarbeiteWarteschlange } from '@logik/begehungsAblauf'
 import { erstelleBegehung, erstelleEintrag, type LokaleBegehung } from './begehungsSpeicher'
 import type { HappyHourProtokollKontext } from './happyHourProtokollKontext'
@@ -48,6 +48,27 @@ describe('Auswertungsdienst', () => {
     expect(formular.get('erfassungsId')).toBe(eintrag.id)
     expect(formular.get('audio')).toBeInstanceOf(Blob)
     expect((aufruf?.[1]?.headers as Record<string, string>)['X-PlauderBox-Freigabe']).toBe(freigabeToken)
+  })
+
+  it('kennzeichnet eine abgelaufene Freigabe eindeutig', async () => {
+    const eintrag = erstelleEintrag()
+    eintrag.audio = {
+      dateiname: 'aufnahme.webm',
+      medientyp: 'audio/webm',
+      groesse: 5,
+      dauerSekunden: 2,
+      audio: new Blob(['audio']),
+    }
+    const fetchFunktion = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(JSON.stringify({ detail: 'synthetische Freigabe abgelaufen' }), { status: 410 }),
+    )
+
+    await expect(sendeAudioZurAuswertung(eintrag, 'a'.repeat(43), fetchFunktion)).rejects.toEqual(
+      expect.objectContaining<Partial<AuswertungsdienstFehler>>({
+        art: 'freigabe_ungueltig',
+        message: 'Die Rundgangsfreigabe ist abgelaufen oder wurde widerrufen.',
+      }),
+    )
   })
 
   it('bearbeitet FIFO und stoppt nach dem ersten Fehler', async () => {

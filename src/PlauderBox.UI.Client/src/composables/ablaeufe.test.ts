@@ -8,6 +8,7 @@ import {
   type LokaleBegehung,
 } from '@/services/begehungsSpeicher'
 import { HappyHourUebergabefehler } from '@/services/happyHourProtokollpunktUebergabe'
+import { AuswertungsdienstFehler } from '@/services/auswertungsDienst'
 import { verwendeBegehung } from './verwendeBegehung'
 import { verwendeAuswertungsWarteschlange } from './verwendeAuswertungsWarteschlange'
 import { verwendeHappyHourUebergabe } from './verwendeHappyHourUebergabe'
@@ -186,6 +187,7 @@ describe('Auswertungswarteschlange', () => {
       speichern: vi.fn(async () => Promise.reject(new Error('Lokale Sicherung fehlgeschlagen'))),
       auswerten,
       istVerbunden: () => true,
+      freigabeErneuern: vi.fn(),
     })
 
     await ablauf.werteEintragAus(eintrag.id, true)
@@ -223,6 +225,7 @@ describe('Auswertungswarteschlange', () => {
         throw new Error('synthetischer Auswertungsfehler')
       }),
       istVerbunden: () => true,
+      freigabeErneuern: vi.fn(),
     })
 
     await ablauf.werteEintragAus(eintrag.id, true)
@@ -232,6 +235,39 @@ describe('Auswertungswarteschlange', () => {
     expect(eintrag.fehler).toContain('nicht im internen App-Speicher gesichert')
     expect(ansicht.value).toBe('auswertung')
     expect(ablauf.auswertungszustand.value.art).toBe('bereit')
+  })
+
+  it('führt bei abgelaufener Freigabe zur Erneuerung und behält die Aufnahme', async () => {
+    const gespeichert = begehung()
+    const eintrag = erstelleEintrag(() => '00000000-0000-4000-8000-000000000005')
+    eintrag.status = 'wartet_auf_auswertung'
+    eintrag.audio = {
+      dateiname: 'synthetisch.webm',
+      medientyp: 'audio/webm',
+      groesse: 1,
+      dauerSekunden: 1,
+      audio: new Blob(['x']),
+    }
+    gespeichert.eintraege.push(eintrag)
+    const ansicht = ref<AppAnsicht>('aktiv')
+    const freigabeErneuern = vi.fn()
+    const ablauf = verwendeAuswertungsWarteschlange({
+      begehung: ref(gespeichert),
+      ansicht,
+      online: ref(true),
+      speichern: vi.fn(async () => undefined),
+      auswerten: vi.fn(async () => {
+        throw new AuswertungsdienstFehler('freigabe_ungueltig', 'Freigabe abgelaufen')
+      }),
+      istVerbunden: () => true,
+      freigabeErneuern,
+    })
+
+    await ablauf.werteEintragAus(eintrag.id, true)
+
+    expect(freigabeErneuern).toHaveBeenCalledWith('auswertung')
+    expect(eintrag.status).toBe('fehler')
+    expect(eintrag.audio?.audio).toBeInstanceOf(Blob)
   })
 })
 
@@ -311,11 +347,13 @@ describe('HappyHour-Übergabe', () => {
       uebergeben: vi.fn(async () => undefined),
     })
 
+    ablauf.beginneFreigabeErneuerung('auswertung')
+
     await ablauf.verarbeiteErneuerteFreigabe(`plauderbox://begehung?freigabe=${'B'.repeat(32)}`)
 
     expect(begehungRef.value?.freigabeToken).toBe('B'.repeat(32))
     expect(toRaw(begehungRef.value?.eintraege)).toStrictEqual(lokal.eintraege)
-    expect(ansicht.value).toBe('abschluss')
+    expect(ansicht.value).toBe('auswertung')
     expect(speichern).toHaveBeenCalledTimes(1)
   })
 })

@@ -5,7 +5,7 @@ import {
   zaehleAusstehendeAudioaufnahmen,
   type LokaleBegehung,
 } from '@/services/begehungsSpeicher'
-import type { Transkriptionsantwort } from '@/services/auswertungsDienst'
+import { AuswertungsdienstFehler, type Transkriptionsantwort } from '@/services/auswertungsDienst'
 import type { AppAnsicht } from './verwendeAppZustand'
 
 export type Auswertungszustand = { art: 'bereit' } | { art: 'laeuft'; eintragId: string }
@@ -17,6 +17,7 @@ export interface AuswertungsWarteschlangeAbhaengigkeiten {
   speichern: (begehung: LokaleBegehung) => Promise<void>
   auswerten: (eintrag: LokaleBegehung['eintraege'][number], freigabeToken: string) => Promise<Transkriptionsantwort>
   istVerbunden: () => boolean
+  freigabeErneuern: (rueckkehr: AppAnsicht) => void
 }
 
 export function verwendeAuswertungsWarteschlange(abhaengigkeiten: AuswertungsWarteschlangeAbhaengigkeiten) {
@@ -32,6 +33,7 @@ export function verwendeAuswertungsWarteschlange(abhaengigkeiten: AuswertungsWar
     if (!eintrag?.audio || zustand.value.art === 'laeuft') return
     zustand.value = { art: 'laeuft', eintragId: id }
     const vorherigerStatus = eintrag.status
+    const rueckkehrAnsicht = ergebnisAnzeigen ? 'auswertung' : abhaengigkeiten.ansicht.value
     let auswertungGestartet = false
     try {
       eintrag.status = 'wird_ausgewertet'
@@ -56,7 +58,11 @@ export function verwendeAuswertungsWarteschlange(abhaengigkeiten: AuswertungsWar
       } catch {
         eintrag.fehler = `${eintrag.fehler} Der Fehlerstatus konnte nicht im internen App-Speicher gesichert werden.`
       }
-      if (ergebnisAnzeigen) abhaengigkeiten.ansicht.value = abhaengigkeiten.istVerbunden() ? 'auswertung' : 'offline'
+      if (fehler instanceof AuswertungsdienstFehler && fehler.art === 'freigabe_ungueltig') {
+        abhaengigkeiten.freigabeErneuern(rueckkehrAnsicht)
+      } else if (ergebnisAnzeigen) {
+        abhaengigkeiten.ansicht.value = abhaengigkeiten.istVerbunden() ? 'auswertung' : 'offline'
+      }
     } finally {
       zustand.value = { art: 'bereit' }
     }

@@ -9,6 +9,16 @@ export interface Transkriptionsantwort {
   rechtsverweis?: string
 }
 
+export class AuswertungsdienstFehler extends Error {
+  constructor(
+    public readonly art: 'freigabe_ungueltig' | 'dienstfehler',
+    meldung: string,
+  ) {
+    super(meldung)
+    this.name = 'AuswertungsdienstFehler'
+  }
+}
+
 export async function sendeAudioZurAuswertung(
   eintrag: BegehungEintrag,
   freigabeToken: string,
@@ -28,7 +38,11 @@ export async function sendeAudioZurAuswertung(
   if (!antwort.ok || !ergebnis || typeof ergebnis.text !== 'string' || !ergebnis.text.trim()) {
     const detail =
       ergebnis && typeof ergebnis.detail === 'string' ? ergebnis.detail : 'Die Auswertung ist momentan nicht verfügbar.'
-    throw new Error(detail)
+    const freigabeUngueltig = [401, 403, 404, 410].includes(antwort.status)
+    throw new AuswertungsdienstFehler(
+      freigabeUngueltig ? 'freigabe_ungueltig' : 'dienstfehler',
+      freigabeUngueltig ? 'Die Rundgangsfreigabe ist abgelaufen oder wurde widerrufen.' : detail,
+    )
   }
   return {
     text: ergebnis.text,

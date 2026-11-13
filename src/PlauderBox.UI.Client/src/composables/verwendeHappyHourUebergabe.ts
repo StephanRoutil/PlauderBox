@@ -28,10 +28,17 @@ export function verwendeHappyHourUebergabe(abhaengigkeiten: HappyHourUebergabeAb
   const zustand = ref<HappyHourUebergabezustand>({ art: 'bereit' })
   const meldung = ref('')
   const uebergabeLaeuft = computed(() => zustand.value.art === 'laeuft')
+  const rueckkehrNachFreigabe = ref<AppAnsicht>('abschluss')
 
-  function beginneFreigabeErneuerung(): void {
+  function beginneFreigabeErneuerung(rueckkehr: AppAnsicht = 'abschluss'): void {
+    rueckkehrNachFreigabe.value = rueckkehr
     abhaengigkeiten.scannerMeldung.value = ''
     abhaengigkeiten.ansicht.value = 'freigabe_erneuern'
+  }
+
+  function verlasseFreigabeErneuerung(): void {
+    abhaengigkeiten.scannerMeldung.value = ''
+    abhaengigkeiten.ansicht.value = rueckkehrNachFreigabe.value
   }
 
   async function verarbeiteErneuerteFreigabe(inhalt: string): Promise<void> {
@@ -59,9 +66,8 @@ export function verwendeHappyHourUebergabe(abhaengigkeiten: HappyHourUebergabeAb
         neuerKontext,
         abhaengigkeiten.speichern,
       )
-      meldung.value =
-        'Freigabe erneuert. Alle lokalen Einträge und Bilder sind erhalten und können jetzt erneut an HappyHour übergeben werden.'
-      abhaengigkeiten.ansicht.value = 'abschluss'
+      meldung.value = 'Freigabe erneuert. Alle lokalen Einträge, Bilder und Aufnahmen sind erhalten.'
+      abhaengigkeiten.ansicht.value = rueckkehrNachFreigabe.value
     } catch (fehler: unknown) {
       abhaengigkeiten.ansicht.value = 'freigabe_erneuern'
       const art = fehler instanceof HappyHourProtokollKontextFehler ? fehler.art : 'speicher'
@@ -115,6 +121,7 @@ export function verwendeHappyHourUebergabe(abhaengigkeiten: HappyHourUebergabeAb
     uebergabeMeldung: meldung,
     uebergabezustand: zustand,
     uebergibAnHappyHour,
+    verlasseFreigabeErneuerung,
     verarbeiteErneuerteFreigabe,
   }
 }

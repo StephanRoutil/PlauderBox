@@ -26,6 +26,7 @@ import { ladeLegacyEintrag, verwerfeLegacyDaten } from '@/services/legacyWiederh
 import { uebergebeProtokollpunkte } from '@/services/happyHourProtokollpunktUebergabe'
 
 const appZustand = verwendeAppZustand(() => navigator.onLine)
+let freigabeErneuern = (_rueckkehr: typeof appZustand.ansicht.value): void => undefined
 
 const auswertungsAblauf = verwendeAuswertungsWarteschlange({
   begehung: appZustand.begehung,
@@ -34,6 +35,7 @@ const auswertungsAblauf = verwendeAuswertungsWarteschlange({
   speichern: speichereBegehung,
   auswerten: sendeAudioZurAuswertung,
   istVerbunden: () => navigator.onLine,
+  freigabeErneuern: (rueckkehr) => freigabeErneuern(rueckkehr),
 })
 
 const begehungsAblauf = verwendeBegehung(
@@ -75,6 +77,7 @@ const happyHourAblauf = verwendeHappyHourUebergabe({
   speichern: speichereBegehung,
   uebergeben: uebergebeProtokollpunkte,
 })
+freigabeErneuern = happyHourAblauf.beginneFreigabeErneuerung
 
 const {
   aktuellerEintrag,
@@ -110,6 +113,7 @@ const {
   uebergabeMeldung,
   uebergabezustand,
   uebergibAnHappyHour,
+  verlasseFreigabeErneuerung,
   verarbeiteErneuerteFreigabe,
 } = happyHourAblauf
 
@@ -145,7 +149,7 @@ onBeforeUnmount(() => {
     erneuerung
     :externe-meldung="scannerMeldung"
     @erkannt="verarbeiteErneuerteFreigabe"
-    @zurueck="ansicht = 'abschluss'"
+    @zurueck="verlasseFreigabeErneuerung"
   />
   <main v-else-if="ansicht === 'laden'" class="begehung-shell">
     <section class="loading-card" aria-live="polite">

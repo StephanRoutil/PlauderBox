@@ -72,6 +72,16 @@ Das PWA-Icon und die Marke in allen App-Kopfzeilen wurden auf dieselbe Bildquell
 
 **Bestanden:** vollständiger `tests/Pruefe-Prototyp.ps1` mit Versionsabgleich, Lint, TypeScript, 105 Frontendtests, Vue-Produktionsbuild, Offline-Browsertest, .NET-Release-Build, 12 Integrationstests, 9 Vertragstests, Offline-App-Shell und Token-Logschutz. Commit `867df94` und Tag `v1.0.1` wurden nach `origin` übertragen. Version `1.0.1` läuft auf Delphi01 als Image `plauderbox:delphi01-test-867df94` (`sha256:2dd33086cc17…`). HTTPS, gemeinsames Icon, eingebettete Version, KI-Status, HappyHour-Negativtest und Containerlog sind geprüft; der vorherige Stand bleibt als Rückfallimage erhalten. **Nicht geprüft:** reale Darstellung des gemeinsamen Icons und der Versionsnummer auf dem Mobilgerät. **Nächster Schritt:** Mobiltest auf Delphi01.
 
+## Session – Abgelaufene Freigabe während der Audioauswertung erneuern
+
+- **Startzeit:** nicht zuverlässig bestimmbar
+- **Endzeit:** nicht zuverlässig bestimmbar
+- **Dauer:** nicht zuverlässig bestimmbar
+
+Die fehlgeschlagenen Auswertungen auf Delphi01 wurden anhand der redigierten Serverlogs diagnostiziert: HappyHour wies die lokal gespeicherte Rundgangsfreigabe vor dem Lesen des Audios mit HTTP 410 ab; KI-Konfiguration und Anwendung waren bereit. Der bestehende Erneuerungsweg war erst im Abschluss erreichbar und bildete damit bei offenen Auswertungen eine Sackgasse. Version `1.0.2` führt bei einer abgelaufenen oder widerrufenen Freigabe direkt zum Erneuerungsscanner, behält Audio, Bilder und Einträge vollständig lokal und kehrt nach bestätigtem Commit zur vorherigen Ansicht zurück. Die erneute Audioauswertung bleibt bewusst durch den Mitarbeiter auszulösen.
+
+**Bestanden:** vollständiger `tests/Pruefe-Prototyp.ps1` mit Versionsabgleich, Lint, TypeScript, 107 Frontendtests, Vue-Produktionsbuild, Offline-Browsertest, .NET-Release-Build, 12 Integrationstests, 9 Vertragstests, Offline-App-Shell und Token-Logschutz. Darin enthalten sind HTTP-410-Klassifikation, Erhalt des Audio-Blobs und Rückkehr zur vorherigen Ansicht. **Nicht geprüft:** Delphi01-Bereitstellung und reale Erneuerung mit HappyHour. **Nächster Schritt:** Commit und Testbereitstellung von `1.0.2`.
+
 ## Tagesgesamtzeit
 
 Nicht zuverlässig bestimmbar.
