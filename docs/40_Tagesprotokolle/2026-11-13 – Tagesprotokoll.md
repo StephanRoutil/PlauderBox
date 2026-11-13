@@ -90,7 +90,7 @@ Die fehlgeschlagenen Auswertungen auf Delphi01 wurden anhand der redigierten Ser
 
 In der Kontrollansicht zeigte der Zähler zwar einen offenen Eintrag, die Liste kennzeichnete aber weder den betroffenen Punkt noch den Grund ausreichend sichtbar. Version `1.0.3` hebt jeden nicht ausgewerteten, fehlgeschlagenen oder unvollständigen Eintrag einzeln hervor, kombiniert die zutreffenden Ursachen und zeigt die explizite Aktion `Öffnen und korrigieren`. Der gesamte Eintrag bleibt antippbar und öffnet über seine stabile ID genau den betroffenen Punkt.
 
-**Bestanden:** vollständiger `tests/Pruefe-Prototyp.ps1` mit Versionsabgleich, Lint, TypeScript, 108 Frontendtests, Vue-Produktionsbuild, Offline-Browsertest, .NET-Release-Build, 12 Integrationstests, 9 Vertragstests, Offline-App-Shell und Token-Logschutz. **Nicht geprüft:** Delphi01-Bereitstellung und reale Sicht-/Touchprüfung auf dem Mobilgerät. **Nächster Schritt:** Commit und Testbereitstellung von `1.0.3`.
+**Bestanden:** vollständiger `tests/Pruefe-Prototyp.ps1` mit Versionsabgleich, Lint, TypeScript, 108 Frontendtests, Vue-Produktionsbuild, Offline-Browsertest, .NET-Release-Build, 12 Integrationstests, 9 Vertragstests, Offline-App-Shell und Token-Logschutz. Commit `c9c319a` und Tag `v1.0.3` wurden nach `origin` übertragen. Version `1.0.3` läuft auf Delphi01 als Image `plauderbox:delphi01-test-c9c319a` (`sha256:3aeccc176165…`); HTTPS, eingebettete Version und neue Korrekturaktion, KI-Status und Containerlog sind geprüft. **Nicht geprüft:** reale Sicht-/Touchprüfung auf dem Mobilgerät. **Nächster Schritt:** offenen Eintrag am Handy antippen und die Korrekturansicht kontrollieren.
 
 ## Tagesgesamtzeit
 
