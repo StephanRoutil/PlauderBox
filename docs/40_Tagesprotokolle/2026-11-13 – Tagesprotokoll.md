@@ -172,6 +172,8 @@ Der Quality-Agent erteilte nach der Korrektur die Freigabe. Commit `9c42dfc` wur
 
 Version `1.1.3` korrigiert die Pflichtfeldmeldung beim einzelnen Eintrag. Die KI erfindet weiterhin keine Protokollpunktart. Fehlt die bewusste Auswahl beim Auswerten eines Diktats oder beim manuellen Übernehmen, erscheint sofort ein modaler Dialog statt nur des Hinweises am Seitenende. Die Dialogaktion führt direkt zum Auswahlfeld; die gewählte Art bleibt wie bisher Standard für nachfolgende neue Einträge derselben Begehung. **Nicht geprüft:** Dockerbuild, Bereitstellung und reale Mobilprüfung von Version `1.1.3`. **Nicht anwendbar:** Änderung des HappyHour-Vertrags oder neue Paketabhängigkeit.
 
+Das erste Quality-Gate fand zwei Restlücken: einen vorbereiteten lokalen Punkt ohne Art und den fehlenden separaten Audio-Verhaltenstest. Nach Freigabe bleibt bei vorbereiteten Punkten HappyHour führend; der Dialog öffnet den vorhandenen Erneuerungsscanner und kehrt nach der Kontextzusammenführung mit erhaltenen lokalen Daten zur Erfassung zurück. Ein zusätzlicher synthetischer Audiotest weist nach, dass `Diktat auswerten` ohne Art denselben Dialog öffnet und keine Auswertung startet. Das vom Product Owner überarbeitete `public/icon.svg` wird als dauerhafte Buildquelle für Header und PWA verwendet.
+
 ## Tagesgesamtzeit
 
 Nicht zuverlässig bestimmbar.

@@ -361,6 +361,45 @@ describe('mobile Komponenten', () => {
     wrapper.unmount()
   })
 
+  it('führt einen vorbereiteten Punkt ohne Art zur Aktualisierung der HappyHour-Freigabe', async () => {
+    const eintrag = erstelleEintrag()
+    eintrag.vorbereiteterProtokollpunktId = 88
+    eintrag.thema = 'Vorbereiteter Punkt ohne Art'
+    const wrapper = mount(EintragErfassen, {
+      props: { eintrag, protokoll, online: true, speichern: vi.fn(), audioRekorder },
+    })
+
+    await wrapper.get('button.mobile-primary').trigger('click')
+    const dialog = wrapper.get('[role="dialog"]')
+
+    expect(wrapper.findAll('select')[0]!.attributes('disabled')).toBeDefined()
+    expect(dialog.text()).toContain('Art in HappyHour ergänzen')
+    expect(dialog.text()).toContain('Audio, Bilder und lokale Eingaben bleiben erhalten')
+    await dialog.get('button').trigger('click')
+    expect(wrapper.emitted('freigabeErneuern')).toHaveLength(1)
+    expect(wrapper.emitted('gespeichert')).toBeUndefined()
+  })
+
+  it('öffnet den Pflichtfelddialog auch beim Auswerten eines Diktats ohne Art', async () => {
+    const eintrag = erstelleEintrag()
+    eintrag.audio = {
+      dateiname: 'synthetisch.webm',
+      medientyp: 'audio/webm',
+      groesse: 1,
+      dauerSekunden: 1,
+      audio: new Blob(['synthetisch'], { type: 'audio/webm' }),
+    }
+    const wrapper = mount(EintragErfassen, {
+      props: { eintrag, protokoll, online: true, speichern: vi.fn(), audioRekorder },
+    })
+
+    const auswerten = wrapper.findAll('button').find((knopf) => knopf.text() === 'Diktat auswerten')
+    await auswerten!.trigger('click')
+
+    expect(wrapper.get('[role="dialog"]').text()).toContain('Art des Protokollpunkts wählen')
+    expect(wrapper.emitted('gespeichert')).toBeUndefined()
+  })
+
   it('zeigt deduplizierte Zuständigkeiten und getrennte Bildquellen', () => {
     const wrapper = mount(EintragErfassen, {
       props: { eintrag: erstelleEintrag(), protokoll, online: true, speichern: vi.fn(), audioRekorder },

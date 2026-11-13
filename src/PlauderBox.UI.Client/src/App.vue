@@ -201,6 +201,7 @@ onBeforeUnmount(() => {
     @gespeichert="speichereErfassung"
     @abbrechen="ansicht = 'aktiv'"
     @kontrolle="(eintrag) => speichereEintrag(eintrag, 'kontrolle')"
+    @freigabe-erneuern="beginneFreigabeErneuerung('erfassen')"
   />
   <OfflineHinweis
     v-else-if="ansicht === 'offline'"

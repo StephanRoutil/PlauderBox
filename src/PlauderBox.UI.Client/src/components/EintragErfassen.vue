@@ -38,6 +38,7 @@ const emit = defineEmits<{
   gespeichert: [eintrag: BegehungEintrag]
   kontrolle: [eintrag: BegehungEintrag]
   abbrechen: []
+  freigabeErneuern: []
 }>()
 
 const entwurf = ref<BegehungEintrag>(kopiereEintrag(props.eintrag))
@@ -75,6 +76,9 @@ const zeit = computed(
     `${String(Math.floor(dauerSekunden.value / 60)).padStart(2, '0')}:${String(dauerSekunden.value % 60).padStart(2, '0')}`,
 )
 const verteileroptionen = computed(() => eindeutigeVerteileroptionen(props.protokoll))
+const vorbereiteterPunktOhneArt = computed(
+  () => entwurf.value.vorbereiteterProtokollpunktId !== null && !entwurf.value.protokollpunktArtId,
+)
 const aktionGesperrt = computed(
   () =>
     aufnahmeLaeuft.value ||
@@ -221,7 +225,11 @@ function halteFokusImProtokollpunktArtDialog(ereignis: KeyboardEvent): void {
   }
 }
 
-async function waehleProtokollpunktArt(): Promise<void> {
+async function behebeFehlendeProtokollpunktArt(): Promise<void> {
+  if (vorbereiteterPunktOhneArt.value) {
+    emit('freigabeErneuern')
+    return
+  }
   protokollpunktArtDialogSichtbar.value = false
   await nextTick()
   protokollpunktArtAuswahl.value?.scrollIntoView?.({ block: 'center', behavior: 'smooth' })
@@ -272,14 +280,20 @@ async function geheZuKontrolle(): Promise<void> {
     <section class="startvoraussetzungen-dialog__inhalt">
       <p class="eyebrow">Pflichtfeld fehlt</p>
       <h2 id="protokollpunktart-dialog-titel" ref="protokollpunktArtDialogTitel" tabindex="-1">
-        Art des Protokollpunkts wählen
+        {{ vorbereiteterPunktOhneArt ? 'Art in HappyHour ergänzen' : 'Art des Protokollpunkts wählen' }}
       </h2>
       <p id="protokollpunktart-dialog-beschreibung">
-        Die KI ergänzt Gruppe, Thema, Inhalt und Rechtsverweis. Die Art des Protokollpunkts muss beim ersten Eintrag
-        bewusst gewählt werden und wird danach für neue Einträge als Standard übernommen.
+        <template v-if="vorbereiteterPunktOhneArt">
+          Dieser vorbereitete Protokollpunkt besitzt in HappyHour keine Art. Ergänze sie dort, aktualisiere die aktive
+          PlauderBox-Freigabe und scanne den QR-Code erneut. Audio, Bilder und lokale Eingaben bleiben erhalten.
+        </template>
+        <template v-else>
+          Die KI ergänzt Gruppe, Thema, Inhalt und Rechtsverweis. Die Art des Protokollpunkts muss beim ersten Eintrag
+          bewusst gewählt werden und wird danach für neue Einträge als Standard übernommen.
+        </template>
       </p>
-      <button class="mobile-primary" type="button" @click="waehleProtokollpunktArt">
-        Art des Protokollpunkts wählen
+      <button class="mobile-primary" type="button" @click="behebeFehlendeProtokollpunktArt">
+        {{ vorbereiteterPunktOhneArt ? 'Aktualisierte Freigabe scannen' : 'Art des Protokollpunkts wählen' }}
       </button>
     </section>
   </div>

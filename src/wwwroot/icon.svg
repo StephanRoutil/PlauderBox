@@ -1,5 +1,94 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="120" fill="#ed4834"/>
-  <path d="M126 132h260a58 58 0 0 1 58 58v104a58 58 0 0 1-58 58H246l-92 72 18-72h-46a58 58 0 0 1-58-58V190a58 58 0 0 1 58-58Z" fill="#fff"/>
-  <circle cx="188" cy="244" r="22" fill="#ed4834"/><circle cx="256" cy="244" r="22" fill="#ed4834"/><circle cx="324" cy="244" r="22" fill="#ed4834"/>
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Generiert durch Microsoft Visio, SVG Export icon.svg Zeichenblatt-1 -->
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:ev="http://www.w3.org/2001/xml-events"
+		xmlns:v="http://schemas.microsoft.com/visio/2003/SVGExtensions/" width="1.72621in" height="1.72621in"
+		viewBox="0 0 124.287 124.287" xml:space="preserve" color-interpolation-filters="sRGB" class="st5">
+	<v:documentProperties v:langID="2055"/>
+
+	<style type="text/css">
+	<![CDATA[
+		.st1 {fill:#ed4834;stroke:none;stroke-linecap:butt;stroke-width:1.19531}
+		.st2 {fill:#ffffff;stroke:none;stroke-linecap:butt;stroke-width:1.19531}
+		.st3 {fill:#c00000;stroke:none;stroke-linecap:round;stroke-linejoin:round;stroke-width:0.25}
+		.st4 {fill:#c00000;stroke:#c00000;stroke-linecap:round;stroke-linejoin:round;stroke-width:0.25}
+		.st5 {fill:none;fill-rule:evenodd;font-size:12px;overflow:visible;stroke-linecap:square;stroke-miterlimit:3}
+	]]>
+	</style>
+
+	<g v:mID="0" v:index="1" v:groupContext="foregroundPage">
+		<title>Zeichenblatt-1</title>
+		<v:pageProperties v:drawingScale="0.0393701" v:pageScale="0.0393701" v:drawingUnits="24" v:shadowOffsetX="8.50395"
+				v:shadowOffsetY="-8.50395"/>
+		<v:layer v:name="Allgemeine Symbole" v:index="0"/>
+		<g id="group1-1" transform="translate(1.19531,-1.19231)" v:mID="1" v:groupContext="group">
+			<title>Tabelle.31</title>
+			<g id="shape2-2" v:mID="2" v:groupContext="shape">
+				<title>Tabelle.3</title>
+				<path d="M0 95.72 A28.5702 28.5702 -180 0 0 28.57 124.29 L93.33 124.29 A28.5702 28.5702 -180 0 0 121.9 95.72 L121.9
+							 30.96 A28.5702 28.5702 -180 0 0 93.33 2.39 L28.57 2.39 A28.5702 28.5702 -180 0 0 -0 30.96 L0 95.72 Z"
+						class="st1"/>
+			</g>
+			<g id="shape3-4" v:mID="3" v:groupContext="shape" transform="translate(7.61854,-15.0919)">
+				<title>Tabelle.4</title>
+				<path d="M16.45 41.46 L90.21 41.46 A16.4528 16.4528 0 0 1 106.66 57.91 L106.66 87.41 A16.4528 16.4528 0 0 1 90.21
+							 103.86 L50.49 103.86 L24.4 124.29 L29.5 103.86 L16.45 103.86 A16.4528 16.4528 0 0 1 0 87.41 L0 57.91
+							 A16.4528 16.4528 0 0 1 16.45 41.46 Z" class="st2"/>
+			</g>
+			<g id="group4-6" transform="translate(58.6807,-52.8577)" v:mID="4" v:groupContext="group">
+				<title>Tabelle.15</title>
+				<g id="shape5-7" v:mID="5" v:groupContext="shape" transform="translate(28.3758,-2.84217E-14)">
+					<title>Tabelle.13</title>
+					<path d="M0 96.33 L0 123.23 A4.75982 4.75982 -180 0 0 5.97 123.23 L5.97 112.03 L16.48 112.03 L16.48 123.23 A4.22967
+								 4.22967 -180 0 0 22.07 123.23 L22.07 96.33 A9.6752 9.6752 -180 0 0 16.43 96.33 L16.43 106.94 L5.93
+								 106.84 L5.89 96.33 A10.4591 10.4591 -180 0 0 0 96.33 Z" class="st3"/>
+				</g>
+				<g id="shape6-9" v:mID="6" v:groupContext="shape">
+					<title>Tabelle.14</title>
+					<path d="M0 96.33 L0 123.23 A4.75982 4.75982 -180 0 0 5.97 123.23 L5.97 112.03 L16.48 112.03 L16.48 123.23 A4.22967
+								 4.22967 -180 0 0 22.07 123.23 L22.07 96.33 A9.6752 9.6752 -180 0 0 16.43 96.33 L16.43 106.94 L5.93
+								 106.84 L5.89 96.33 A10.4591 10.4591 -180 0 0 0 96.33 Z" class="st3"/>
+				</g>
+			</g>
+			<g id="group7-11" transform="translate(-5.24006,-41.7673) rotate(-10)" v:mID="7" v:groupContext="group"
+					v:layerMember="0">
+				<v:userDefs>
+					<v:ud v:nameU="visVersion" v:prompt="" v:val="VT0(17):26"/>
+					<v:ud v:nameU="visAltText" v:prompt="" v:val="VT4(Assistent)"/>
+					<v:ud v:nameU="visAltDescription" v:prompt="" v:val="VT4(Assistent-Symbol.)"/>
+					<v:ud v:nameU="Font" v:prompt="" v:val="VT0(243):26"/>
+				</v:userDefs>
+				<title>Assistent</title>
+				<g id="group8-12" v:mID="8" v:groupContext="group" v:layerMember="0">
+					<title>Tabelle.22</title>
+					<g id="shape9-13" v:mID="9" v:groupContext="shape" v:layerMember="0" transform="translate(17.1879,-28.5736)">
+						<title>Tabelle.23</title>
+						<path d="M3.29 118 C3.04 119.66 1.69 120.97 0 121.2 C1.66 121.42 2.98 122.68 3.28 124.29 C3.53 122.62 4.88
+									 121.31 6.57 121.09 C4.92 120.87 3.59 119.61 3.29 118 Z" class="st4"/>
+					</g>
+					<g id="shape10-15" v:mID="10" v:groupContext="shape" v:layerMember="0" transform="translate(23,-33.8298)">
+						<title>Tabelle.24</title>
+						<path d="M4.16 116.34 C3.84 118.44 2.14 120.09 0 120.38 C2.09 120.66 3.76 122.25 4.14 124.29 C4.46 122.19
+									 6.16 120.53 8.31 120.24 C6.21 119.96 4.54 118.38 4.16 116.34 Z" class="st4"/>
+					</g>
+					<g id="shape11-17" v:mID="11" v:groupContext="shape" v:layerMember="0" transform="translate(30.399,-28.5233)">
+						<title>Tabelle.25</title>
+						<path d="M3.08 118.4 C2.84 119.96 1.58 121.18 0 121.39 C1.55 121.6 2.79 122.78 3.07 124.29 C3.31 122.73 4.57
+									 121.5 6.15 121.29 C4.6 121.09 3.36 119.91 3.08 118.4 Z" class="st4"/>
+					</g>
+					<g id="shape12-19" v:mID="12" v:groupContext="shape" v:layerMember="0" transform="translate(30.9499,-20.1981)">
+						<title>Tabelle.26</title>
+						<path d="M2.16 120.16 C1.99 121.25 1.11 122.11 0 122.26 C1.09 122.4 1.96 123.23 2.15 124.29 C2.32 123.19
+									 3.2 122.33 4.32 122.19 C3.23 122.04 2.36 121.22 2.16 120.16 Z" class="st4"/>
+					</g>
+					<g id="shape13-21" v:mID="13" v:groupContext="shape" v:layerMember="0">
+						<title>Tabelle.27</title>
+						<path d="M31.53 97.42 L27.24 93.19 C27 92.95 26.61 92.95 26.38 93.19 L0.24 118.97 C0 119.2 0 119.58 0.24
+									 119.82 L4.53 124.05 C4.77 124.29 5.16 124.29 5.39 124.05 L31.53 98.27 C31.77 98.04 31.77 97.65
+									 31.53 97.42 ZM23.3 103.85 L20.75 101.34 L26.86 95.32 L29.4 97.83 L23.3 103.85 Z" class="st4"/>
+					</g>
+				</g>
+			</g>
+		</g>
+	</g>
 </svg>
