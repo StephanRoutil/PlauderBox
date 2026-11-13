@@ -48,6 +48,8 @@ anforderung: D011
 
 > **Aktualisierung vom 13.11.2026:** Version `1.0.3` aus Commit `c9c319a` läuft als Image `plauderbox:delphi01-test-c9c319a`, ID `sha256:3aeccc176165…`, in `Production`. Internes HTTPS und das neue Asset `index-B-jqvHyQ.js` liefern HTTP 200. Das Asset enthält die gebaute Version `1.0.3`, die Kennzeichnung `Auswertung fehlgeschlagen` und die Aktion `Öffnen und korrigieren`; `/api/v1/status` meldet die KI als bereit und das Containerlog enthält keine Startfehler. Das Image `plauderbox:delphi01-test-e0c71e2` bleibt als Rückfallstand erhalten. Die reale Sicht- und Touchprüfung des offenen Eintrags auf dem Mobilgerät bleibt offen.
 
+> **Aktualisierung vom 13.11.2026:** Version `1.0.4` aus Commit `e20a221` läuft als Image `plauderbox:delphi01-test-e20a221`, ID `sha256:c68d9f0f3129…`, in `Production`. Internes HTTPS und das neue Asset `index-C3JiHCmu.js` liefern HTTP 200. Das Asset enthält die gebaute Version `1.0.4` und die manuelle Übernahmeaktion; `/api/v1/status` meldet die KI als bereit und das Containerlog enthält keine Startfehler. Das Image `plauderbox:delphi01-test-c9c319a` bleibt als Rückfallstand erhalten. Der reale Abschluss eines manuellen Eintrags ohne Audio auf dem Mobilgerät bleibt offen.
+
 - Vollständiger Linux-Dockerbuild auf Delphi01 einschliesslich `src/PlauderBox.Logik/Client`: bestanden. Die Fotoerweiterung läuft als Image `sha256:f7f1d60381dd…`; der unmittelbar vorherige Stand ist als `plauderbox:delphi01-test-before-fotosicherung` markiert.
 - Anwendungs- und HTTPS-Container aus `/home/zeus/plauderbox-test-vorbereitung` gestartet: bestanden.
 - Root, Manifest, Service Worker und die gehashten JavaScript-/CSS-Assets liefern über internes HTTPS Status 200; Manifest-MIME-Typ korrekt: bestanden.

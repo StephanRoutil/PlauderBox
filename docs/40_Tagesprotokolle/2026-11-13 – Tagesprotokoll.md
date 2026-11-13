@@ -100,7 +100,7 @@ In der Kontrollansicht zeigte der Zähler zwar einen offenen Eintrag, die Liste 
 
 Ein bewusst übernommener manueller Eintrag ohne Audio behielt fälschlich den Status `entwurf` und blockierte dadurch trotz vollständiger Felder den Begehungsabschluss. Version `1.0.4` setzt nur Einträge ohne Audio bei der bewussten Übernahme auf `ausgewertet` und entfernt einen früheren Auswertungsfehler. Einträge mit Audio bleiben unverändert bis zur bestätigten KI-Auswertung ausstehend.
 
-**Bestanden:** vollständiger `tests/Pruefe-Prototyp.ps1` mit Versionsabgleich, Lint, TypeScript, 109 Frontendtests, Vue-Produktionsbuild, Offline-Browsertest, .NET-Release-Build, 12 Integrationstests, 9 Vertragstests, Offline-App-Shell und Token-Logschutz. **Nicht geprüft:** Delphi01-Bereitstellung und realer Abschluss eines manuellen Eintrags auf dem Mobilgerät. **Nächster Schritt:** Commit und Testbereitstellung von `1.0.4`.
+**Bestanden:** vollständiger `tests/Pruefe-Prototyp.ps1` mit Versionsabgleich, Lint, TypeScript, 109 Frontendtests, Vue-Produktionsbuild, Offline-Browsertest, .NET-Release-Build, 12 Integrationstests, 9 Vertragstests, Offline-App-Shell und Token-Logschutz. Commit `e20a221` und Tag `v1.0.4` wurden nach `origin` übertragen. Version `1.0.4` läuft auf Delphi01 als Image `plauderbox:delphi01-test-e20a221` (`sha256:c68d9f0f3129…`); HTTPS, eingebettete Version, KI-Status und Containerlog sind geprüft. **Nicht geprüft:** realer Abschluss eines manuellen Eintrags auf dem Mobilgerät. **Nächster Schritt:** manuellen Eintrag ohne Audio übernehmen und die Begehung abschliessen.
 
 ## Tagesgesamtzeit
 
